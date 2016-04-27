@@ -16,9 +16,6 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-/**
- * Created by fi8er1 on 26/04/2016.
- */
 public class Helpers {
 
     private static ProgressDialog progressDialog;
