@@ -5,29 +5,92 @@
     android:layout_height="match_parent"
     android:background="@mipmap/img_background_welcome"
     android:orientation="vertical"
+    android:focusableInTouchMode="true"
     android:scaleX="1.02"
     android:scaleY="1.02"
     tools:context="com.byteshaft.briver.RegisterActivity">
 
-    <LinearLayout
-        android:id="@+id/ll_register"
+    <ScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
-        android:layout_marginLeft="44dp"
-        android:layout_marginRight="44dp"
+        android:paddingTop="10dp"
+        android:paddingBottom="10dp"
+        android:scrollbars="none"
+        android:overScrollMode="never">
+    <LinearLayout
+        android:id="@+id/ll_register"
+        android:focusableInTouchMode="true"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="42dp"
+        android:layout_marginRight="42dp"
         android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="10dp"
+            android:orientation="vertical"
+            android:layout_marginBottom="10dp"
+            android:background="@drawable/background_welcome_edit_text">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:text="User Type"
+                android:textSize="18dp"
+                android:textColor="#ffffff"
+                android:layout_marginTop="5dp"
+                android:layout_marginBottom="15dp"/>
+
+            <RadioGroup
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_horizontal"
+                android:weightSum="2">
+
+                <RadioButton
+                    android:id="@+id/rb_register_customer"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center_horizontal"
+                    android:text="CUSTOMER"
+                    android:padding="10dp"
+                    android:button="@android:color/transparent"
+                    android:textColor="#ffffff"
+                    android:textSize="15dp"
+                    android:background="@drawable/background_radio_button"/>
+
+                <RadioButton
+                    android:id="@+id/rb_register_driver"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center_horizontal"
+                    android:text="DRIVER"
+                    android:padding="10dp"
+                    android:button="@android:color/transparent"
+                    android:textColor="#ffffff"
+                    android:textSize="15dp"
+                    android:layout_marginLeft="8dp"
+                    android:background="@drawable/background_radio_button"/>
+            </RadioGroup>
+        </LinearLayout>
 
         <EditText
             android:id="@+id/et_register_full_name"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@+id/ll_register"
-            android:layout_marginTop="79dp"
             android:background="@drawable/background_welcome_edit_text"
             android:drawableLeft="@mipmap/ic_edit_text_full_name"
+            android:inputType="textPersonName"
             android:drawablePadding="10dp"
-            android:hint="Fullname"
+            android:layout_marginBottom="10dp"
+            android:hint="Full Name"
             android:padding="10dp"
             android:textColor="#ffffff"
             android:textColorHint="#ffffff"
@@ -38,12 +101,12 @@
             android:id="@+id/et_register_email"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@+id/et_register_full_name"
-            android:layout_marginTop="15dp"
+            android:layout_marginBottom="10dp"
             android:background="@drawable/background_welcome_edit_text"
             android:drawableLeft="@mipmap/ic_edit_text_email"
             android:drawablePadding="10dp"
-            android:hint="Email"
+            android:hint="E-Mail"
+            android:inputType="textEmailAddress"
             android:padding="10dp"
             android:textColor="#ffffff"
             android:textColorHint="#ffffff"
@@ -54,8 +117,7 @@
             android:id="@+id/et_register_password"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@+id/et_register_full_name"
-            android:layout_marginTop="12dp"
+            android:layout_marginBottom="10dp"
             android:background="@drawable/background_welcome_edit_text"
             android:drawableLeft="@mipmap/ic_edit_text_password"
             android:drawablePadding="10dp"
@@ -71,8 +133,7 @@
             android:id="@+id/et_register_confirm_password"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@+id/et_register_full_name"
-            android:layout_marginTop="12dp"
+            android:layout_marginBottom="10dp"
             android:background="@drawable/background_welcome_edit_text"
             android:drawableLeft="@mipmap/ic_edit_text_password"
             android:drawablePadding="10dp"
@@ -88,37 +149,11 @@
             android:id="@+id/btn_usr_create"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@+id/et_login_password"
-            android:layout_marginBottom="10dp"
-            android:layout_marginTop="10dp"
             android:background="@drawable/background_button"
             android:padding="10dp"
             android:text="Create Account"
             android:textColor="#ffffff"
             android:textSize="18dp" />
-
-        <RadioGroup
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent">
-
-            <RadioButton
-                android:id="@+id/rb_register_customer"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="As a Customer"
-                android:textColor="#FFF"
-                android:textSize="20dp" />
-
-            <RadioButton
-                android:id="@+id/rb_register_driver"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="As a Driver"
-                android:textColor="#FFF"
-                android:textSize="20dp" />
-
-        </RadioGroup>
-
     </LinearLayout>
-
+    </ScrollView>
 </RelativeLayout>

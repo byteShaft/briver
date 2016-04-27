@@ -29,6 +29,8 @@ public class RegisterActivity extends Activity implements View.OnClickListener {
         registerUserPassword = (EditText) findViewById(R.id.et_register_password);
         registerUserConfirmPassword = (EditText) findViewById(R.id.et_register_confirm_password);
 
+        findViewById(R.id.ll_register).requestFocus();
+
         rbRegisterCustomer = (RadioButton) findViewById(R.id.rb_register_customer);
         rbRegisterDriver = (RadioButton) findViewById(R.id.rb_register_driver);
 

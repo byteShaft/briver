@@ -54,7 +54,7 @@ public class WelcomeActivity extends Activity implements View.OnClickListener {
         llWelcomeLogin.setVisibility(View.GONE);
 
         final Animation animMainLogoFading = AnimationUtils.loadAnimation(WelcomeActivity.this, R.anim.anim_welcome_logo_fading);
-        final Animation animMainLogoTransition = AnimationUtils.loadAnimation(WelcomeActivity.this, R.anim.anim_welcome_logo_transition);
+        final Animation animMainLogoTransition = AnimationUtils.loadAnimation(WelcomeActivity.this, R.anim.anim_welcome_logo_transition_up);
         final Animation animLayoutLoginFadeIn = AnimationUtils.loadAnimation(WelcomeActivity.this, R.anim.anim_login_layout);
         final Animation animMainLogoFadeIn = AnimationUtils.loadAnimation(WelcomeActivity.this, R.anim.anim_welcome_logo_fade_in);
         final Animation animMainLogoFadeOut = AnimationUtils.loadAnimation(WelcomeActivity.this, R.anim.anim_welcome_logo_fade_out);
@@ -62,13 +62,13 @@ public class WelcomeActivity extends Activity implements View.OnClickListener {
         ivWelcomeLogoMain.startAnimation(animMainLogoFading);
 
         RelativeLayout mainLayout = (RelativeLayout) findViewById(R.id.layout_root);
-        InputMethodManager im = (InputMethodManager)getSystemService(Service.INPUT_METHOD_SERVICE);
+        InputMethodManager im = (InputMethodManager) getSystemService(Service.INPUT_METHOD_SERVICE);
 
         softKeyboard = new SoftKeyboard(mainLayout, im);
         softKeyboard.setSoftKeyboardCallback(new SoftKeyboard.SoftKeyboardChanged() {
 
             @Override
-            public void onSoftKeyboardHide()  {
+            public void onSoftKeyboardHide() {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -86,8 +86,8 @@ public class WelcomeActivity extends Activity implements View.OnClickListener {
                     }
                 });
             }
-         });
-        
+        });
+
         animMainLogoTransition.setAnimationListener(new Animation.AnimationListener() {
             @Override
             public void onAnimationStart(Animation animation) {
@@ -141,12 +141,9 @@ public class WelcomeActivity extends Activity implements View.OnClickListener {
                 break;
 
             case R.id.btn_register:
-
-        Intent i = new Intent(WelcomeActivity.this, RegisterActivity.class);
-        startActivity(i);
-        overridePendingTransition(R.anim.anim_enter_register_activity
-                , R.anim.anim_exit_login_activity);
-
+                Intent i = new Intent(WelcomeActivity.this, RegisterActivity.class);
+                startActivity(i);
+                overridePendingTransition(R.anim.anim_enter_register_activity, R.anim.anim_exit_login_activity);
                 break;
             case R.id.tv_forgot_password:
 
