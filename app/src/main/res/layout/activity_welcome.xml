@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".WelcomeActivity"
+    android:orientation="vertical"
+    android:scaleX="1.02"
+    android:scaleY="1.02"
+    android:background="@mipmap/img_background_welcome">
+    <ImageView
+        android:id="@+id/iv_welcome_logo_main"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@mipmap/logo_app_main"
+        android:layout_centerInParent="true"/>
+
+    <LinearLayout
+        android:id="@+id/ll_welcome_login"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="80dp"
+        android:layout_marginLeft="54dp"
+        android:layout_marginRight="54dp">
+
+        <EditText
+            android:id="@+id/et_login_username"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/background_welcome_edit_text"
+            android:textCursorDrawable="@null"
+            android:textSize="18dp"
+            android:hint="Username"
+            android:textColor="#ffffff"
+            android:textColorHint="#ffffff"
+            android:padding="10dp"
+            android:drawablePadding="10dp"
+            android:layout_marginBottom="10dp"
+            android:drawableLeft="@mipmap/ic_edit_text_username" />
+
+        <EditText
+            android:id="@+id/et_login_password"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/background_welcome_edit_text"
+            android:textCursorDrawable="@null"
+            android:textSize="18dp"
+            android:hint="Password"
+            android:textColor="#ffffff"
+            android:textColorHint="#ffffff"
+            android:padding="10dp"
+            android:drawablePadding="10dp"
+            android:layout_marginBottom="10dp"
+            android:drawableLeft="@mipmap/ic_edit_text_password"
+            android:layout_below="@+id/et_login_username" />
+
+        <Button
+            android:id="@+id/btn_login"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="10dp"
+            android:textSize="18dp"
+            android:text="Login"
+            android:padding="10dp"
+            android:textColor="#ffffff"
+            android:background="@drawable/background_button"
+            android:layout_below="@+id/et_login_password" />
+
+        <Button
+            android:id="@+id/btn_register"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="10dp"
+            android:textSize="18dp"
+            android:text="Register"
+            android:padding="10dp"
+            android:textColor="#ffffff"
+            android:background="@drawable/background_button"
+            android:layout_below="@+id/et_login_password" />
+    </LinearLayout>
+</RelativeLayout>
