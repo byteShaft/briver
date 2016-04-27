@@ -1,6 +1,7 @@
 package com.byteshaft.briver;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -140,6 +141,11 @@ public class WelcomeActivity extends Activity implements View.OnClickListener {
                 break;
 
             case R.id.btn_register:
+
+        Intent i = new Intent(WelcomeActivity.this, RegisterActivity.class);
+        startActivity(i);
+        overridePendingTransition(R.anim.anim_enter_register_activity
+                , R.anim.anim_exit_login_activity);
 
                 break;
 
