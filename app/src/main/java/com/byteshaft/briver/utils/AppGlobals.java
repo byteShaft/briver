@@ -15,8 +15,8 @@ public class AppGlobals extends Application {
     private static SharedPreferences sPreferences;
     private static final String LOGGED_IN = "logged_in";
     private static final String USER_NAME = "user_name";
-    private static final String NAME = "student_name";
-    private static final String STUDENT_TYPE = "student_type";
+    private static final String PERSON_NAME = "person_name";
+    private static final String USER_TYPE = "user_type";
     private static final String TOKEN = "token";
     private static final String GCM_TOKEN = "gcm_token";
     private static final String USER_DATA = "user_data";
@@ -73,17 +73,17 @@ public class AppGlobals extends Application {
         return sPreferences.getString(GCM_TOKEN, null);
     }
 
-    public static String getName() {
-        return sPreferences.getString(NAME, null);
+    public static String getPeronName() {
+        return sPreferences.getString(PERSON_NAME, null);
     }
-    public static void putName(String name) {
-        sPreferences.edit().putString(NAME, name).apply();
+    public static void putPersonName(String name) {
+        sPreferences.edit().putString(PERSON_NAME, name).apply();
     }
     public static int getUserType() {
-        return sPreferences.getInt(STUDENT_TYPE, 0);
+        return sPreferences.getInt(USER_TYPE, 0);
     }
 
     public static void putUserType(int userType) {
-        sPreferences.edit().putInt(STUDENT_TYPE, userType).apply();
+        sPreferences.edit().putInt(USER_TYPE, userType).apply();
     }
 }
