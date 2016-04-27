@@ -1,19 +1,23 @@
 package com.byteshaft.briver;
 
 import android.app.Activity;
+import android.app.Service;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.byteshaft.briver.utils.AppGlobals;
+import com.byteshaft.briver.utils.SoftKeyboard;
 
 public class WelcomeActivity extends Activity implements View.OnClickListener {
 
@@ -26,6 +30,11 @@ public class WelcomeActivity extends Activity implements View.OnClickListener {
     EditText etLoginPassword;
     String sLoginEmail;
     String sLoginPassword;
+
+//    Animation animMainLogoFadeOut;
+//    Animation animMainLogoFadeIn;
+
+    SoftKeyboard softKeyboard;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,41 +60,33 @@ public class WelcomeActivity extends Activity implements View.OnClickListener {
 
         ivWelcomeLogoMain.startAnimation(animMainLogoFading);
 
-        etLoginEmail.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+        RelativeLayout mainLayout = (RelativeLayout) findViewById(R.id.layout_root);
+        InputMethodManager im = (InputMethodManager)getSystemService(Service.INPUT_METHOD_SERVICE);
+
+        softKeyboard = new SoftKeyboard(mainLayout, im);
+        softKeyboard.setSoftKeyboardCallback(new SoftKeyboard.SoftKeyboardChanged() {
+
             @Override
-            public void onFocusChange(View v, boolean hasFocus) {
-                if (hasFocus) {
-                    Log.i("Email", " Focus Got");
-                    if (!etLoginPassword.hasFocus()) {
-                        ivWelcomeLogoMain.startAnimation(animMainLogoFadeOut);
-                    }
-                } else {
-                    Log.i("Email", " Focus Lost");
-                    if (!etLoginPassword.hasFocus()) {
+            public void onSoftKeyboardHide()  {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
                         ivWelcomeLogoMain.startAnimation(animMainLogoFadeIn);
                     }
-                }
+                });
             }
-        });
 
-        etLoginPassword.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override
-            public void onFocusChange(View v, boolean hasFocus) {
-                if (hasFocus) {
-                    Log.i("Password", " Focus Got");
-                    if (!etLoginEmail.hasFocus()) {
+            public void onSoftKeyboardShow() {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
                         ivWelcomeLogoMain.startAnimation(animMainLogoFadeOut);
-                        Log.i("Password", " Focus Got");
                     }
-                } else {
-                    Log.i("Password", " Focus Lost");
-                    if (!etLoginEmail.hasFocus()) {
-                        ivWelcomeLogoMain.startAnimation(animMainLogoFadeIn);
-                    }
-                }
+                });
             }
-        });
-
+         });
+        
         animMainLogoTransition.setAnimationListener(new Animation.AnimationListener() {
             @Override
             public void onAnimationStart(Animation animation) {
@@ -125,7 +126,6 @@ public class WelcomeActivity extends Activity implements View.OnClickListener {
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
-
             case R.id.btn_login:
 
                 sLoginEmail = etLoginEmail.getText().toString();
@@ -142,16 +142,15 @@ public class WelcomeActivity extends Activity implements View.OnClickListener {
             case R.id.btn_register:
 
                 break;
-
             case R.id.tv_forgot_password:
 
                 break;
+
             default:
 
                 break;
         }
     }
-
 
     public boolean validateLoginInput() {
         boolean valid = true;
@@ -183,4 +182,9 @@ public class WelcomeActivity extends Activity implements View.OnClickListener {
         Toast.makeText(getBaseContext(), message, Toast.LENGTH_SHORT).show();
     }
 
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        softKeyboard.unRegisterSoftKeyboardCallback();
+    }
 }
