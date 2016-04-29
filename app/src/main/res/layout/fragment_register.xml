@@ -1,54 +1,54 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:background="@android:color/transparent"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
+    android:background="@android:color/transparent"
     android:focusableInTouchMode="true"
+    android:orientation="vertical"
     tools:context="com.byteshaft.briver.WelcomeActivity">
 
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
-        android:paddingTop="10dp"
+        android:overScrollMode="never"
         android:paddingBottom="10dp"
-        android:scrollbars="none"
-        android:overScrollMode="never">
+        android:paddingTop="10dp"
+        android:scrollbars="none">
+
         <LinearLayout
             android:id="@+id/ll_register"
-            android:focusableInTouchMode="true"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginLeft="42dp"
             android:layout_marginRight="42dp"
+            android:focusableInTouchMode="true"
             android:orientation="vertical">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:padding="10dp"
-                android:orientation="vertical"
                 android:layout_marginBottom="10dp"
-                android:background="@drawable/background_welcome_edit_text">
+                android:background="@drawable/background_welcome_edit_text"
+                android:orientation="vertical"
+                android:padding="10dp">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center_horizontal"
+                    android:layout_marginBottom="10dp"
                     android:text="User Type"
-                    android:textSize="18dp"
-                    android:textStyle="bold"
                     android:textColor="#ffffff"
-                    android:layout_marginBottom="10dp"/>
+                    android:textSize="16dp" />
 
                 <RadioGroup
                     android:id="@+id/rg_register_select_user_type"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
                     android:gravity="center_horizontal"
+                    android:orientation="horizontal"
                     android:weightSum="2">
 
                     <RadioButton
@@ -56,29 +56,27 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:gravity="center_horizontal"
-                        android:text="CUSTOMER"
-                        android:textStyle="bold"
-                        android:padding="10dp"
+                        android:background="@drawable/background_radio_button"
                         android:button="@android:color/transparent"
+                        android:gravity="center_horizontal"
+                        android:padding="10dp"
+                        android:text="CUSTOMER"
                         android:textColor="#ffffff"
-                        android:textSize="15dp"
-                        android:background="@drawable/background_radio_button"/>
+                        android:textSize="15dp" />
 
                     <RadioButton
                         android:id="@+id/rb_register_driver"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:gravity="center_horizontal"
-                        android:text="DRIVER"
-                        android:textStyle="bold"
-                        android:padding="10dp"
-                        android:button="@android:color/transparent"
-                        android:textColor="#ffffff"
-                        android:textSize="15dp"
                         android:layout_marginLeft="8dp"
-                        android:background="@drawable/background_radio_button"/>
+                        android:layout_weight="1"
+                        android:background="@drawable/background_radio_button"
+                        android:button="@android:color/transparent"
+                        android:gravity="center_horizontal"
+                        android:padding="10dp"
+                        android:text="DRIVER"
+                        android:textColor="#ffffff"
+                        android:textSize="15dp" />
                 </RadioGroup>
             </LinearLayout>
 
@@ -86,13 +84,13 @@
                 android:id="@+id/et_register_full_name"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginBottom="10dp"
                 android:background="@drawable/background_welcome_edit_text"
                 android:drawableLeft="@mipmap/ic_edit_text_full_name"
-                android:inputType="textPersonName"
                 android:drawablePadding="10dp"
-                android:layout_marginBottom="10dp"
-                android:maxLength="20"
                 android:hint="Full Name"
+                android:inputType="textPersonName"
+                android:maxLength="20"
                 android:padding="10dp"
                 android:textColor="#ffffff"
                 android:textColorHint="#ffffff"
@@ -108,8 +106,8 @@
                 android:drawableLeft="@mipmap/ic_edit_text_email"
                 android:drawablePadding="10dp"
                 android:hint="E-Mail"
-                android:maxLength="20"
                 android:inputType="textEmailAddress"
+                android:maxLength="20"
                 android:padding="10dp"
                 android:textColor="#ffffff"
                 android:textColorHint="#ffffff"
@@ -125,8 +123,8 @@
                 android:drawableLeft="@mipmap/ic_edit_text_password"
                 android:drawablePadding="10dp"
                 android:hint="Password"
-                android:maxLength="20"
                 android:inputType="textPassword"
+                android:maxLength="20"
                 android:padding="10dp"
                 android:textColor="#ffffff"
                 android:textColorHint="#ffffff"
@@ -142,8 +140,8 @@
                 android:drawableLeft="@mipmap/ic_edit_text_password"
                 android:drawablePadding="10dp"
                 android:hint="Confirm Password"
-                android:maxLength="20"
                 android:inputType="textPassword"
+                android:maxLength="20"
                 android:padding="10dp"
                 android:textColor="#ffffff"
                 android:textColorHint="#ffffff"
@@ -154,10 +152,10 @@
                 android:id="@+id/layout_elements_register"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
                 android:layout_marginBottom="10dp"
-                android:visibility="gone"
-                android:animateLayoutChanges="true">
+                android:animateLayoutChanges="true"
+                android:orientation="vertical"
+                android:visibility="gone">
 
                 <EditText
                     android:id="@+id/et_register_phone_number"
@@ -168,8 +166,8 @@
                     android:drawableLeft="@mipmap/ic_edit_text_phone"
                     android:drawablePadding="10dp"
                     android:hint="Contact Number"
-                    android:maxLength="20"
                     android:inputType="phone"
+                    android:maxLength="20"
                     android:padding="10dp"
                     android:textColor="#ffffff"
                     android:textColorHint="#ffffff"
@@ -180,9 +178,11 @@
                     android:id="@+id/layout_elements_register_driver"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginBottom="10dp"
+                    android:animateLayoutChanges="true"
                     android:orientation="vertical"
-                    android:visibility="gone"
-                    android:animateLayoutChanges="true">
+                    android:visibility="gone">
+
                     <EditText
                         android:id="@+id/et_register_driving_experience"
                         android:layout_width="match_parent"
@@ -192,8 +192,8 @@
                         android:drawableLeft="@mipmap/ic_edit_text_experience"
                         android:drawablePadding="10dp"
                         android:hint="Driving Experience (Yrs)"
-                        android:maxLength="2"
                         android:inputType="number"
+                        android:maxLength="2"
                         android:padding="10dp"
                         android:textColor="#ffffff"
                         android:textColorHint="#ffffff"
@@ -204,14 +204,13 @@
                         android:id="@+id/et_register_bio"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginBottom="10dp"
                         android:background="@drawable/background_welcome_edit_text"
                         android:drawableLeft="@mipmap/ic_edit_text_biography"
                         android:drawablePadding="10dp"
                         android:hint="Basic Biography"
+                        android:inputType="textShortMessage"
                         android:maxLength="160"
                         android:maxLines="3"
-                        android:inputType="textShortMessage"
                         android:padding="10dp"
                         android:textColor="#ffffff"
                         android:textColorHint="#ffffff"
@@ -225,9 +224,9 @@
                     android:id="@+id/layout_elements_register_customer"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:animateLayoutChanges="true"
                     android:orientation="vertical"
-                    android:visibility="gone"
-                    android:animateLayoutChanges="true">
+                    android:visibility="gone">
 
                     <EditText
                         android:id="@+id/et_register_vehicle_make"
@@ -238,8 +237,8 @@
                         android:drawableLeft="@mipmap/ic_edit_text_vehicle_make"
                         android:drawablePadding="10dp"
                         android:hint="Vehicle Make"
+                        android:inputType="textNoSuggestions"
                         android:maxLength="20"
-                        android:inputType="number"
                         android:padding="10dp"
                         android:textColor="#ffffff"
                         android:textColorHint="#ffffff"
@@ -255,14 +254,68 @@
                         android:drawableLeft="@mipmap/ic_edit_text_calender"
                         android:drawablePadding="10dp"
                         android:hint="Vehicle Model (Yr)"
-                        android:maxLength="4"
                         android:inputType="date"
+                        android:maxLength="4"
                         android:padding="10dp"
                         android:textColor="#ffffff"
                         android:textColorHint="#ffffff"
                         android:textCursorDrawable="@null"
                         android:textSize="18dp" />
 
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="10dp"
+                        android:background="@drawable/background_welcome_edit_text"
+                        android:orientation="vertical"
+                        android:padding="10dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center_horizontal"
+                            android:layout_marginBottom="10dp"
+                            android:text="Vehicle Type"
+                            android:textColor="#ffffff"
+                            android:textSize="16dp" />
+
+                        <RadioGroup
+                            android:id="@+id/rg_register_select_vehicle_type"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_horizontal"
+                            android:orientation="horizontal"
+                            android:weightSum="2">
+
+                            <RadioButton
+                                android:id="@+id/rb_register_customer_vehicle_type_economy"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:background="@drawable/background_radio_button"
+                                android:button="@android:color/transparent"
+                                android:gravity="center_horizontal"
+                                android:padding="10dp"
+                                android:text="ECONOMY"
+                                android:textColor="#ffffff"
+                                android:textSize="15dp" />
+
+                            <RadioButton
+                                android:id="@+id/rb_register_customer_vehicle_type_luxury"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginLeft="8dp"
+                                android:layout_weight="1"
+                                android:background="@drawable/background_radio_button"
+                                android:button="@android:color/transparent"
+                                android:gravity="center_horizontal"
+                                android:padding="10dp"
+                                android:text="LUXURY"
+                                android:textColor="#ffffff"
+                                android:textSize="15dp" />
+                        </RadioGroup>
+                    </LinearLayout>
                 </LinearLayout>
 
                 <Button
