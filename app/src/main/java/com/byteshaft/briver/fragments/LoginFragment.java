@@ -3,6 +3,7 @@ package com.byteshaft.briver.fragments;
 import android.app.Fragment;
 import android.app.Service;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -39,7 +40,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
     String sLoginEmail;
     String sLoginPassword;
     SoftKeyboard softKeyboard;
-    View baseView;
+    View baseViewLoginFragment;
 
     Animation animMainLogoFading;
     Animation animMainLogoTransitionUp;
@@ -52,30 +53,36 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        baseView = inflater.inflate(R.layout.fragment_login, container, false);
+        baseViewLoginFragment = inflater.inflate(R.layout.fragment_login, container, false);
 
-        ivWelcomeLogoMain = (ImageView) baseView.findViewById(R.id.iv_welcome_logo_main);
-        llWelcomeLogin = (LinearLayout) baseView.findViewById(R.id.ll_welcome_login);
-        etLoginEmail = (EditText) baseView.findViewById(R.id.et_login_email);
-        etLoginPassword = (EditText) baseView.findViewById(R.id.et_login_password);
-        btnLogin = (Button) baseView.findViewById(R.id.btn_login_login);
+        ivWelcomeLogoMain = (ImageView) baseViewLoginFragment.findViewById(R.id.iv_welcome_logo_main);
+        llWelcomeLogin = (LinearLayout) baseViewLoginFragment.findViewById(R.id.ll_welcome_login);
+        etLoginEmail = (EditText) baseViewLoginFragment.findViewById(R.id.et_login_email);
+        etLoginPassword = (EditText) baseViewLoginFragment.findViewById(R.id.et_login_password);
+        btnLogin = (Button) baseViewLoginFragment.findViewById(R.id.btn_login_login);
         btnLogin.setOnClickListener(this);
-        btnRegister = (Button) baseView.findViewById(R.id.btn_login_register);
+        btnRegister = (Button) baseViewLoginFragment.findViewById(R.id.btn_login_register);
         btnRegister.setOnClickListener(this);
-        tvForgotPassword = (TextView) baseView.findViewById(R.id.tv_login_forgot_password);
+        tvForgotPassword = (TextView) baseViewLoginFragment.findViewById(R.id.tv_login_forgot_password);
         tvForgotPassword.setOnClickListener(this);
         llWelcomeLogin.setVisibility(View.GONE);
 
-        animMainLogoFading = AnimationUtils.loadAnimation(getActivity(), R.anim.anim_welcome_logo_fading);
+        animMainLogoFading = AnimationUtils.loadAnimation(getActivity(), R.anim.anim_welcome_logo_partial_fading);
         animMainLogoTransitionUp = AnimationUtils.loadAnimation(getActivity(), R.anim.anim_welcome_logo_transition_up);
         animMainLogoTransitionDown = AnimationUtils.loadAnimation(getActivity(), R.anim.anim_welcome_logo_transition_down);
         animMainLogoFadeIn = AnimationUtils.loadAnimation(getActivity(), R.anim.anim_welcome_logo_fade_in);
         animMainLogoFadeOut = AnimationUtils.loadAnimation(getActivity(), R.anim.anim_welcome_logo_fade_out);
 
-        RelativeLayout mainLayout = (RelativeLayout) baseView.findViewById(R.id.layout_fragment_login);
+        RelativeLayout mainLayout = (RelativeLayout) baseViewLoginFragment.findViewById(R.id.layout_fragment_login);
         InputMethodManager im = (InputMethodManager) getActivity().getApplicationContext().getSystemService(Service.INPUT_METHOD_SERVICE);
 
-        ivWelcomeLogoMain.startAnimation(animMainLogoTransitionUp);
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run()
+            {
+                ivWelcomeLogoMain.startAnimation(animMainLogoTransitionUp);
+            }
+        }, 350);
 
         softKeyboard = new SoftKeyboard(mainLayout, im);
         softKeyboard.setSoftKeyboardCallback(new SoftKeyboard.SoftKeyboardChanged() {
@@ -137,7 +144,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
             }
         });
 
-        return baseView;
+        return baseViewLoginFragment;
     }
 
     @Override

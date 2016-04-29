@@ -41,7 +41,7 @@ public class RegisterFragment extends Fragment implements View.OnClickListener {
     RadioButton rbRegisterDriver;
 
     String userRegisterFullName;
-    String userRegisterEmail;
+    static String userRegisterEmail;
     String userRegisterPassword;
     String userRegisterConfirmPassword;
     String userRegisterContactNumber;
@@ -54,38 +54,38 @@ public class RegisterFragment extends Fragment implements View.OnClickListener {
 
     Button btnCreateUser;
 
-    View baseView;
+    View baseViewRegisterFragment;
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
-        baseView = inflater.inflate(R.layout.fragment_register, container, false);
+        baseViewRegisterFragment = inflater.inflate(R.layout.fragment_register, container, false);
 
-        etRegisterUserFullName = (EditText) baseView.findViewById(R.id.et_register_full_name);
-        etRegisterUserEmail = (EditText) baseView.findViewById(R.id.et_register_email);
-        etRegisterUserPassword = (EditText) baseView.findViewById(R.id.et_register_password);
-        etRegisterUserConfirmPassword = (EditText) baseView.findViewById(R.id.et_register_confirm_password);
-        etRegisterUserContactNumber = (EditText) baseView.findViewById(R.id.et_register_phone_number);
-        etRegisterUserDrivingExperience = (EditText) baseView.findViewById(R.id.et_register_driving_experience);
-        etRegisterUserBasicBio = (EditText) baseView.findViewById(R.id.et_register_bio);
-        etRegisterUserVehicleMake = (EditText) baseView.findViewById(R.id.et_register_vehicle_make);
-        etRegisterUserVehicleModel = (EditText) baseView.findViewById(R.id.et_register_vehicle_model);
+        etRegisterUserFullName = (EditText) baseViewRegisterFragment.findViewById(R.id.et_register_full_name);
+        etRegisterUserEmail = (EditText) baseViewRegisterFragment.findViewById(R.id.et_register_email);
+        etRegisterUserPassword = (EditText) baseViewRegisterFragment.findViewById(R.id.et_register_password);
+        etRegisterUserConfirmPassword = (EditText) baseViewRegisterFragment.findViewById(R.id.et_register_confirm_password);
+        etRegisterUserContactNumber = (EditText) baseViewRegisterFragment.findViewById(R.id.et_register_phone_number);
+        etRegisterUserDrivingExperience = (EditText) baseViewRegisterFragment.findViewById(R.id.et_register_driving_experience);
+        etRegisterUserBasicBio = (EditText) baseViewRegisterFragment.findViewById(R.id.et_register_bio);
+        etRegisterUserVehicleMake = (EditText) baseViewRegisterFragment.findViewById(R.id.et_register_vehicle_make);
+        etRegisterUserVehicleModel = (EditText) baseViewRegisterFragment.findViewById(R.id.et_register_vehicle_model);
 
-        baseView.findViewById(R.id.ll_register).requestFocus();
+        baseViewRegisterFragment.findViewById(R.id.ll_register).requestFocus();
 
-        rgRegisterSelectUserType = (RadioGroup) baseView.findViewById(R.id.rg_register_select_user_type);
-        rgRegisterSelectVehicleType = (RadioGroup) baseView.findViewById(R.id.rg_register_select_vehicle_type);
+        rgRegisterSelectUserType = (RadioGroup) baseViewRegisterFragment.findViewById(R.id.rg_register_select_user_type);
+        rgRegisterSelectVehicleType = (RadioGroup) baseViewRegisterFragment.findViewById(R.id.rg_register_select_vehicle_type);
 
-        rbRegisterCustomer = (RadioButton) baseView.findViewById(R.id.rb_register_customer);
-        rbRegisterDriver = (RadioButton) baseView.findViewById(R.id.rb_register_driver);
+        rbRegisterCustomer = (RadioButton) baseViewRegisterFragment.findViewById(R.id.rb_register_customer);
+        rbRegisterDriver = (RadioButton) baseViewRegisterFragment.findViewById(R.id.rb_register_driver);
 
-        btnCreateUser = (Button) baseView.findViewById(R.id.btn_register_create_account);
+        btnCreateUser = (Button) baseViewRegisterFragment.findViewById(R.id.btn_register_create_account);
         btnCreateUser.setOnClickListener(this);
 
-        llRegisterElements = (LinearLayout) baseView.findViewById(R.id.layout_elements_register);
-        llRegisterElementsCustomer = (LinearLayout) baseView.findViewById(R.id.layout_elements_register_customer);
-        llRegisterElementsDriver = (LinearLayout) baseView.findViewById(R.id.layout_elements_register_driver);
+        llRegisterElements = (LinearLayout) baseViewRegisterFragment.findViewById(R.id.layout_elements_register);
+        llRegisterElementsCustomer = (LinearLayout) baseViewRegisterFragment.findViewById(R.id.layout_elements_register_customer);
+        llRegisterElementsDriver = (LinearLayout) baseViewRegisterFragment.findViewById(R.id.layout_elements_register_driver);
 
         rgRegisterSelectUserType.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
             @Override
@@ -114,7 +114,7 @@ public class RegisterFragment extends Fragment implements View.OnClickListener {
                 }
             }
         });
-        return baseView;
+        return baseViewRegisterFragment;
     }
 
     @Override
@@ -131,10 +131,12 @@ public class RegisterFragment extends Fragment implements View.OnClickListener {
                 userRegisterBasicBio = etRegisterUserBasicBio.getText().toString();
                 userRegisterVehicleMake = etRegisterUserVehicleMake.getText().toString();
                 userRegisterVehicleModel = etRegisterUserVehicleModel.getText().toString();
+//
+//                if (validateRegisterInfo()) {
+//                    loadFragment(new CodeConfirmationFragment());
+//                }
 
-                if (validateRegisterInfo()) {
-                    loadFragment(new CodeConfirmationFragment());
-                }
+                loadFragment(new CodeConfirmationFragment());
                 break;
         }
     }
