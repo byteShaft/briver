@@ -41,6 +41,14 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
     SoftKeyboard softKeyboard;
     View baseView;
 
+    Animation animMainLogoFading;
+    Animation animMainLogoTransitionUp;
+    Animation animMainLogoTransitionDown;
+    Animation animMainLogoFadeIn;
+    Animation animMainLogoFadeOut;
+
+    boolean isSoftKeyboardOpen;
+
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -50,30 +58,31 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
         llWelcomeLogin = (LinearLayout) baseView.findViewById(R.id.ll_welcome_login);
         etLoginEmail = (EditText) baseView.findViewById(R.id.et_login_email);
         etLoginPassword = (EditText) baseView.findViewById(R.id.et_login_password);
-        btnLogin = (Button) baseView.findViewById(R.id.btn_login);
+        btnLogin = (Button) baseView.findViewById(R.id.btn_login_login);
         btnLogin.setOnClickListener(this);
-        btnRegister = (Button) baseView.findViewById(R.id.btn_register);
+        btnRegister = (Button) baseView.findViewById(R.id.btn_login_register);
         btnRegister.setOnClickListener(this);
-        tvForgotPassword = (TextView) baseView.findViewById(R.id.tv_forgot_password);
+        tvForgotPassword = (TextView) baseView.findViewById(R.id.tv_login_forgot_password);
         tvForgotPassword.setOnClickListener(this);
         llWelcomeLogin.setVisibility(View.GONE);
 
-        final Animation animMainLogoFading = AnimationUtils.loadAnimation(getActivity(), R.anim.anim_welcome_logo_fading);
-        final Animation animMainLogoTransition = AnimationUtils.loadAnimation(getActivity(), R.anim.anim_welcome_logo_transition_up);
-        final Animation animLayoutLoginFadeIn = AnimationUtils.loadAnimation(getActivity(), R.anim.anim_login_layout);
-        final Animation animMainLogoFadeIn = AnimationUtils.loadAnimation(getActivity(), R.anim.anim_welcome_logo_fade_in);
-        final Animation animMainLogoFadeOut = AnimationUtils.loadAnimation(getActivity(), R.anim.anim_welcome_logo_fade_out);
-
-        ivWelcomeLogoMain.startAnimation(animMainLogoFading);
+        animMainLogoFading = AnimationUtils.loadAnimation(getActivity(), R.anim.anim_welcome_logo_fading);
+        animMainLogoTransitionUp = AnimationUtils.loadAnimation(getActivity(), R.anim.anim_welcome_logo_transition_up);
+        animMainLogoTransitionDown = AnimationUtils.loadAnimation(getActivity(), R.anim.anim_welcome_logo_transition_down);
+        animMainLogoFadeIn = AnimationUtils.loadAnimation(getActivity(), R.anim.anim_welcome_logo_fade_in);
+        animMainLogoFadeOut = AnimationUtils.loadAnimation(getActivity(), R.anim.anim_welcome_logo_fade_out);
 
         RelativeLayout mainLayout = (RelativeLayout) baseView.findViewById(R.id.layout_fragment_login);
         InputMethodManager im = (InputMethodManager) getActivity().getApplicationContext().getSystemService(Service.INPUT_METHOD_SERVICE);
+
+        ivWelcomeLogoMain.startAnimation(animMainLogoTransitionUp);
 
         softKeyboard = new SoftKeyboard(mainLayout, im);
         softKeyboard.setSoftKeyboardCallback(new SoftKeyboard.SoftKeyboardChanged() {
 
             @Override
             public void onSoftKeyboardHide() {
+                isSoftKeyboardOpen = false;
                 getActivity().runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -84,6 +93,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
 
             @Override
             public void onSoftKeyboardShow() {
+                isSoftKeyboardOpen = true;
                 getActivity().runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -93,7 +103,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
             }
         });
 
-        animMainLogoTransition.setAnimationListener(new Animation.AnimationListener() {
+        animMainLogoTransitionUp.setAnimationListener(new Animation.AnimationListener() {
             @Override
             public void onAnimationStart(Animation animation) {
 
@@ -102,7 +112,6 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
             @Override
             public void onAnimationEnd(Animation animation) {
                 llWelcomeLogin.setVisibility(View.VISIBLE);
-                llWelcomeLogin.startAnimation(animLayoutLoginFadeIn);
             }
 
             @Override
@@ -111,7 +120,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
             }
         });
 
-        animMainLogoFading.setAnimationListener(new Animation.AnimationListener() {
+        animMainLogoTransitionDown.setAnimationListener(new Animation.AnimationListener() {
             @Override
             public void onAnimationStart(Animation animation) {
 
@@ -119,7 +128,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
 
             @Override
             public void onAnimationEnd(Animation animation) {
-                ivWelcomeLogoMain.startAnimation(animMainLogoTransition);
+                    ivWelcomeLogoMain.startAnimation(animMainLogoFading);
             }
 
             @Override
@@ -134,24 +143,26 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
-            case R.id.btn_login:
-
+            case R.id.btn_login_login:
+                if (isSoftKeyboardOpen) {
+                    softKeyboard.closeSoftKeyboard();
+                }
                 sLoginEmail = etLoginEmail.getText().toString();
                 sLoginPassword = etLoginPassword.getText().toString();
                 if (validateLoginInput()) {
                     Log.i("Validate: ", "Yes");
+                    llWelcomeLogin.setVisibility(View.GONE);
+                    ivWelcomeLogoMain.startAnimation(animMainLogoTransitionDown);
                 } else {
                     Log.i("Validate: ", "No");
                 }
                 break;
-
-            case R.id.btn_register:
-                loadFragment(new RegisterFragment());
+            case R.id.btn_login_register:
+                loadRegisterFragment(new RegisterFragment());
                 break;
-            case R.id.tv_forgot_password:
-
+            case R.id.tv_login_forgot_password:
+                loadPasswordRecoverFragment(new ForgotPasswordFragment());
                 break;
-
             default:
 
                 break;
@@ -170,8 +181,8 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
             etLoginEmail.setError(null);
         }
 
-        if (sLoginPassword.trim().isEmpty() || sLoginPassword.length() < 4) {
-            etLoginPassword.setError("Minimum 4 Characters");
+        if (sLoginPassword.trim().isEmpty() || sLoginPassword.length() < 6) {
+            etLoginPassword.setError("Minimum 6 Characters");
             valid = false;
         } else {
             etLoginPassword.setError(null);
@@ -194,11 +205,19 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
         softKeyboard.unRegisterSoftKeyboardCallback();
     }
 
-    public void loadFragment(Fragment fragment) {
+    public void loadRegisterFragment(Fragment fragment) {
         android.app.FragmentTransaction tx = getFragmentManager().beginTransaction();
+        tx.setCustomAnimations(R.animator.anim_transition_fragment_slide_in_left, R.animator.anim_transition_fragment_slide_out_left,
+                R.animator.anim_transition_fragment_slide_out_right, R.animator.anim_transition_fragment_slide_in_right);
+        tx.replace(R.id.container, fragment).addToBackStack("Register");
+        tx.commit();
+    }
 
-        tx.setCustomAnimations(R.animator.anim_transition_fragment_left, R.animator.anim_transition_fragment_right);
-        tx.replace(R.id.container, fragment);
+    public void loadPasswordRecoverFragment(Fragment fragment) {
+        android.app.FragmentTransaction tx = getFragmentManager().beginTransaction();
+        tx.setCustomAnimations(R.animator.anim_transition_fragment_slide_out_right, R.animator.anim_transition_fragment_slide_in_right,
+                R.animator.anim_transition_fragment_slide_in_left, R.animator.anim_transition_fragment_slide_out_left);
+        tx.replace(R.id.container, fragment).addToBackStack("Recover");
         tx.commit();
     }
 }

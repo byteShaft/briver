@@ -18,7 +18,20 @@ public class WelcomeActivity extends Activity {
 
     public void loadFragment(Fragment fragment) {
         android.app.FragmentTransaction tx = getFragmentManager().beginTransaction();
-        tx.add(R.id.container, fragment);
+        tx.replace(R.id.container, fragment).addToBackStack("Login");
         tx.commit();
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (getFragmentManager().getBackStackEntryCount() > 0) {
+            if (getFragmentManager().getBackStackEntryCount() == 1) {
+                getFragmentManager().popBackStack("Login", 0);
+            } else {
+                getFragmentManager().popBackStack();
+            }
+        } else {
+            super.onBackPressed();
+        }
     }
 }
