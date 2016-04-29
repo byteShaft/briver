@@ -1,6 +1,5 @@
 package com.byteshaft.briver.utils;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -8,9 +7,7 @@ import android.content.DialogInterface;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.support.v4.app.FragmentActivity;
-import android.view.inputmethod.InputMethodManager;
-import android.widget.Toast;
+import android.os.CountDownTimer;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -18,6 +15,7 @@ import java.net.URL;
 
 public class Helpers {
 
+    public static int countDownTimerMillisUntilFinished;
     private static ProgressDialog progressDialog;
 
     public static void showProgressDialog(Context context, String message) {
@@ -36,12 +34,6 @@ public class Helpers {
         }
     }
 
-    public static void closeKeyboard(FragmentActivity activity) {
-        InputMethodManager inputMethodManager = (InputMethodManager) activity.getSystemService(Activity.INPUT_METHOD_SERVICE);
-        inputMethodManager.hideSoftInputFromWindow(activity.getCurrentFocus().getWindowToken(), 0);
-        activity.getCurrentFocus().clearFocus();
-    }
-
 //    public static String getAddress(Context context, LatLng latLng) {
 //        Geocoder geocoder;
 //        List<Address> addresses;
@@ -56,32 +48,6 @@ public class Helpers {
 //
 //        return address;
 //    }
-
-
-    public static void showNoNetworkDialog(final Context context) {
-        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(context);
-        alertDialogBuilder.setTitle("Network Not Available").setCancelable(false);
-        alertDialogBuilder
-                .setCancelable(false)
-                .setPositiveButton("Recheck", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        if (Helpers.isNetworkAvailable(context)) {
-                            dialog.dismiss();
-                        } else {
-                            Toast.makeText(context, "No network available", Toast.LENGTH_SHORT).show();
-                            showNoNetworkDialog(context);
-                        }
-                    }
-                })
-                .setNegativeButton("Exit", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        dialog.cancel();
-                        System.exit(0);
-                    }
-                });
-        AlertDialog alertDialog = alertDialogBuilder.create();
-        alertDialog.show();
-    }
 
     public static boolean isNetworkAvailable(Context context) {
         ConnectivityManager connMgr = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -124,6 +90,87 @@ public class Helpers {
 
     private static boolean isNetworkBasedGpsEnabled(LocationManager locationManager) {
         return locationManager.isProviderEnabled((LocationManager.NETWORK_PROVIDER));
+    }
+
+    public static void AlertDialogMessage(Context context, String title, String message, String neutralButtonText) {
+        new AlertDialog.Builder(context)
+                .setTitle(title)
+                .setMessage(message)
+                .setPositiveButton(neutralButtonText, null)
+                .show();
+    }
+
+    public static void AlertDialogMessageWithPositiveFunction(
+            Context context, String title, String message, String positiveButtonText,
+            final Runnable listenerOk) {
+        new AlertDialog.Builder(context)
+                .setTitle(title)
+                .setMessage(message)
+                .setPositiveButton(positiveButtonText, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        listenerOk.run();
+                    }
+                })
+                .show();
+    }
+
+
+    public static void AlertDialogWithPositiveFunctionNegativeButton(
+            Context context, String title, String message, String positiveButtonText,
+            String negativeButtonText, final Runnable listenerYes) {
+        new AlertDialog.Builder(context)
+                .setTitle(title)
+                .setMessage(message)
+                .setPositiveButton(positiveButtonText, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        listenerYes.run();
+                    }
+                })
+                .setNegativeButton(negativeButtonText, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                })
+                .show();
+    }
+
+    public static void AlertDialogWithPositiveNegativeFunctions(
+            Context context, String title, String message, String positiveButtonText,
+            String negativeButtonText, final Runnable listenerYes, final Runnable listenerNo) {
+        new AlertDialog.Builder(context)
+                .setTitle(title)
+                .setMessage(message)
+                .setPositiveButton(positiveButtonText, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        listenerYes.run();
+                    }
+                })
+                .setNegativeButton(negativeButtonText, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        listenerNo.run();
+                    }
+                })
+                .show();
+    }
+
+    public static String secondsToMinutesSeconds(int seconds) {
+        return String.format("%02d:%02d", seconds / 60, seconds % 60);
+    }
+
+    public static void setCountDownTimer(int totalTime, int tickTime, final Runnable functionTick, final Runnable functionFinished) {
+        CountDownTimer Count = new CountDownTimer(totalTime, tickTime) {
+            public void onTick(long millisUntilFinished) {
+                functionTick.run();
+                countDownTimerMillisUntilFinished = (int) millisUntilFinished;
+            }
+
+            public void onFinish() {
+                functionFinished.run();
+            }
+        };
+        Count.start();
     }
 
 }
