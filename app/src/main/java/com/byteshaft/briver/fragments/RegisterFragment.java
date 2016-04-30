@@ -15,6 +15,7 @@ import android.widget.RadioGroup;
 import android.widget.Toast;
 
 import com.byteshaft.briver.R;
+import com.byteshaft.briver.utils.Helpers;
 
 /**
  * Created by fi8er1 on 28/04/2016.
@@ -131,12 +132,11 @@ public class RegisterFragment extends Fragment implements View.OnClickListener {
                 userRegisterBasicBio = etRegisterUserBasicBio.getText().toString();
                 userRegisterVehicleMake = etRegisterUserVehicleMake.getText().toString();
                 userRegisterVehicleModel = etRegisterUserVehicleModel.getText().toString();
-//
-//                if (validateRegisterInfo()) {
-//                    loadFragment(new CodeConfirmationFragment());
-//                }
 
-                loadFragment(new CodeConfirmationFragment());
+                if (validateRegisterInfo()) {
+                    Helpers.closeSoftKeyboard(getActivity());
+                    loadFragment(new CodeConfirmationFragment());
+                }
                 break;
         }
     }
