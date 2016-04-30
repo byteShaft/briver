@@ -1,13 +1,20 @@
 package com.byteshaft.briver.utils;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.graphics.Color;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.CountDownTimer;
+import android.support.design.widget.Snackbar;
+import android.view.Gravity;
+import android.view.View;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.TextView;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -17,6 +24,8 @@ public class Helpers {
 
     public static int countDownTimerMillisUntilFinished;
     private static ProgressDialog progressDialog;
+    private static CountDownTimer countdownTimer;
+    private static boolean isCountDownTimerRunning;
 
     public static void showProgressDialog(Context context, String message) {
         progressDialog = new ProgressDialog(context);
@@ -33,6 +42,19 @@ public class Helpers {
             progressDialog.dismiss();
         }
     }
+
+    public static void closeSoftKeyboard(Activity activity) {
+        InputMethodManager inputMethodManager = (InputMethodManager) activity.getSystemService(Activity.INPUT_METHOD_SERVICE);
+        inputMethodManager.hideSoftInputFromWindow(activity.getCurrentFocus().getWindowToken(), 0);
+        activity.getCurrentFocus().clearFocus();
+    }
+
+    public static void openSoftKeyboard(Activity activity) {
+        InputMethodManager inputMethodManager = (InputMethodManager) activity.getSystemService(Activity.INPUT_METHOD_SERVICE);
+        inputMethodManager.showSoftInputFromInputMethod(activity.getCurrentFocus().getWindowToken(), 0);
+        activity.getCurrentFocus().clearFocus();
+    }
+
 
 //    public static String getAddress(Context context, LatLng latLng) {
 //        Geocoder geocoder;
@@ -96,6 +118,7 @@ public class Helpers {
         new AlertDialog.Builder(context)
                 .setTitle(title)
                 .setMessage(message)
+                .setCancelable(false)
                 .setPositiveButton(neutralButtonText, null)
                 .show();
     }
@@ -106,6 +129,7 @@ public class Helpers {
         new AlertDialog.Builder(context)
                 .setTitle(title)
                 .setMessage(message)
+                .setCancelable(false)
                 .setPositiveButton(positiveButtonText, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
                         listenerOk.run();
@@ -121,6 +145,7 @@ public class Helpers {
         new AlertDialog.Builder(context)
                 .setTitle(title)
                 .setMessage(message)
+                .setCancelable(false)
                 .setPositiveButton(positiveButtonText, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
                         listenerYes.run();
@@ -160,17 +185,33 @@ public class Helpers {
     }
 
     public static void setCountDownTimer(int totalTime, int tickTime, final Runnable functionTick, final Runnable functionFinished) {
-        CountDownTimer Count = new CountDownTimer(totalTime, tickTime) {
+        countdownTimer = new CountDownTimer(totalTime, tickTime) {
             public void onTick(long millisUntilFinished) {
+                isCountDownTimerRunning = true;
                 functionTick.run();
                 countDownTimerMillisUntilFinished = (int) millisUntilFinished;
             }
 
             public void onFinish() {
                 functionFinished.run();
+                isCountDownTimerRunning = false;
             }
         };
-        Count.start();
+        countdownTimer.start();
     }
 
+    public static void stopCountDownTimer() {
+        if (isCountDownTimerRunning) {
+            countdownTimer.cancel();
+        }
+    }
+
+    public static void showSnackBar(View view, String message, int time, String textColor) {
+        Snackbar snackbar = Snackbar.make(view, message, time);
+        View snackBarView = snackbar.getView();
+        TextView snackBarText = (TextView) snackBarView.findViewById(android.support.design.R.id.snackbar_text);
+        snackBarText.setGravity(Gravity.CENTER_HORIZONTAL);
+        snackBarText.setTextColor(Color.parseColor(textColor));
+        snackbar.show();
+    }
 }

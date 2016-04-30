@@ -5,7 +5,6 @@ import android.app.Service;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -151,23 +150,26 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.btn_login_login:
-                if (isSoftKeyboardOpen) {
-                    softKeyboard.closeSoftKeyboard();
-                }
                 sLoginEmail = etLoginEmail.getText().toString();
                 sLoginPassword = etLoginPassword.getText().toString();
                 if (validateLoginInput()) {
-                    Log.i("Validate: ", "Yes");
+                    if (isSoftKeyboardOpen) {
+                        softKeyboard.closeSoftKeyboard();
+                    }
                     llWelcomeLogin.setVisibility(View.GONE);
                     ivWelcomeLogoMain.startAnimation(animMainLogoTransitionDown);
-                } else {
-                    Log.i("Validate: ", "No");
                 }
                 break;
             case R.id.btn_login_register:
+                if (isSoftKeyboardOpen) {
+                    softKeyboard.closeSoftKeyboard();
+                }
                 loadRegisterFragment(new RegisterFragment());
                 break;
             case R.id.tv_login_forgot_password:
+                if (isSoftKeyboardOpen) {
+                    softKeyboard.closeSoftKeyboard();
+                }
                 loadPasswordRecoverFragment(new ForgotPasswordFragment());
                 break;
             default:

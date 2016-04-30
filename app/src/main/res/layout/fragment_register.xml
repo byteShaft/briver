@@ -325,7 +325,7 @@
                     android:background="@drawable/background_button"
                     android:padding="10dp"
                     android:text="Create Account"
-                    android:textColor="#ffffff"
+                    android:textColor="@drawable/button_text_color"
                     android:textSize="18dp" />
             </LinearLayout>
 
