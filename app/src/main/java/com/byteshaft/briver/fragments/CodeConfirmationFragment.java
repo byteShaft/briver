@@ -83,7 +83,6 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
         etCodeConfirmationEmail.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override
             public void onFocusChange(View v, boolean hasFocus) {
-                Log.i("EditText", "GotFocus");
                 if (!hasFocus) {
                     etCodeConfirmationEmail.setFocusable(false);
                     etCodeConfirmationEmail.setFocusableInTouchMode(false);
@@ -127,6 +126,7 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
                     } else {
                         confirmationEmailPreviousEntry = etCodeConfirmationEmail.getText().toString();
                         Helpers.stopCountDownTimer();
+                        etCodeConfirmationEmail.clearFocus();
                         layoutCodeConfirmation.requestFocus();
                         Helpers.setCountDownTimer(120000, 1000, functionSetTimerTextOnTick, functionOnTimerFinish);
                         tvCodeConfirmationStatusDisplayTimer.startAnimation(animTimerFading);

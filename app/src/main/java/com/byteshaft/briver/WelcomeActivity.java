@@ -10,7 +10,7 @@ import com.byteshaft.briver.utils.Helpers;
 
 public class WelcomeActivity extends Activity {
 
-    FragmentManager fragmentManager;
+    static FragmentManager fragmentManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -18,10 +18,11 @@ public class WelcomeActivity extends Activity {
         setContentView(R.layout.activity_welcome);
         getWindow().setBackgroundDrawableResource(R.mipmap.img_background_welcome);
         fragmentManager = getFragmentManager();
-        loadFragment(new LoginFragment());
+
+        loadLoginFragment(new LoginFragment());
     }
 
-    public void loadFragment(Fragment fragment) {
+    public void loadLoginFragment(Fragment fragment) {
         android.app.FragmentTransaction tx = fragmentManager.beginTransaction();
         tx.replace(R.id.container, fragment);
         tx.commit();
