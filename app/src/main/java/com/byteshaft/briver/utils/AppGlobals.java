@@ -16,6 +16,7 @@ public class AppGlobals extends Application {
     private static final String LOGGED_IN = "logged_in";
     private static final String USER_NAME = "user_name";
     private static final String PERSON_NAME = "person_name";
+    private static final String USER_PASSWORD = "user_password";
     private static final String USER_TYPE = "user_type";
     private static final String TOKEN = "token";
     private static final String GCM_TOKEN = "gcm_token";
@@ -28,7 +29,7 @@ public class AppGlobals extends Application {
         sPreferences = PreferenceManager.getDefaultSharedPreferences(this);
     }
 
-    public static Context getContext() {
+    public static Context getContext()   {
         return sContext;
     }
 
@@ -37,7 +38,7 @@ public class AppGlobals extends Application {
     }
 
     public static boolean isLoggedIn() {
-        return sPreferences.getBoolean(LOGGED_IN, true);
+        return sPreferences.getBoolean(LOGGED_IN, false);
     }
 
     public static void putUsername(String username) {
@@ -85,5 +86,13 @@ public class AppGlobals extends Application {
 
     public static void putUserType(int userType) {
         sPreferences.edit().putInt(USER_TYPE, userType).apply();
+    }
+
+    public static void putUserPassword(String password) {
+        sPreferences.edit().putString(USER_PASSWORD, password).apply();
+    }
+
+    public static String getUserPassword() {
+        return sPreferences.getString(USER_PASSWORD, null);
     }
 }

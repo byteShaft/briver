@@ -1,7 +1,9 @@
 package com.byteshaft.briver.fragments;
 
+import android.app.ActivityOptions;
 import android.app.Fragment;
 import android.app.Service;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
@@ -19,6 +21,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.byteshaft.briver.MainActivity;
 import com.byteshaft.briver.R;
 import com.byteshaft.briver.utils.AppGlobals;
 import com.byteshaft.briver.utils.SoftKeyboard;
@@ -48,6 +51,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
     Animation animMainLogoFadeOut;
 
     boolean isSoftKeyboardOpen;
+    boolean launchingMainActivity;
 
     @Nullable
     @Override
@@ -75,13 +79,16 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
         RelativeLayout mainLayout = (RelativeLayout) baseViewLoginFragment.findViewById(R.id.layout_fragment_login);
         InputMethodManager im = (InputMethodManager) getActivity().getApplicationContext().getSystemService(Service.INPUT_METHOD_SERVICE);
 
-        new Handler().postDelayed(new Runnable() {
-            @Override
-            public void run()
-            {
-                ivWelcomeLogoMain.startAnimation(animMainLogoTransitionUp);
-            }
-        }, 350);
+        if (AppGlobals.isLoggedIn()) {
+            ivWelcomeLogoMain.startAnimation(animMainLogoFading);
+        } else {
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    ivWelcomeLogoMain.startAnimation(animMainLogoTransitionUp);
+                }
+            }, 350);
+        }
 
         softKeyboard = new SoftKeyboard(mainLayout, im);
         softKeyboard.setSoftKeyboardCallback(new SoftKeyboard.SoftKeyboardChanged() {
@@ -89,23 +96,66 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
             @Override
             public void onSoftKeyboardHide() {
                 isSoftKeyboardOpen = false;
-                getActivity().runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        ivWelcomeLogoMain.startAnimation(animMainLogoFadeIn);
-                    }
-                });
+                if (!launchingMainActivity) {
+                    getActivity().runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            ivWelcomeLogoMain.startAnimation(animMainLogoFadeIn);
+                        }
+                    });
+                }
             }
 
             @Override
             public void onSoftKeyboardShow() {
                 isSoftKeyboardOpen = true;
-                getActivity().runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        ivWelcomeLogoMain.startAnimation(animMainLogoFadeOut);
-                    }
-                });
+                if (!launchingMainActivity) {
+                    getActivity().runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            ivWelcomeLogoMain.startAnimation(animMainLogoFadeOut);
+                        }
+                    });
+                }
+            }
+        });
+
+        animMainLogoFading.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+
+            }
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+
+                Intent intent = new Intent(getActivity(), MainActivity.class);
+                ActivityOptions options = ActivityOptions.makeScaleUpAnimation(baseViewLoginFragment, 0,
+                        0, baseViewLoginFragment.getWidth(), baseViewLoginFragment.getHeight());
+                startActivity(intent, options.toBundle());
+                AppGlobals.setLoggedIn(true);
+                getActivity().finish();
+
+//                Intent intent = new Intent(getActivity(), MainActivity.class);
+//                Bundle bundle = ActivityOptions.makeCustomAnimation(getActivity(),
+//                        R.animator.anim_transition_fragment_slide_right_exit, R.animator.anim_transition_fragment_slide_left_enter).toBundle();
+//                ActivityCompat.startActivity(getActivity(), intent, bundle);
+
+//                Intent intent = new Intent(getActivity(), MainActivity.class);
+//                Bundle bundle = ActivityOptions.makeCustomAnimation(getActivity(), R.animator.anim_transition_fragment_slide_right_enter, R.animator.anim_transition_fragment_slide_left_exit).toBundle();
+//                getActivity().startActivity(intent, bundle);
+
+
+//                startActivity(new Intent(getActivity(), MainActivity.class));
+//                getActivity().overridePendingTransition(R.animator.anim_transition_fragment_slide_right_enter,
+//                        R.animator.anim_hold);
+//                getActivity().finish();
+//                getActivity().overridePendingTransition(R.animator.anim_hold, R.animator.anim_transition_fragment_slide_left_exit);
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {
+
             }
         });
 
@@ -134,7 +184,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
 
             @Override
             public void onAnimationEnd(Animation animation) {
-                    ivWelcomeLogoMain.startAnimation(animMainLogoFading);
+                ivWelcomeLogoMain.startAnimation(animMainLogoFading);
             }
 
             @Override
@@ -153,6 +203,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
                 sLoginEmail = etLoginEmail.getText().toString();
                 sLoginPassword = etLoginPassword.getText().toString();
                 if (validateLoginInput()) {
+                    launchingMainActivity = true;
                     if (isSoftKeyboardOpen) {
                         softKeyboard.closeSoftKeyboard();
                     }
@@ -216,16 +267,16 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
 
     public void loadRegisterFragment(Fragment fragment) {
         android.app.FragmentTransaction tx = getFragmentManager().beginTransaction();
-        tx.setCustomAnimations(R.animator.anim_transition_fragment_slide_in_left, R.animator.anim_transition_fragment_slide_out_left,
-                R.animator.anim_transition_fragment_slide_out_right, R.animator.anim_transition_fragment_slide_in_right);
+        tx.setCustomAnimations(R.animator.anim_transition_fragment_slide_right_enter, R.animator.anim_transition_fragment_slide_left_exit,
+                R.animator.anim_transition_fragment_slide_left_enter, R.animator.anim_transition_fragment_slide_right_exit);
         tx.replace(R.id.container, fragment).addToBackStack("Register");
         tx.commit();
     }
 
     public void loadPasswordRecoverFragment(Fragment fragment) {
         android.app.FragmentTransaction tx = getFragmentManager().beginTransaction();
-        tx.setCustomAnimations(R.animator.anim_transition_fragment_slide_out_right, R.animator.anim_transition_fragment_slide_in_right,
-                R.animator.anim_transition_fragment_slide_in_left, R.animator.anim_transition_fragment_slide_out_left);
+        tx.setCustomAnimations(R.animator.anim_transition_fragment_slide_left_enter, R.animator.anim_transition_fragment_slide_right_exit,
+                R.animator.anim_transition_fragment_slide_right_enter, R.animator.anim_transition_fragment_slide_left_exit);
         tx.replace(R.id.container, fragment).addToBackStack("Recover");
         tx.commit();
     }

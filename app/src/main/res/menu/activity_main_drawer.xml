@@ -3,33 +3,37 @@
 
     <group android:checkableBehavior="single">
         <item
-            android:id="@+id/nav_camera"
-            android:icon="@drawable/ic_menu_camera"
-            android:title="Import" />
+            android:id="@+id/nav_hire"
+            android:icon="@mipmap/ic_nav_hire"
+            android:title="Hire" />
         <item
-            android:id="@+id/nav_gallery"
-            android:icon="@drawable/ic_menu_gallery"
-            android:title="Gallery" />
-        <item
-            android:id="@+id/nav_slideshow"
-            android:icon="@drawable/ic_menu_slideshow"
-            android:title="Slideshow" />
-        <item
-            android:id="@+id/nav_manage"
-            android:icon="@drawable/ic_menu_manage"
-            android:title="Tools" />
+            android:id="@+id/nav_hire_timeline"
+            android:icon="@mipmap/ic_nav_timeline"
+            android:title="Timeline" />
     </group>
+
+    <item android:title="Settings">
+        <menu>
+            <item android:id="@+id/nav_profile"
+                android:icon="@mipmap/ic_nav_profile"
+                android:title="My Profile"/>
+            <item android:id="@+id/nav_change_password"
+                android:icon="@mipmap/ic_nav_change_password"
+                android:title="Change Password"/>
+            <item android:id="@+id/nav_logout"
+                android:icon="@mipmap/ic_nav_logout"
+                android:title="Logout"/>
+            <item android:id="@+id/nav_preference"
+                android:icon="@mipmap/ic_nav_preference"
+                android:title="Preference"/>
+        </menu>
+    </item>
 
     <item android:title="Communicate">
         <menu>
-            <item
-                android:id="@+id/nav_share"
-                android:icon="@drawable/ic_menu_share"
-                android:title="Share" />
-            <item
-                android:id="@+id/nav_send"
-                android:icon="@drawable/ic_menu_send"
-                android:title="Send" />
+            <item android:id="@+id/nav_contact"
+                android:icon="@mipmap/ic_nav_contact_us"
+                android:title="Contact"/>
         </menu>
     </item>
 

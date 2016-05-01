@@ -143,8 +143,8 @@ public class RegisterFragment extends Fragment implements View.OnClickListener {
 
     public void loadFragment(Fragment fragment) {
         android.app.FragmentTransaction tx = getFragmentManager().beginTransaction();
-        tx.setCustomAnimations(R.animator.anim_transition_fragment_slide_in_left, R.animator.anim_transition_fragment_slide_out_left,
-                R.animator.anim_transition_fragment_slide_out_right, R.animator.anim_transition_fragment_slide_in_right);
+        tx.setCustomAnimations(R.animator.anim_transition_fragment_slide_right_enter, R.animator.anim_transition_fragment_slide_left_exit,
+                R.animator.anim_transition_fragment_slide_left_enter, R.animator.anim_transition_fragment_slide_right_exit);
         tx.replace(R.id.container, fragment).addToBackStack("Confirmation");
         tx.commit();
     }
