@@ -5,17 +5,19 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.support.design.internal.NavigationMenuView;
 import android.support.design.widget.NavigationView;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.view.Menu;
 import android.view.MenuItem;
 
 import com.byteshaft.briver.fragments.ChangePasswordFragment;
 import com.byteshaft.briver.fragments.ContactUsFragment;
 import com.byteshaft.briver.fragments.HireFragment;
+import com.byteshaft.briver.fragments.HomeFragment;
 import com.byteshaft.briver.fragments.PreferencesFragment;
 import com.byteshaft.briver.fragments.ProfileFragment;
 import com.byteshaft.briver.fragments.TimelineFragment;
@@ -25,7 +27,7 @@ import com.byteshaft.briver.utils.Helpers;
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
-    android.app.Fragment fragment;
+    Fragment fragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,28 +57,6 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
-    }
-
     @SuppressWarnings("StatementWithEmptyBody")
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
@@ -87,7 +67,9 @@ public class MainActivity extends AppCompatActivity
         Class fragmentClass = null;
         int id = item.getItemId();
 
-        if (id == R.id.nav_hire) {
+        if (id == R.id.nav_home) {
+            fragmentClass = HomeFragment.class;
+        } else if (id == R.id.nav_hire) {
             fragmentClass = HireFragment.class;
         } else if (id == R.id.nav_hire_timeline) {
             fragmentClass = TimelineFragment.class;
@@ -108,7 +90,7 @@ public class MainActivity extends AppCompatActivity
 
         if (!logoutCheck) {
             try {
-                fragment = (android.app.Fragment) fragmentClass.newInstance();
+                fragment = (Fragment) fragmentClass.newInstance();
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -117,8 +99,8 @@ public class MainActivity extends AppCompatActivity
             new Handler().postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    android.app.FragmentManager fragmentManager = getFragmentManager();
-                    fragmentManager.beginTransaction().replace(R.id.container_main, fragment).commit();
+                    FragmentManager fragmentManager = getSupportFragmentManager();
+                     fragmentManager.beginTransaction().replace(R.id.container_main, fragment).commit();
                 }
             }, 300);
         } else {

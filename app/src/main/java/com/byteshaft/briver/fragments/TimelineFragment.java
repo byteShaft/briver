@@ -1,6 +1,5 @@
 package com.byteshaft.briver.fragments;
 
-import android.app.Fragment;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.view.LayoutInflater;
@@ -12,7 +11,7 @@ import com.byteshaft.briver.R;
 /**
  * Created by fi8er1 on 01/05/2016.
  */
-public class TimelineFragment extends Fragment implements View.OnClickListener {
+public class TimelineFragment extends android.support.v4.app.Fragment implements View.OnClickListener {
 
     View baseViewTimelineFragment;
 

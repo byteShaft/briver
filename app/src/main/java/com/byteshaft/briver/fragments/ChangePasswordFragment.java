@@ -1,6 +1,5 @@
 package com.byteshaft.briver.fragments;
 
-import android.app.Fragment;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.view.LayoutInflater;
@@ -15,7 +14,7 @@ import com.byteshaft.briver.utils.AppGlobals;
 /**
  * Created by fi8er1 on 01/05/2016.
  */
-public class ChangePasswordFragment extends Fragment implements View.OnClickListener {
+public class ChangePasswordFragment extends android.support.v4.app.Fragment implements View.OnClickListener {
 
     View baseViewChangePasswordFragment;
     String passwordOld;
