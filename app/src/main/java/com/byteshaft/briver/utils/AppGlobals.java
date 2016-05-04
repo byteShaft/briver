@@ -18,6 +18,7 @@ public class AppGlobals extends Application {
     private static final String PERSON_NAME = "person_name";
     private static final String USER_PASSWORD = "user_password";
     private static final String USER_TYPE = "user_type";
+    private static final String LOCATION_INTERVAL = "location_interval";
     private static final String TOKEN = "token";
     private static final String GCM_TOKEN = "gcm_token";
     private static final String USER_DATA = "user_data";
@@ -87,6 +88,16 @@ public class AppGlobals extends Application {
     public static void putUserType(int userType) {
         sPreferences.edit().putInt(USER_TYPE, userType).apply();
     }
+
+
+    public static int getDriverLocationReportingIntervalTime() {
+        return sPreferences.getInt(LOCATION_INTERVAL, 2);
+    }
+
+    public static void putDriverLocationReportingIntervalTime(int interval) {
+        sPreferences.edit().putInt(LOCATION_INTERVAL, interval).apply();
+    }
+
 
     public static void putUserPassword(String password) {
         sPreferences.edit().putString(USER_PASSWORD, password).apply();

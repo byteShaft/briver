@@ -40,6 +40,10 @@
             </intent-filter>
         </receiver>
 
+        <service
+            android:name="com.byteshaft.briver.utils.DriverService"
+            android:exported="false">
+        </service>
 
         <meta-data
             android:name="com.google.android.geo.API_KEY"

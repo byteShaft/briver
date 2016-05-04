@@ -1,7 +1,9 @@
 package com.byteshaft.briver.fragments;
 
 import android.app.Fragment;
+import android.content.Intent;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.support.annotation.Nullable;
 import android.telephony.PhoneNumberUtils;
 import android.view.LayoutInflater;
@@ -15,6 +17,7 @@ import android.widget.RadioGroup;
 import android.widget.Toast;
 
 import com.byteshaft.briver.R;
+import com.byteshaft.briver.utils.DriverService;
 import com.byteshaft.briver.utils.Helpers;
 
 /**
@@ -101,6 +104,13 @@ public class RegisterFragment extends Fragment implements View.OnClickListener {
                     llRegisterElements.setVisibility(View.VISIBLE);
                     llRegisterElementsDriver.setVisibility(View.VISIBLE);
                     userRegisterUserType = 1;
+                    if (Helpers.isAnyLocationServiceAvailable()) {
+                        getActivity().startService(new Intent(getActivity(), DriverService.class));
+                    } else {
+                        Helpers.AlertDialogWithPositiveNegativeNeutralFunctions(getActivity(), "Location Service disabled",
+                                "Enable device GPS to continue driver registration", "Settings", "Exit", "Re-Check",
+                                openLocationServiceSettings, closeRegistration, recheckLocationServiceStatus);
+                    }
                 }
             }
         });
@@ -219,5 +229,34 @@ public class RegisterFragment extends Fragment implements View.OnClickListener {
         }
         return valid;
     }
+
+
+
+    final Runnable closeRegistration = new Runnable() {
+        public void run() {
+            getActivity().onBackPressed();
+        }
+    };
+
+    final Runnable openLocationServiceSettings = new Runnable() {
+        public void run() {
+            getActivity().onBackPressed();
+            Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+            startActivity(intent);
+        }
+    };
+
+
+    final Runnable recheckLocationServiceStatus = new Runnable() {
+        public void run() {
+            if (Helpers.isAnyLocationServiceAvailable()) {
+                getActivity().startService(new Intent(getActivity(), DriverService.class));
+            } else {
+                Helpers.AlertDialogWithPositiveNegativeNeutralFunctions(getActivity(), "Location Service disabled",
+                        "Enable device GPS to continue driver registration", "Settings", "Exit", "Re-Check",
+                        openLocationServiceSettings, closeRegistration, recheckLocationServiceStatus);
+            }
+        }
+    };
 
 }

@@ -6,6 +6,8 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.graphics.Color;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -16,9 +18,13 @@ import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.TextView;
 
+import com.google.android.gms.maps.model.LatLng;
+
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.List;
+import java.util.Locale;
 
 public class Helpers {
 
@@ -56,20 +62,20 @@ public class Helpers {
     }
 
 
-//    public static String getAddress(Context context, LatLng latLng) {
-//        Geocoder geocoder;
-//        List<Address> addresses;
-//        String address = null;
-//        geocoder = new Geocoder(context, Locale.getDefault());
-//        try {
-//            addresses = geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1);
-//            address = addresses.get(0).getAddressLine(0);
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//
-//        return address;
-//    }
+    public static String getAddress(Context context, LatLng latLng) {
+        Geocoder geocoder;
+        List<Address> addresses;
+        String address = null;
+        geocoder = new Geocoder(context, Locale.getDefault());
+        try {
+            addresses = geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1);
+            address = addresses.get(0).getAddressLine(0);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return address;
+    }
 
     public static boolean isNetworkAvailable(Context context) {
         ConnectivityManager connMgr = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -166,6 +172,7 @@ public class Helpers {
         new AlertDialog.Builder(context)
                 .setTitle(title)
                 .setMessage(message)
+                .setCancelable(false)
                 .setPositiveButton(positiveButtonText, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
                         listenerYes.run();
@@ -175,6 +182,34 @@ public class Helpers {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         listenerNo.run();
+                    }
+                })
+                .show();
+    }
+
+    public static void AlertDialogWithPositiveNegativeNeutralFunctions(
+            Context context, String title, String message, String positiveButtonText,
+            String negativeButtonText, String neutralButtonText, final Runnable listenerYes,
+            final Runnable listenerNo, final Runnable listenerNeutral) {
+        new AlertDialog.Builder(context)
+                .setTitle(title)
+                .setMessage(message)
+                .setCancelable(false)
+                .setPositiveButton(positiveButtonText, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        listenerYes.run();
+                    }
+                })
+                .setNegativeButton(negativeButtonText, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        listenerNo.run();
+                    }
+                })
+                .setNeutralButton(neutralButtonText, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        listenerNeutral.run();
                     }
                 })
                 .show();
@@ -214,4 +249,6 @@ public class Helpers {
         snackBarText.setTextColor(Color.parseColor(textColor));
         snackbar.show();
     }
+
+
 }

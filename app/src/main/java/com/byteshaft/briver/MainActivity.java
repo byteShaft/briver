@@ -28,6 +28,7 @@ public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
     Fragment fragment;
+    public static boolean isMainActivityRunning;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -102,7 +103,7 @@ public class MainActivity extends AppCompatActivity
                     FragmentManager fragmentManager = getSupportFragmentManager();
                      fragmentManager.beginTransaction().replace(R.id.container_main, fragment).commit();
                 }
-            }, 300);
+            }, 350);
         } else {
             new Handler().postDelayed(new Runnable() {
                 @Override
@@ -110,7 +111,7 @@ public class MainActivity extends AppCompatActivity
                     Helpers.AlertDialogWithPositiveFunctionNegativeButton(MainActivity.this,
                             "Logout", "Are you sure?", "Yes", "No", logout);
                 }
-            }, 300);
+            }, 350);
         }
         return true;
     }
@@ -131,5 +132,18 @@ public class MainActivity extends AppCompatActivity
                 navigationMenuView.setVerticalScrollBarEnabled(false);
             }
         }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        isMainActivityRunning = true;
+//        MainActivity.this.startService(new Intent(MainActivity.this, DriverService.class));
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        isMainActivityRunning = false;
     }
 }
