@@ -11,7 +11,6 @@ import android.support.design.widget.Snackbar;
 import android.support.v4.app.FragmentManager;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -214,10 +213,6 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
                             }
                         }
                     }, 2000);
-                } else if (inputMapSearch.trim().length() < 1) {
-                    if (currentLatLngAuto != null) {
-                        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentLatLngAuto, 15.0f));
-                    }
                 }
             }
 

@@ -28,6 +28,7 @@ public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
     Fragment fragment;
+    public static boolean isMainActivityRunning;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -131,5 +132,18 @@ public class MainActivity extends AppCompatActivity
                 navigationMenuView.setVerticalScrollBarEnabled(false);
             }
         }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        isMainActivityRunning = true;
+//        MainActivity.this.startService(new Intent(MainActivity.this, DriverService.class));
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        isMainActivityRunning = false;
     }
 }

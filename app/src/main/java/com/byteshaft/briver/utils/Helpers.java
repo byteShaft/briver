@@ -172,6 +172,7 @@ public class Helpers {
         new AlertDialog.Builder(context)
                 .setTitle(title)
                 .setMessage(message)
+                .setCancelable(false)
                 .setPositiveButton(positiveButtonText, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
                         listenerYes.run();
@@ -181,6 +182,34 @@ public class Helpers {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         listenerNo.run();
+                    }
+                })
+                .show();
+    }
+
+    public static void AlertDialogWithPositiveNegativeNeutralFunctions(
+            Context context, String title, String message, String positiveButtonText,
+            String negativeButtonText, String neutralButtonText, final Runnable listenerYes,
+            final Runnable listenerNo, final Runnable listenerNeutral) {
+        new AlertDialog.Builder(context)
+                .setTitle(title)
+                .setMessage(message)
+                .setCancelable(false)
+                .setPositiveButton(positiveButtonText, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        listenerYes.run();
+                    }
+                })
+                .setNegativeButton(negativeButtonText, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        listenerNo.run();
+                    }
+                })
+                .setNeutralButton(neutralButtonText, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        listenerNeutral.run();
                     }
                 })
                 .show();
@@ -220,4 +249,6 @@ public class Helpers {
         snackBarText.setTextColor(Color.parseColor(textColor));
         snackbar.show();
     }
+
+
 }
