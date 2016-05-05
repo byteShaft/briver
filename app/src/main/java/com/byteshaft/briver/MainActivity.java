@@ -27,23 +27,36 @@ import com.byteshaft.briver.utils.Helpers;
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
-    Fragment fragment;
     public static boolean isMainActivityRunning;
+    static FragmentManager fragmentManager;
+    final Runnable logout = new Runnable() {
+        public void run() {
+            AppGlobals.setLoggedIn(false);
+            startActivity(new Intent(MainActivity.this, WelcomeActivity.class));
+            finish();
+        }
+    };
+    Fragment fragment;
+    String fragmentName = "";
+    NavigationView navigationView;
+    DrawerLayout drawer;
+    Toolbar toolbar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        fragmentManager = getSupportFragmentManager();
 
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.setDrawerListener(toggle);
         toggle.syncState();
 
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
         disableNavigationViewScrollbars(navigationView);
     }
@@ -54,7 +67,13 @@ public class MainActivity extends AppCompatActivity
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
         } else {
-            super.onBackPressed();
+            if (fragmentManager.getBackStackEntryCount() > 0) {
+                fragmentManager.popBackStack(0, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+                navigationView.getMenu().getItem(0).setChecked(true);
+                toolbar.setTitle("Home");
+            } else {
+                super.onBackPressed();
+            }
         }
     }
 
@@ -70,20 +89,27 @@ public class MainActivity extends AppCompatActivity
 
         if (id == R.id.nav_home) {
             fragmentClass = HomeFragment.class;
+            fragmentName = "HomeFragment";
         } else if (id == R.id.nav_hire) {
             fragmentClass = HireFragment.class;
+            fragmentName = "HireFragment";
         } else if (id == R.id.nav_hire_timeline) {
             fragmentClass = TimelineFragment.class;
+            fragmentName = "TimelineFragment";
         } else if (id == R.id.nav_profile) {
             fragmentClass = ProfileFragment.class;
+            fragmentName = "ProfileFragment";
         } else if (id == R.id.nav_change_password) {
             fragmentClass = ChangePasswordFragment.class;
+            fragmentName = "ChangePasswordFragment";
         } else if (id == R.id.nav_logout) {
             logoutCheck = true;
         } else if (id == R.id.nav_preference) {
             fragmentClass = PreferencesFragment.class;
+            fragmentName = "PreferencesFragment";
         } else if (id == R.id.nav_contact) {
             fragmentClass = ContactUsFragment.class;
+            fragmentName = "ContactUSFragment";
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -101,7 +127,7 @@ public class MainActivity extends AppCompatActivity
                 @Override
                 public void run() {
                     FragmentManager fragmentManager = getSupportFragmentManager();
-                     fragmentManager.beginTransaction().replace(R.id.container_main, fragment).commit();
+                    fragmentManager.beginTransaction().replace(R.id.container_main, fragment).addToBackStack(fragmentName).commit();
                 }
             }, 350);
         } else {
@@ -115,15 +141,6 @@ public class MainActivity extends AppCompatActivity
         }
         return true;
     }
-
-
-    final Runnable logout = new Runnable() {
-        public void run() {
-            AppGlobals.setLoggedIn(false);
-            startActivity(new Intent(MainActivity.this, WelcomeActivity.class));
-            finish();
-        }
-    };
 
     private void disableNavigationViewScrollbars(NavigationView navigationView) {
         if (navigationView != null) {
@@ -146,4 +163,6 @@ public class MainActivity extends AppCompatActivity
         super.onPause();
         isMainActivityRunning = false;
     }
+
+
 }

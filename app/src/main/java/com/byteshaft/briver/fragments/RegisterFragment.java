@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.support.annotation.Nullable;
+import android.support.design.widget.Snackbar;
 import android.telephony.PhoneNumberUtils;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -19,6 +20,7 @@ import android.widget.Toast;
 import com.byteshaft.briver.R;
 import com.byteshaft.briver.utils.DriverService;
 import com.byteshaft.briver.utils.Helpers;
+import com.google.android.gms.maps.model.LatLng;
 
 /**
  * Created by fi8er1 on 28/04/2016.
@@ -55,10 +57,13 @@ public class RegisterFragment extends Fragment implements View.OnClickListener {
     String userRegisterVehicleModel;
     int userRegisterUserType = -1;
     int userRegisterVehicleType = -1;
+    public static int driverLocationCounterForRegistration = 0;
+    public static LatLng latLngDriverLocationForRegistration;
+    public static boolean isRegistrationFragmentOpen;
 
     Button btnCreateUser;
 
-    View baseViewRegisterFragment;
+    public static View baseViewRegisterFragment;
 
     @Nullable
     @Override
@@ -106,6 +111,7 @@ public class RegisterFragment extends Fragment implements View.OnClickListener {
                     userRegisterUserType = 1;
                     if (Helpers.isAnyLocationServiceAvailable()) {
                         getActivity().startService(new Intent(getActivity(), DriverService.class));
+                        Helpers.showSnackBar(baseViewRegisterFragment, "Acquiring location for registration", Snackbar.LENGTH_SHORT, "#ffffff");
                     } else {
                         Helpers.AlertDialogWithPositiveNegativeNeutralFunctions(getActivity(), "Location Service disabled",
                                 "Enable device GPS to continue driver registration", "Settings", "Exit", "Re-Check",
@@ -240,7 +246,6 @@ public class RegisterFragment extends Fragment implements View.OnClickListener {
 
     final Runnable openLocationServiceSettings = new Runnable() {
         public void run() {
-            getActivity().onBackPressed();
             Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
             startActivity(intent);
         }
@@ -259,4 +264,31 @@ public class RegisterFragment extends Fragment implements View.OnClickListener {
         }
     };
 
+
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        isRegistrationFragmentOpen = false;
+        if (DriverService.driverLocationReportingServiceIsRunning) {
+            getActivity().stopService(new Intent(getActivity(), DriverService.class));
+        }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        isRegistrationFragmentOpen = true;
+        if (rgRegisterSelectUserType.getCheckedRadioButtonId() == R.id.rb_register_driver) {
+            if (Helpers.isAnyLocationServiceAvailable()) {
+                getActivity().startService(new Intent(getActivity(), DriverService.class));
+                Helpers.showSnackBar(baseViewRegisterFragment, "Acquiring location for registration", Snackbar.LENGTH_SHORT, "#ffffff");
+            } else {
+                Helpers.AlertDialogWithPositiveNegativeNeutralFunctions(getActivity(), "Location Service disabled",
+                        "Enable device GPS to continue driver registration", "Settings", "Exit", "Re-Check",
+                        openLocationServiceSettings, closeRegistration, recheckLocationServiceStatus);
+            }
+        }
+
+    }
 }
