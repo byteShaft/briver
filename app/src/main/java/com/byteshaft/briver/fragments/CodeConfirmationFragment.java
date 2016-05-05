@@ -5,7 +5,6 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -73,8 +72,6 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
 
         tvCodeConfirmationStatusDisplay.setText("Code Sent - Check Mail");
         tvCodeConfirmationStatusDisplay.setTextColor(Color.parseColor("#A4C639"));
-
-        Log.i("BackStack", "Number: " + getFragmentManager().getBackStackEntryCount());
 
         Helpers.setCountDownTimer(120000, 1000, functionSetTimerTextOnTick, functionOnTimerFinish);
         tvCodeConfirmationStatusDisplayTimer.startAnimation(animTimerFading);

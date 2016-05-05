@@ -9,10 +9,13 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.byteshaft.briver.fragments.PreferencesFragment;
+import com.byteshaft.briver.fragments.RegisterFragment;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationListener;
@@ -53,7 +56,7 @@ public class DriverService extends Service implements LocationListener,
     public int onStartCommand(Intent intent, int flags, int startId) {
         driverLocationReportingServiceIsRunning = true;
         connectGoogleApiClient();
-        return START_STICKY;
+        return START_NOT_STICKY;
     }
 
     @Override
@@ -89,13 +92,24 @@ public class DriverService extends Service implements LocationListener,
     @Override
     public void onLocationChanged(Location location) {
         onLocationChangedCounter++;
-        Log.i("onLocationChange", "Called");
-        if (onLocationChangedCounter == 1) {
-//            new DriverLocationPostingTask().execute();
-            Toast.makeText(getApplicationContext(), "Location Acquired. Reporting Started.", Toast.LENGTH_LONG).show();
+        Log.i("onLocationChange", "Called: " + onLocationChangedCounter);
+        if (RegisterFragment.isRegistrationFragmentOpen && onLocationChangedCounter == 3) {
+            RegisterFragment.latLngDriverLocationForRegistration = driverCurrentLocation;
+            Log.i("onLocationChange", "reg");
+            Helpers.showSnackBar(RegisterFragment.baseViewRegisterFragment, "Location Acquired", Snackbar.LENGTH_SHORT, "#A4C639");
+        } else if (PreferencesFragment.isPreferencesFragmentOpen && onLocationChangedCounter == 3) {
+            Log.i("onLocationChange", "pref");
+            PreferencesFragment.latLngDriverLocationFixed = driverCurrentLocation;
+            PreferencesFragment.setFixedLocationDisplay();
         }
+
+        if (onLocationChangedCounter > 3) {
+            onDestroy();
+        }
+
+
         driverCurrentLocation = new LatLng(location.getLatitude(), location.getLongitude());
-        driverCurrentSpeedInKilometers = String.valueOf((int) ((location.getSpeed() * 3600) / 1000));
+//        driverCurrentSpeedInKilometers = String.valueOf((int) ((location.getSpeed() * 3600) / 1000));
     }
 
     @Override
