@@ -1,12 +1,14 @@
 package com.byteshaft.briver.fragments;
 
-import android.app.ActivityOptions;
 import android.app.Fragment;
 import android.app.Service;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
+import android.support.design.widget.Snackbar;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,12 +21,19 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.byteshaft.briver.MainActivity;
 import com.byteshaft.briver.R;
 import com.byteshaft.briver.utils.AppGlobals;
+import com.byteshaft.briver.utils.EndPoints;
+import com.byteshaft.briver.utils.Helpers;
 import com.byteshaft.briver.utils.SoftKeyboard;
+
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 /**
  * Created by fi8er1 on 28/04/2016.
@@ -45,6 +54,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
     View baseViewLoginFragment;
 
     Animation animMainLogoFading;
+    Animation animMainLogoFadingInfinite;
     Animation animMainLogoTransitionUp;
     Animation animMainLogoTransitionDown;
     Animation animMainLogoFadeIn;
@@ -52,6 +62,9 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
 
     boolean isSoftKeyboardOpen;
     boolean launchingMainActivity;
+
+    HttpURLConnection connection;
+    public static int responseCode;
 
     @Nullable
     @Override
@@ -69,8 +82,8 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
         tvForgotPassword = (TextView) baseViewLoginFragment.findViewById(R.id.tv_login_forgot_password);
         tvForgotPassword.setOnClickListener(this);
         llWelcomeLogin.setVisibility(View.GONE);
-
         animMainLogoFading = AnimationUtils.loadAnimation(getActivity(), R.anim.anim_welcome_logo_partial_fading);
+        animMainLogoFadingInfinite = AnimationUtils.loadAnimation(getActivity(), R.anim.anim_welcome_logo_partial_fading_infinite);
         animMainLogoTransitionUp = AnimationUtils.loadAnimation(getActivity(), R.anim.anim_welcome_logo_transition_up);
         animMainLogoTransitionDown = AnimationUtils.loadAnimation(getActivity(), R.anim.anim_welcome_logo_transition_down);
         animMainLogoFadeIn = AnimationUtils.loadAnimation(getActivity(), R.anim.anim_welcome_logo_fade_in);
@@ -120,45 +133,6 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
             }
         });
 
-        animMainLogoFading.setAnimationListener(new Animation.AnimationListener() {
-            @Override
-            public void onAnimationStart(Animation animation) {
-
-            }
-
-            @Override
-            public void onAnimationEnd(Animation animation) {
-
-                Intent intent = new Intent(getActivity(), MainActivity.class);
-                ActivityOptions options = ActivityOptions.makeScaleUpAnimation(baseViewLoginFragment, 0,
-                        0, baseViewLoginFragment.getWidth(), baseViewLoginFragment.getHeight());
-                startActivity(intent, options.toBundle());
-                AppGlobals.setLoggedIn(true);
-                getActivity().finish();
-
-//                Intent intent = new Intent(getActivity(), MainActivity.class);
-//                Bundle bundle = ActivityOptions.makeCustomAnimation(getActivity(),
-//                        R.animator.anim_transition_fragment_slide_right_exit, R.animator.anim_transition_fragment_slide_left_enter).toBundle();
-//                ActivityCompat.startActivity(getActivity(), intent, bundle);
-
-//                Intent intent = new Intent(getActivity(), MainActivity.class);
-//                Bundle bundle = ActivityOptions.makeCustomAnimation(getActivity(), R.animator.anim_transition_fragment_slide_right_enter, R.animator.anim_transition_fragment_slide_left_exit).toBundle();
-//                getActivity().startActivity(intent, bundle);
-
-
-//                startActivity(new Intent(getActivity(), MainActivity.class));
-//                getActivity().overridePendingTransition(R.animator.anim_transition_fragment_slide_right_enter,
-//                        R.animator.anim_hold);
-//                getActivity().finish();
-//                getActivity().overridePendingTransition(R.animator.anim_hold, R.animator.anim_transition_fragment_slide_left_exit);
-            }
-
-            @Override
-            public void onAnimationRepeat(Animation animation) {
-
-            }
-        });
-
         animMainLogoTransitionUp.setAnimationListener(new Animation.AnimationListener() {
             @Override
             public void onAnimationStart(Animation animation) {
@@ -184,7 +158,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
 
             @Override
             public void onAnimationEnd(Animation animation) {
-                ivWelcomeLogoMain.startAnimation(animMainLogoFading);
+                ivWelcomeLogoMain.startAnimation(animMainLogoFadingInfinite);
             }
 
             @Override
@@ -203,12 +177,10 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
                 sLoginEmail = etLoginEmail.getText().toString();
                 sLoginPassword = etLoginPassword.getText().toString();
                 if (validateLoginInput()) {
-                    launchingMainActivity = true;
                     if (isSoftKeyboardOpen) {
                         softKeyboard.closeSoftKeyboard();
                     }
-                    llWelcomeLogin.setVisibility(View.GONE);
-                    ivWelcomeLogoMain.startAnimation(animMainLogoTransitionDown);
+                    new UserLoginTask().execute();
                 }
                 break;
             case R.id.btn_login_register:
@@ -251,12 +223,15 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
     }
 
     public void onLoginSuccess() {
+        Intent intent = new Intent(getActivity(), MainActivity.class);
         AppGlobals.setLoggedIn(true);
-//        startActivity(new Intent(getApplicationContext(), MainActivity.class));
+        getActivity().finish();
+        startActivity(intent);
     }
 
-    public void onLoginFailed(String message) {
-        Toast.makeText(getActivity(), message, Toast.LENGTH_SHORT).show();
+    public void onLoginFailed() {
+        Helpers.showSnackBar(getView(), "Login Failed! Invalid Email or Password", Snackbar.LENGTH_LONG, "#f44336");
+        ivWelcomeLogoMain.startAnimation(animMainLogoTransitionUp);
     }
 
     @Override
@@ -280,4 +255,70 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
         tx.replace(R.id.container, fragment).addToBackStack("Recover");
         tx.commit();
     }
+
+
+    private class UserLoginTask extends AsyncTask<Void, Integer, Void> {
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            llWelcomeLogin.setVisibility(View.GONE);
+            ivWelcomeLogoMain.startAnimation(animMainLogoTransitionDown);
+        }
+
+        @Override
+        protected Void doInBackground(Void... params) {
+            try {
+                URL url = new URL(EndPoints.LOGIN);
+                connection = (HttpURLConnection) url.openConnection();
+                connection.setDoOutput(true);
+                connection.setDoInput(true);
+                connection.setInstanceFollowRedirects(false);
+                connection.setRequestMethod("POST");
+                connection.setRequestProperty("Content-Type", "application/json");
+                connection.setRequestProperty("charset", "utf-8");
+                DataOutputStream out = new DataOutputStream(connection.getOutputStream());
+
+                String loginString = getLoginString(sLoginEmail, sLoginPassword);
+                Log.i("Login ", "String: " + loginString);
+                out.writeBytes(loginString);
+                out.flush();
+                out.close();
+                responseCode = connection.getResponseCode();
+
+                InputStream in = (InputStream) connection.getContent();
+                int ch;
+                StringBuilder sb;
+
+                sb = new StringBuilder();
+                while ((ch = in.read()) != -1)
+                    sb.append((char) ch);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+            if (responseCode == 200) {
+                Helpers.dismissProgressDialog();
+                onLoginSuccess();
+            } else {
+                onLoginFailed();
+                Helpers.dismissProgressDialog();
+            }
+        }
+    }
+
+
+    public static String getLoginString (
+            String email, String password) {
+        return "{" +
+                String.format("\"username\": \"%s\", ", email) +
+                String.format("\"password\": \"%s\"", password) +
+                "}";
+    }
+
 }

@@ -1,10 +1,13 @@
 package com.byteshaft.briver.fragments;
 
 import android.app.Fragment;
+import android.content.Intent;
 import android.graphics.Color;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,9 +17,19 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.byteshaft.briver.MainActivity;
 import com.byteshaft.briver.R;
+import com.byteshaft.briver.utils.AppGlobals;
+import com.byteshaft.briver.utils.EndPoints;
 import com.byteshaft.briver.utils.Helpers;
+
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 /**
  * Created by fi8er1 on 29/04/2016.
@@ -54,7 +67,12 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
     String confirmationEmailPreviousEntry;
     String confirmationEmailReEntry;
     String confirmationCode;
+
+    String textEmailEntry;
     View baseViewCodeConfirmationFragment;
+    HttpURLConnection connection;
+    public static int responseCode;
+
 
     @Nullable
     @Override
@@ -107,11 +125,9 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
                 }
                 break;
             case R.id.btn_confirmation_code_submit:
-
                 confirmationCode = etCodeConfirmationCode.getText().toString();
-
                 if (validateConfirmationCode()) {
-
+                    new UserConfirmationTask().execute();
                 }
 
                 break;
@@ -159,4 +175,87 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
         }
         return valid;
     }
+
+
+    private class UserConfirmationTask extends AsyncTask<Void, Integer, Void> {
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            Helpers.showProgressDialog(getActivity(), "Registering");
+            textEmailEntry = etCodeConfirmationEmail.getText().toString();
+        }
+
+        @Override
+        protected Void doInBackground(Void... params) {
+            try {
+                URL url = new URL(EndPoints.ACTIVATE_ACCOUNT);
+                connection = (HttpURLConnection) url.openConnection();
+                connection.setDoOutput(true);
+                connection.setDoInput(true);
+                connection.setInstanceFollowRedirects(false);
+                connection.setRequestMethod("POST");
+                connection.setRequestProperty("Content-Type", "application/json");
+                connection.setRequestProperty("charset", "utf-8");
+                DataOutputStream out = new DataOutputStream(connection.getOutputStream());
+
+                String confirmationString = getConfirmationString(textEmailEntry, confirmationCode);
+                Log.i("ConfirmationCode", "String: " + confirmationString);
+                out.writeBytes(confirmationString);
+                out.flush();
+                out.close();
+                responseCode = connection.getResponseCode();
+
+                InputStream in = (InputStream) connection.getContent();
+                int ch;
+                StringBuilder sb;
+
+                sb = new StringBuilder();
+                while ((ch = in.read()) != -1)
+                    sb.append((char) ch);
+            } catch (IOException e) {
+                e.printStackTrace();
+                onConfirmationFailed();
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+            if (responseCode == 200) {
+                Helpers.dismissProgressDialog();
+                onConfirmationSuccess();
+            } else {
+                Toast.makeText(getActivity(), "Confirmation Failed", Toast.LENGTH_SHORT).show();
+                Helpers.dismissProgressDialog();
+            }
+        }
+    }
+
+    public void onConfirmationSuccess() {
+        Toast.makeText(getActivity(), "Confirmation successful", Toast.LENGTH_SHORT).show();
+        Helpers.closeSoftKeyboard(getActivity());
+        if (RegisterFragment.registerUserType == 0) {
+            AppGlobals.putUserType(0);
+        } else {
+            AppGlobals.putUserType(1);
+        }
+        AppGlobals.setLoggedIn(true);
+        getActivity().finish();
+        startActivity(new Intent(getActivity(), MainActivity.class));
+    }
+
+    public void onConfirmationFailed() {
+        Toast.makeText(getActivity(), "Confirmation failed, check internet and retry", Toast.LENGTH_SHORT).show();
+    }
+
+    public static String getConfirmationString (
+            String email, String activationCode) {
+        return "{" +
+                String.format("\"email\": \"%s\", ", email) +
+                String.format("\"activation_key\": \"%s\"", activationCode) +
+                "}";
+    }
+
 }

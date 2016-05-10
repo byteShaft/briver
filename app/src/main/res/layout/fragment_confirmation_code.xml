@@ -40,6 +40,7 @@
             android:textCursorDrawable="@null"
             android:textSize="18dp"
             android:hint="E-Mail"
+            android:enabled="false"
             android:maxLength="20"
             android:textColor="#ffffff"
             android:textColorHint="#ffffff"

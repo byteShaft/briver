@@ -1,5 +1,8 @@
 package com.byteshaft.briver.fragments;
 
+import android.app.DatePickerDialog;
+import android.app.TimePickerDialog;
+import android.content.DialogInterface;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
@@ -9,8 +12,10 @@ import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.FragmentManager;
+import android.support.v7.app.AlertDialog;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -20,9 +25,12 @@ import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.AutoCompleteTextView;
+import android.widget.Button;
+import android.widget.DatePicker;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.TimePicker;
 import android.widget.Toast;
 
 import com.byteshaft.briver.R;
@@ -38,6 +46,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import java.util.Calendar;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -66,8 +75,13 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
     private LinearLayout llMapHireButtons;
     private TextView tvMapHireAddress;
     private ImageButton btnMapHireRemoveMarker;
+    Button btnQuickHire;
+    Button btnScheduledHire;
     private AutoCompleteTextView etMapSearch;
     private String inputMapSearch;
+    String totalHoursOfService;
+    private int mYear, mMonth, mDay, mHour, mMinute;
+    final CharSequence[] itemsForHoursSelectingDialog = {" 2 Hours ", " 4 Hours ", " 6 Hours ", " 8 Hours "};
 
     @Nullable
     @Override
@@ -82,8 +96,12 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
         tvMapHireAddress = (TextView) baseViewHireFragment.findViewById(R.id.tv_map_hire_address);
         btnMapHireRemoveMarker = (ImageButton) baseViewHireFragment.findViewById(R.id.btn_map_hire_cancel);
         etMapSearch = (AutoCompleteTextView) baseViewHireFragment.findViewById(R.id.et_map_search);
+        btnQuickHire = (Button) baseViewHireFragment.findViewById(R.id.btn_map_hire_quick);
+        btnScheduledHire = (Button) baseViewHireFragment.findViewById(R.id.btn_map_hire_scheduled);
 
         btnMapHireRemoveMarker.setOnClickListener(this);
+        btnQuickHire.setOnClickListener(this);
+        btnScheduledHire.setOnClickListener(this);
 
         fm = getChildFragmentManager();
 
@@ -176,13 +194,6 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
             }
         });
 
-//        etMapSearch.setOnKeyListener(new View.OnKeyListener() {
-//            @Override
-//            public boolean onKey(View v, int keyCode, KeyEvent event) {
-//                return false;
-//            }
-//        });
-
         etMapSearch.addTextChangedListener(new TextWatcher() {
 
             Timer timer = new Timer();
@@ -243,6 +254,81 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
                     }, 300);
                 }
                 break;
+            case R.id.btn_map_hire_quick:
+                AlertDialog levelDialogQuickHire;
+
+                AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+                builder.setTitle("Select service duration");
+                builder.setSingleChoiceItems(itemsForHoursSelectingDialog, -1, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int item) {
+                        switch(item)
+                        {
+                            case 0:
+                                totalHoursOfService = "2";
+                                break;
+                            case 1:
+                                totalHoursOfService = "4";
+                                break;
+                            case 2:
+                                totalHoursOfService = "6";
+                                break;
+                            case 3:
+                                totalHoursOfService = "8";
+                                break;
+                        }
+                        dialog.dismiss();
+                    }
+                });
+                levelDialogQuickHire = builder.create();
+                levelDialogQuickHire.show();
+                break;
+
+            case R.id.btn_map_hire_scheduled:
+                AlertDialog levelDialogScheduledHire;
+
+                AlertDialog.Builder builderTwo = new AlertDialog.Builder(getActivity());
+                builderTwo.setTitle("Select service duration");
+                builderTwo.setSingleChoiceItems(itemsForHoursSelectingDialog, -1, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int item) {
+                        switch(item)
+                        {
+                            case 0:
+                                totalHoursOfService = "2";
+                                break;
+                            case 1:
+                                totalHoursOfService = "4";
+                                break;
+                            case 2:
+                                totalHoursOfService = "6";
+                                break;
+                            case 3:
+                                totalHoursOfService = "8";
+                                break;
+                        }
+                        final TimePickerDialog tpd = new TimePickerDialog(getActivity(),
+                                new TimePickerDialog.OnTimeSetListener() {
+                                    @Override
+                                    public void onTimeSet(TimePicker view, int hourOfDay,
+                                                          int minute) {
+                                        Log.i("Time", "Set: " + hourOfDay + ":" + minute);
+                                        Calendar newCalendar = Calendar.getInstance();
+                                        DatePickerDialog datePickerDialog = new DatePickerDialog(getActivity(), new DatePickerDialog.OnDateSetListener() {
+
+                                            public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
+                                                Calendar newDate = Calendar.getInstance();
+                                                newDate.set(year, monthOfYear, dayOfMonth);
+                                                Log.i("Date", "Set: " + dayOfMonth + "-" + monthOfYear + "-" + year);
+                                            }
+                                        },newCalendar.get(Calendar.YEAR), newCalendar.get(Calendar.MONTH), newCalendar.get(Calendar.DAY_OF_MONTH));
+                                        datePickerDialog.show();
+                                    }
+                                }, mHour, mMinute, false);
+                        tpd.show();
+                        dialog.dismiss();
+                    }
+                });
+                levelDialogScheduledHire = builderTwo.create();
+                levelDialogScheduledHire.show();
         }
 
     }

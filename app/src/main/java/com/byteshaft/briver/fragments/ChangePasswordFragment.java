@@ -89,7 +89,7 @@ public class ChangePasswordFragment extends android.support.v4.app.Fragment impl
         }
 
         if (!passwordNew.equals(passwordRepeat)) {
-            etChangePasswordNewPasswordRepeat.setError("password doesn't match");
+            etChangePasswordNewPasswordRepeat.setError("password does not match");
             valid = false;
         } else {
             etChangePasswordNewPasswordRepeat.setError(null);

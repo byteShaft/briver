@@ -109,7 +109,6 @@ public class DriverService extends Service implements LocationListener,
 
 
         driverCurrentLocation = new LatLng(location.getLatitude(), location.getLongitude());
-//        driverCurrentSpeedInKilometers = String.valueOf((int) ((location.getSpeed() * 3600) / 1000));
     }
 
     @Override
