@@ -2,11 +2,13 @@ package com.byteshaft.briver.fragments;
 
 import android.app.Fragment;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
 import android.telephony.PhoneNumberUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,8 +21,15 @@ import android.widget.Toast;
 
 import com.byteshaft.briver.R;
 import com.byteshaft.briver.utils.DriverService;
+import com.byteshaft.briver.utils.EndPoints;
 import com.byteshaft.briver.utils.Helpers;
 import com.google.android.gms.maps.model.LatLng;
+
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 /**
  * Created by fi8er1 on 28/04/2016.
@@ -55,11 +64,14 @@ public class RegisterFragment extends Fragment implements View.OnClickListener {
     String userRegisterBasicBio;
     String userRegisterVehicleMake;
     String userRegisterVehicleModel;
-    int userRegisterUserType = -1;
-    int userRegisterVehicleType = -1;
-    public static int driverLocationCounterForRegistration = 0;
+    static int registerUserType = -1;
+    String userRegisterVehicleType = "-1";
     public static LatLng latLngDriverLocationForRegistration;
     public static boolean isRegistrationFragmentOpen;
+    static String driverLocationToString;
+
+    HttpURLConnection connection;
+    public static int responseCode;
 
     Button btnCreateUser;
 
@@ -103,12 +115,12 @@ public class RegisterFragment extends Fragment implements View.OnClickListener {
                     rbRegisterDriver.setVisibility(View.INVISIBLE);
                     llRegisterElements.setVisibility(View.VISIBLE);
                     llRegisterElementsCustomer.setVisibility(View.VISIBLE);
-                    userRegisterUserType = 0;
+                    registerUserType = 0;
                 } else if (checkedId == R.id.rb_register_driver) {
                     rbRegisterCustomer.setVisibility(View.INVISIBLE);
                     llRegisterElements.setVisibility(View.VISIBLE);
                     llRegisterElementsDriver.setVisibility(View.VISIBLE);
-                    userRegisterUserType = 1;
+                    registerUserType = 1;
                     if (Helpers.isAnyLocationServiceAvailable()) {
                         getActivity().startService(new Intent(getActivity(), DriverService.class));
                         Helpers.showSnackBar(baseViewRegisterFragment, "Acquiring location for registration", Snackbar.LENGTH_SHORT, "#ffffff");
@@ -125,12 +137,15 @@ public class RegisterFragment extends Fragment implements View.OnClickListener {
             @Override
             public void onCheckedChanged(RadioGroup group, int checkedId) {
                 if (checkedId == R.id.rb_register_customer_vehicle_type_economy) {
-                    userRegisterVehicleType = 0;
+                    userRegisterVehicleType = "0";
                 } else if (checkedId == R.id.rb_register_customer_vehicle_type_luxury) {
-                    userRegisterVehicleType = 1;
+                    userRegisterVehicleType = "1";
                 }
             }
         });
+
+
+        rgRegisterSelectVehicleType.check(R.id.rb_register_customer_vehicle_type_economy);
         return baseViewRegisterFragment;
     }
 
@@ -150,8 +165,20 @@ public class RegisterFragment extends Fragment implements View.OnClickListener {
                 userRegisterVehicleModel = etRegisterUserVehicleModel.getText().toString();
 
                 if (validateRegisterInfo()) {
-                    Helpers.closeSoftKeyboard(getActivity());
-                    loadFragment(new CodeConfirmationFragment());
+                    if (registerUserType == 1) {
+                    if (latLngDriverLocationForRegistration != null) {
+                        driverLocationToString = latLngDriverLocationForRegistration.latitude + "," + latLngDriverLocationForRegistration.longitude;
+                        new RegisterUserTask().execute();
+                    } else {
+                        driverLocationToString = null;
+                        Helpers.AlertDialogWithPositiveFunctionNegativeButton(getActivity(), "Location Unavailable",
+                                "Your location is being acquired. You can either wait or it can be acquired later",
+                                "Continue Anyway", "Wait", driverRegistrationContinueAnyway);
+                    }
+
+                    } else {
+                        new RegisterUserTask().execute();
+                    }
                 }
                 break;
         }
@@ -203,7 +230,7 @@ public class RegisterFragment extends Fragment implements View.OnClickListener {
                 etRegisterUserContactNumber.setError(null);
             }
 
-        if (userRegisterUserType == 0) {
+        if (registerUserType == 0) {
             if (userRegisterVehicleMake.isEmpty() || userRegisterVehicleMake.length() < 3) {
                 etRegisterUserVehicleMake.setError("Minimum 3 Characters");
                 valid = false;
@@ -220,7 +247,7 @@ public class RegisterFragment extends Fragment implements View.OnClickListener {
             }
         }
         
-        if (userRegisterUserType == 1) {
+        if (registerUserType == 1) {
             if (userRegisterDrivingExperience.trim().isEmpty()) {
                 etRegisterUserDrivingExperience.setError("Empty");
                 valid = false;
@@ -229,14 +256,12 @@ public class RegisterFragment extends Fragment implements View.OnClickListener {
             }
         }
 
-        if (valid && userRegisterUserType == 0 && userRegisterVehicleType == -1) {
+        if (valid && registerUserType == 0 && userRegisterVehicleType.equals("-1")) {
             Toast.makeText(getActivity(), "Select Vehicle Type", Toast.LENGTH_SHORT).show();
             valid = false;
         }
         return valid;
     }
-
-
 
     final Runnable closeRegistration = new Runnable() {
         public void run() {
@@ -264,8 +289,6 @@ public class RegisterFragment extends Fragment implements View.OnClickListener {
         }
     };
 
-
-
     @Override
     public void onPause() {
         super.onPause();
@@ -289,6 +312,131 @@ public class RegisterFragment extends Fragment implements View.OnClickListener {
                         openLocationServiceSettings, closeRegistration, recheckLocationServiceStatus);
             }
         }
-
     }
+
+
+
+    private class RegisterUserTask extends AsyncTask<Void, Integer, Void> {
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            Helpers.showProgressDialog(getActivity(), "Registering");
+        }
+
+        @Override
+        protected Void doInBackground(Void... params) {
+                try {
+                    URL url;
+                    if (registerUserType == 0) {
+                        url = new URL(EndPoints.REGISTER_CUSTOMER);
+                    } else {
+                        url = new URL(EndPoints.REGISTER_DRIVER);
+                    }
+                    connection = (HttpURLConnection) url.openConnection();
+                    connection.setDoOutput(true);
+                    connection.setDoInput(true);
+                    connection.setInstanceFollowRedirects(false);
+                    connection.setRequestMethod("POST");
+                    connection.setRequestProperty("Content-Type", "application/json");
+                    connection.setRequestProperty("charset", "utf-8");
+                    DataOutputStream out = new DataOutputStream(connection.getOutputStream());
+                    if (registerUserType == 0) {
+                        String dataForRegistration = getRegistrationStringForCustomer(userRegisterFullName,
+                                userRegisterEmail, userRegisterPassword, userRegisterContactNumber, userRegisterVehicleType,
+                                userRegisterVehicleMake, userRegisterVehicleModel);
+                        Log.i("DataToWrite: ", "Customer: " + dataForRegistration);
+                        out.writeBytes(dataForRegistration);
+                    } else {
+                        String dataForRegisteringDriver = getRegistrationStringForDriver(userRegisterFullName,
+                                userRegisterEmail, userRegisterPassword, userRegisterContactNumber, userRegisterDrivingExperience,
+                                userRegisterBasicBio, driverLocationToString);
+                        Log.i("DataToWrite: ", "Driver: " + dataForRegisteringDriver);
+                        out.writeBytes(dataForRegisteringDriver);
+                    }
+                    out.flush();
+                    out.close();
+                    responseCode = connection.getResponseCode();
+
+                    InputStream in = (InputStream) connection.getContent();
+                    int ch;
+                    StringBuilder sb;
+
+                    sb = new StringBuilder();
+                    while ((ch = in.read()) != -1)
+                        sb.append((char) ch);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    onRegistrationFailed();
+                }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+            if (responseCode == 201) {
+                Helpers.dismissProgressDialog();
+                onRegistrationSuccess();
+            } else {
+                Toast.makeText(getActivity(), "Invalid Response: " + responseCode, Toast.LENGTH_SHORT).show();
+                Helpers.dismissProgressDialog();
+            }
+        }
+    }
+
+    public void onRegistrationSuccess() {
+        Toast.makeText(getActivity(), "Registration successful", Toast.LENGTH_SHORT).show();
+
+        Helpers.closeSoftKeyboard(getActivity());
+        loadFragment(new CodeConfirmationFragment());
+    }
+
+    public void onRegistrationFailed() {
+        Toast.makeText(getActivity(), "Registration failed, check internet and retry", Toast.LENGTH_SHORT).show();
+    }
+
+    public static String getRegistrationStringForCustomer(
+            String fullName, String email, String password, String phone, String vehicleType,
+            String vehicleMake, String vehicleModel) {
+
+        return "{" +
+                String.format("\"full_name\": \"%s\", ", fullName) +
+                String.format("\"email\": \"%s\", ", email) +
+                String.format("\"password\": \"%s\", ", password) +
+                String.format("\"phone_number\": \"%s\", ", phone) +
+                String.format("\"vehicle_type\": \"%s\", ", vehicleType) +
+                String.format("\"vehicle_make\": \"%s\", ", vehicleMake) +
+                String.format("\"vehicle_model\": \"%s\"", vehicleModel) +
+                "}";
+    }
+
+    public static String getRegistrationStringForDriver(
+            String fullName, String email, String password, String phone,
+            String experience, String bio, String location) {
+        StringBuilder output = new StringBuilder();
+        output.append("{");
+        output.append(String.format("\"full_name\": \"%s\", ", fullName));
+        output.append(String.format("\"email\": \"%s\", ", email));
+        output.append(String.format("\"password\": \"%s\", ", password));
+        output.append(String.format("\"phone_number\": \"%s\", ", phone));
+        output.append(String.format("\"driving_experience\": \"%s\", ", experience));
+        if (bio != null) {
+            output.append(String.format("\"bio\": \"%s\", ", bio));
+        }
+
+        if (location != null) {
+            output.append(String.format("\"location\": \"%s\"", location));
+        }
+
+        output.append("}");
+        return output.toString();
+    }
+
+
+    final Runnable driverRegistrationContinueAnyway = new Runnable() {
+        public void run() {
+            new RegisterUserTask().execute();
+        }
+    };
 }
