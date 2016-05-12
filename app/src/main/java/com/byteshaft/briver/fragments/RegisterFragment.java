@@ -38,6 +38,7 @@ public class RegisterFragment extends Fragment implements View.OnClickListener {
 
     EditText etRegisterUserFullName;
     EditText etRegisterUserEmail;
+    EditText etRegisterUserEmailRepeat;
     EditText etRegisterUserPassword;
     EditText etRegisterUserConfirmPassword;
     EditText etRegisterUserContactNumber;
@@ -57,6 +58,7 @@ public class RegisterFragment extends Fragment implements View.OnClickListener {
 
     String userRegisterFullName;
     static String userRegisterEmail;
+    String userRegisterEmailRepeat;
     String userRegisterPassword;
     String userRegisterConfirmPassword;
     String userRegisterContactNumber;
@@ -85,6 +87,7 @@ public class RegisterFragment extends Fragment implements View.OnClickListener {
 
         etRegisterUserFullName = (EditText) baseViewRegisterFragment.findViewById(R.id.et_register_full_name);
         etRegisterUserEmail = (EditText) baseViewRegisterFragment.findViewById(R.id.et_register_email);
+        etRegisterUserEmailRepeat = (EditText) baseViewRegisterFragment.findViewById(R.id.et_register_email_repeat);
         etRegisterUserPassword = (EditText) baseViewRegisterFragment.findViewById(R.id.et_register_password);
         etRegisterUserConfirmPassword = (EditText) baseViewRegisterFragment.findViewById(R.id.et_register_confirm_password);
         etRegisterUserContactNumber = (EditText) baseViewRegisterFragment.findViewById(R.id.et_register_phone_number);
@@ -156,6 +159,7 @@ public class RegisterFragment extends Fragment implements View.OnClickListener {
 
                 userRegisterFullName = etRegisterUserFullName.getText().toString();
                 userRegisterEmail = etRegisterUserEmail.getText().toString();
+                userRegisterEmailRepeat = etRegisterUserEmailRepeat.getText().toString();
                 userRegisterPassword = etRegisterUserPassword.getText().toString();
                 userRegisterConfirmPassword = etRegisterUserConfirmPassword.getText().toString();
                 userRegisterContactNumber = etRegisterUserContactNumber.getText().toString();
@@ -205,6 +209,9 @@ public class RegisterFragment extends Fragment implements View.OnClickListener {
                 valid = false;
             } else if (!userRegisterEmail.trim().isEmpty() && !android.util.Patterns.EMAIL_ADDRESS.matcher(userRegisterEmail).matches()) {
                 etRegisterUserEmail.setError("Invalid E-Mail");
+                valid = false;
+            } else if (!userRegisterEmail.equals(userRegisterEmailRepeat)) {
+                etRegisterUserEmailRepeat.setError("E-Mail doesn't match");
                 valid = false;
             } else {
                 etRegisterUserEmail.setError(null);
@@ -315,7 +322,6 @@ public class RegisterFragment extends Fragment implements View.OnClickListener {
     }
 
 
-
     private class RegisterUserTask extends AsyncTask<Void, Integer, Void> {
 
         @Override
@@ -375,12 +381,11 @@ public class RegisterFragment extends Fragment implements View.OnClickListener {
         @Override
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
+            Helpers.dismissProgressDialog();
             if (responseCode == 201) {
-                Helpers.dismissProgressDialog();
                 onRegistrationSuccess();
             } else {
-                Toast.makeText(getActivity(), "Invalid Response: " + responseCode, Toast.LENGTH_SHORT).show();
-                Helpers.dismissProgressDialog();
+                onRegistrationFailed();
             }
         }
     }
@@ -390,10 +395,11 @@ public class RegisterFragment extends Fragment implements View.OnClickListener {
 
         Helpers.closeSoftKeyboard(getActivity());
         loadFragment(new CodeConfirmationFragment());
+        CodeConfirmationFragment.isFragmentOpenedFromLogin = false;
     }
 
     public void onRegistrationFailed() {
-        Toast.makeText(getActivity(), "Registration failed, check internet and retry", Toast.LENGTH_SHORT).show();
+        Helpers.showSnackBar(baseViewRegisterFragment, "Registration failed, check internet and retry", Snackbar.LENGTH_SHORT, "#f44336");
     }
 
     public static String getRegistrationStringForCustomer(
@@ -432,7 +438,6 @@ public class RegisterFragment extends Fragment implements View.OnClickListener {
         output.append("}");
         return output.toString();
     }
-
 
     final Runnable driverRegistrationContinueAnyway = new Runnable() {
         public void run() {

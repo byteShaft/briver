@@ -2,6 +2,7 @@ package com.byteshaft.briver.fragments;
 
 import android.app.Fragment;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -25,6 +26,9 @@ import com.byteshaft.briver.utils.AppGlobals;
 import com.byteshaft.briver.utils.EndPoints;
 import com.byteshaft.briver.utils.Helpers;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -37,15 +41,10 @@ import java.net.URL;
 
 public class CodeConfirmationFragment extends Fragment implements View.OnClickListener {
 
+    public static int responseCode;
+    public static boolean isFragmentOpenedFromLogin;
     RelativeLayout layoutCodeConfirmation;
     EditText etCodeConfirmationEmail;
-    final Runnable editConfirmationEmail = new Runnable() {
-        public void run() {
-            etCodeConfirmationEmail.setFocusable(true);
-            etCodeConfirmationEmail.setFocusableInTouchMode(true);
-            etCodeConfirmationEmail.requestFocus();
-        }
-    };
     EditText etCodeConfirmationCode;
     Button btnCodeConfirmationSubmitCode;
     Button btnCodeConfirmationResendCode;
@@ -53,26 +52,38 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
     TextView tvCodeConfirmationStatusDisplayTimer;
     final Runnable functionSetTimerTextOnTick = new Runnable() {
         public void run() {
-            tvCodeConfirmationStatusDisplayTimer.setText(Helpers.secondsToMinutesSeconds(Helpers.countDownTimerMillisUntilFinished / 1000));
+            tvCodeConfirmationStatusDisplayTimer.setText(Helpers.secondsToMinutesSeconds(
+                    Helpers.countDownTimerMillisUntilFinished / 1000));
         }
     };
     Animation animTimerFading;
-    final Runnable functionOnTimerFinish = new Runnable() {
-        public void run() {
-            animTimerFading.cancel();
-            tvCodeConfirmationStatusDisplay.setVisibility(View.GONE);
-            tvCodeConfirmationStatusDisplayTimer.setVisibility(View.GONE);
-        }
-    };
-    String confirmationEmailPreviousEntry;
-    String confirmationEmailReEntry;
     String confirmationCode;
-
     String textEmailEntry;
     View baseViewCodeConfirmationFragment;
     HttpURLConnection connection;
-    public static int responseCode;
+    boolean isTimerActive;
+    final Runnable functionOnTimerFinish = new Runnable() {
+        public void run() {
+            animTimerFading.cancel();
+            isTimerActive = false;
+            tvCodeConfirmationStatusDisplayTimer.setVisibility(View.GONE);
+        }
+    };
 
+    public static String getConfirmationString(
+            String email, String activationCode) {
+        return "{" +
+                String.format("\"email\": \"%s\", ", email) +
+                String.format("\"activation_key\": \"%s\"", activationCode) +
+                "}";
+    }
+
+    public static String getResendString(
+            String email) {
+        return "{" +
+                String.format("\"email\": \"%s\"", email) +
+                "}";
+    }
 
     @Nullable
     @Override
@@ -88,81 +99,52 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
         tvCodeConfirmationStatusDisplayTimer = (TextView) baseViewCodeConfirmationFragment.findViewById(R.id.tv_confirmation_code_resend_timer);
         animTimerFading = AnimationUtils.loadAnimation(getActivity(), R.anim.anim_text_complete_fading);
 
-        tvCodeConfirmationStatusDisplay.setText("Code Sent - Check Mail");
-        tvCodeConfirmationStatusDisplay.setTextColor(Color.parseColor("#A4C639"));
-
-        Helpers.setCountDownTimer(120000, 1000, functionSetTimerTextOnTick, functionOnTimerFinish);
-        tvCodeConfirmationStatusDisplayTimer.startAnimation(animTimerFading);
-
-        etCodeConfirmationEmail.setText(RegisterFragment.userRegisterEmail);
-        etCodeConfirmationEmail.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-            @Override
-            public void onFocusChange(View v, boolean hasFocus) {
-                if (!hasFocus) {
-                    etCodeConfirmationEmail.setFocusable(false);
-                    etCodeConfirmationEmail.setFocusableInTouchMode(false);
-                }
-            }
-        });
-
-        etCodeConfirmationEmail.setOnClickListener(this);
         btnCodeConfirmationResendCode.setOnClickListener(this);
         btnCodeConfirmationSubmitCode.setOnClickListener(this);
 
-        etCodeConfirmationEmail.setFocusable(false);
-        confirmationEmailPreviousEntry = RegisterFragment.userRegisterEmail;
+        if (isFragmentOpenedFromLogin) {
+            etCodeConfirmationEmail.setText(LoginFragment.sLoginEmail);
+            textEmailEntry = LoginFragment.sLoginEmail;
+            tvCodeConfirmationStatusDisplay.setText("Activate Account");
+            tvCodeConfirmationStatusDisplay.setTextColor(Color.parseColor("#ffffff"));
+            return baseViewCodeConfirmationFragment;
+        }
 
+        tvCodeConfirmationStatusDisplay.setText("Code Sent - Check Mail");
+        tvCodeConfirmationStatusDisplay.setTextColor(Color.parseColor("#A4C639"));
+
+        isTimerActive = true;
+        Helpers.setCountDownTimer(120000, 1000, functionSetTimerTextOnTick, functionOnTimerFinish);
+        tvCodeConfirmationStatusDisplayTimer.startAnimation(animTimerFading);
+        tvCodeConfirmationStatusDisplayTimer.setVisibility(View.VISIBLE);
+
+        etCodeConfirmationEmail.setText(RegisterFragment.userRegisterEmail);
         return baseViewCodeConfirmationFragment;
     }
 
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
-            case R.id.et_confirmation_code_email:
-                if (!etCodeConfirmationEmail.hasFocus()) {
-                    Helpers.AlertDialogWithPositiveFunctionNegativeButton(getActivity(),
-                            RegisterFragment.userRegisterEmail, "Want to change?", "Yes", "No", editConfirmationEmail);
-                }
-                break;
             case R.id.btn_confirmation_code_submit:
+                textEmailEntry = etCodeConfirmationEmail.getText().toString();
                 confirmationCode = etCodeConfirmationCode.getText().toString();
                 if (validateConfirmationCode()) {
                     new UserConfirmationTask().execute();
                 }
-
+                Helpers.closeSoftKeyboard(getActivity());
                 break;
             case R.id.btn_confirmation_code_resend:
-                confirmationEmailReEntry = etCodeConfirmationEmail.getText().toString();
-                if (validateEmail()) {
-                    if (tvCodeConfirmationStatusDisplayTimer.isShown() && confirmationEmailReEntry.equals(confirmationEmailPreviousEntry)) {
-                        Helpers.showSnackBar(baseViewCodeConfirmationFragment, "Code already sent - Wait for the CountDown", Snackbar.LENGTH_SHORT, "#ffffff");
-                    } else {
-                        confirmationEmailPreviousEntry = etCodeConfirmationEmail.getText().toString();
-                        Helpers.stopCountDownTimer();
-                        etCodeConfirmationEmail.clearFocus();
-                        layoutCodeConfirmation.requestFocus();
-                        Helpers.setCountDownTimer(120000, 1000, functionSetTimerTextOnTick, functionOnTimerFinish);
-                        tvCodeConfirmationStatusDisplayTimer.startAnimation(animTimerFading);
-                        tvCodeConfirmationStatusDisplay.setVisibility(View.VISIBLE);
-                        tvCodeConfirmationStatusDisplayTimer.setVisibility(View.VISIBLE);
-                    }
+                textEmailEntry = etCodeConfirmationEmail.getText().toString();
+                if (isTimerActive) {
+                    Helpers.showSnackBar(baseViewCodeConfirmationFragment,
+                            "Code already sent - Wait for the CountDown",
+                            Snackbar.LENGTH_SHORT, "#ffffff");
+                } else {
+                    new UserResendEmail().execute();
                 }
+                Helpers.closeSoftKeyboard(getActivity());
                 break;
         }
-    }
-
-    public boolean validateEmail() {
-        boolean valid = true;
-        if (confirmationEmailReEntry.trim().isEmpty()) {
-            etCodeConfirmationEmail.setError("Empty");
-            valid = false;
-        } else if (!confirmationEmailReEntry.trim().isEmpty() && !android.util.Patterns.EMAIL_ADDRESS.matcher(confirmationEmailReEntry).matches()) {
-            etCodeConfirmationEmail.setError("Invalid E-Mail");
-            valid = false;
-        } else {
-            etCodeConfirmationEmail.setError(null);
-        }
-        return valid;
     }
 
     public boolean validateConfirmationCode() {
@@ -176,14 +158,63 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
         return valid;
     }
 
+    public void onConfirmationSuccess() {
+        Toast.makeText(getActivity(), "Confirmation successful", Toast.LENGTH_SHORT).show();
+        Helpers.closeSoftKeyboard(getActivity());
+        if (RegisterFragment.registerUserType == 0) {
+            AppGlobals.putUserType(0);
+        } else {
+            AppGlobals.putUserType(1);
+        }
+        AppGlobals.setLoggedIn(true);
+        getActivity().finish();
+        startActivity(new Intent(getActivity(), MainActivity.class));
+    }
+
+    public void onConfirmationFailed() {
+        Helpers.showSnackBar(getView(), "Confirmation failed, check internet and retry", Snackbar.LENGTH_SHORT, "#f44336");
+    }
+
+    public void onResendSuccess() {
+        Helpers.closeSoftKeyboard(getActivity());
+        Helpers.showSnackBar(getView(), "E-Mail successfully sent", Snackbar.LENGTH_LONG, "#A4C639");
+        tvCodeConfirmationStatusDisplay.setText("Code Sent - Check Mail");
+        tvCodeConfirmationStatusDisplay.setTextColor(Color.parseColor("#A4C639"));
+        tvCodeConfirmationStatusDisplay.clearAnimation();
+
+        isTimerActive = true;
+        Helpers.setCountDownTimer(120000, 1000, functionSetTimerTextOnTick, functionOnTimerFinish);
+        tvCodeConfirmationStatusDisplayTimer.startAnimation(animTimerFading);
+        tvCodeConfirmationStatusDisplayTimer.setVisibility(View.VISIBLE);
+        tvCodeConfirmationStatusDisplay.setVisibility(View.VISIBLE);
+    }
+
+    public void onResendFailed() {
+        Helpers.showSnackBar(getView(), "Failed to resend E-Mail", Snackbar.LENGTH_LONG, "#f44336");
+        tvCodeConfirmationStatusDisplay.setText("Resend Failed");
+        tvCodeConfirmationStatusDisplay.setTextColor(Color.parseColor("#f44336"));
+        tvCodeConfirmationStatusDisplay.clearAnimation();
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+
+    }
 
     private class UserConfirmationTask extends AsyncTask<Void, Integer, Void> {
 
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
-            Helpers.showProgressDialog(getActivity(), "Registering");
-            textEmailEntry = etCodeConfirmationEmail.getText().toString();
+            btnCodeConfirmationResendCode.setEnabled(false);
+            btnCodeConfirmationSubmitCode.setEnabled(false);
+            Helpers.showProgressDialog(getActivity(), "Activating User");
         }
 
         @Override
@@ -205,7 +236,6 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
                 out.flush();
                 out.close();
                 responseCode = connection.getResponseCode();
-
                 InputStream in = (InputStream) connection.getContent();
                 int ch;
                 StringBuilder sb;
@@ -213,6 +243,69 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
                 sb = new StringBuilder();
                 while ((ch = in.read()) != -1)
                     sb.append((char) ch);
+                JSONObject jsonObject = new JSONObject(sb.toString());
+
+                Log.i("UserConfirmationTask", jsonObject.toString());
+
+                AppGlobals.putToken(jsonObject.getString("token"));
+                AppGlobals.putPersonName(jsonObject.getString("full_name"));
+                AppGlobals.putUsername(jsonObject.getString("email"));
+                AppGlobals.putUserType(jsonObject.getInt("user_type"));
+
+            } catch (IOException e) {
+                e.printStackTrace();
+                onConfirmationFailed();
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+            Helpers.dismissProgressDialog();
+            btnCodeConfirmationResendCode.setEnabled(true);
+            btnCodeConfirmationSubmitCode.setEnabled(true);
+            if (responseCode == 200) {
+                onConfirmationSuccess();
+            } else {
+                onConfirmationFailed();
+            }
+        }
+    }
+
+    private class UserResendEmail extends AsyncTask<Void, Integer, Void> {
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            btnCodeConfirmationResendCode.setEnabled(false);
+            btnCodeConfirmationSubmitCode.setEnabled(false);
+            tvCodeConfirmationStatusDisplay.setText("Resending Email");
+            tvCodeConfirmationStatusDisplayTimer.setTextColor(Color.parseColor("#ffa500"));
+            tvCodeConfirmationStatusDisplay.startAnimation(animTimerFading);
+            tvCodeConfirmationStatusDisplayTimer.setVisibility(View.GONE);
+        }
+
+        @Override
+        protected Void doInBackground(Void... params) {
+            try {
+                URL url = new URL(EndPoints.BASE_ACCOUNTS + "request_activation_key");
+                connection = (HttpURLConnection) url.openConnection();
+                connection.setDoOutput(true);
+                connection.setDoInput(true);
+                connection.setInstanceFollowRedirects(false);
+                connection.setRequestMethod("POST");
+                connection.setRequestProperty("Content-Type", "application/json");
+                connection.setRequestProperty("charset", "utf-8");
+                DataOutputStream out = new DataOutputStream(connection.getOutputStream());
+
+                String resendString = getResendString(textEmailEntry);
+                out.writeBytes(resendString);
+                out.flush();
+                out.close();
+                responseCode = connection.getResponseCode();
             } catch (IOException e) {
                 e.printStackTrace();
                 onConfirmationFailed();
@@ -223,39 +316,15 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
         @Override
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
+            btnCodeConfirmationResendCode.setEnabled(true);
+            btnCodeConfirmationSubmitCode.setEnabled(true);
             if (responseCode == 200) {
-                Helpers.dismissProgressDialog();
-                onConfirmationSuccess();
+                onResendSuccess();
             } else {
-                Toast.makeText(getActivity(), "Confirmation Failed", Toast.LENGTH_SHORT).show();
+                onResendFailed();
                 Helpers.dismissProgressDialog();
             }
         }
-    }
-
-    public void onConfirmationSuccess() {
-        Toast.makeText(getActivity(), "Confirmation successful", Toast.LENGTH_SHORT).show();
-        Helpers.closeSoftKeyboard(getActivity());
-        if (RegisterFragment.registerUserType == 0) {
-            AppGlobals.putUserType(0);
-        } else {
-            AppGlobals.putUserType(1);
-        }
-        AppGlobals.setLoggedIn(true);
-        getActivity().finish();
-        startActivity(new Intent(getActivity(), MainActivity.class));
-    }
-
-    public void onConfirmationFailed() {
-        Toast.makeText(getActivity(), "Confirmation failed, check internet and retry", Toast.LENGTH_SHORT).show();
-    }
-
-    public static String getConfirmationString (
-            String email, String activationCode) {
-        return "{" +
-                String.format("\"email\": \"%s\", ", email) +
-                String.format("\"activation_key\": \"%s\"", activationCode) +
-                "}";
     }
 
 }

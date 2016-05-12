@@ -139,7 +139,6 @@
                         android:maxLength="2"
                         android:padding="10dp"
                         android:textColor="#ffffff"
-                        android:textColorHint="#ffffff"
                         android:textCursorDrawable="@null"
                         android:textSize="18dp"
                         android:visibility="gone" />
@@ -192,7 +191,6 @@
                         android:maxLength="2"
                         android:padding="10dp"
                         android:textColor="#ffffff"
-                        android:textColorHint="#ffffff"
                         android:textCursorDrawable="@null"
                         android:textSize="18dp" />
                 </LinearLayout>

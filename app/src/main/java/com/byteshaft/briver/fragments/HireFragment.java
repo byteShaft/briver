@@ -54,6 +54,7 @@ import java.util.TimerTask;
 /**
  * Created by fi8er1 on 01/05/2016.
  */
+
 public class HireFragment extends android.support.v4.app.Fragment implements View.OnClickListener {
 
     private static GoogleMap mMap = null;
@@ -79,7 +80,7 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
     Button btnScheduledHire;
     private AutoCompleteTextView etMapSearch;
     private String inputMapSearch;
-    String totalHoursOfService;
+    int totalHoursOfService;
     private int mYear, mMonth, mDay, mHour, mMinute;
     final CharSequence[] itemsForHoursSelectingDialog = {" 2 Hours ", " 4 Hours ", " 6 Hours ", " 8 Hours "};
 
@@ -257,25 +258,33 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
             case R.id.btn_map_hire_quick:
                 AlertDialog levelDialogQuickHire;
 
-                AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+                final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
                 builder.setTitle("Select service duration");
+                builder.setCancelable(false);
+                builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                });
                 builder.setSingleChoiceItems(itemsForHoursSelectingDialog, -1, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int item) {
                         switch(item)
                         {
                             case 0:
-                                totalHoursOfService = "2";
+                                totalHoursOfService = 2;
                                 break;
                             case 1:
-                                totalHoursOfService = "4";
+                                totalHoursOfService = 4;
                                 break;
                             case 2:
-                                totalHoursOfService = "6";
+                                totalHoursOfService = 6;
                                 break;
                             case 3:
-                                totalHoursOfService = "8";
+                                totalHoursOfService = 8;
                                 break;
                         }
+                        Log.i("SelectedHoursOfService", " " + totalHoursOfService);
                         dialog.dismiss();
                     }
                 });
@@ -288,23 +297,31 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
 
                 AlertDialog.Builder builderTwo = new AlertDialog.Builder(getActivity());
                 builderTwo.setTitle("Select service duration");
+                builderTwo.setCancelable(false);
+                builderTwo.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                });
                 builderTwo.setSingleChoiceItems(itemsForHoursSelectingDialog, -1, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int item) {
                         switch(item)
                         {
                             case 0:
-                                totalHoursOfService = "2";
+                                totalHoursOfService = 2;
                                 break;
                             case 1:
-                                totalHoursOfService = "4";
+                                totalHoursOfService = 4;
                                 break;
                             case 2:
-                                totalHoursOfService = "6";
+                                totalHoursOfService = 6;
                                 break;
                             case 3:
-                                totalHoursOfService = "8";
+                                totalHoursOfService = 8;
                                 break;
                         }
+                        Log.i("SelectedHoursOfService", " " + totalHoursOfService);
                         final TimePickerDialog tpd = new TimePickerDialog(getActivity(),
                                 new TimePickerDialog.OnTimeSetListener() {
                                     @Override

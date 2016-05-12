@@ -93,7 +93,6 @@
                 android:maxLength="20"
                 android:padding="10dp"
                 android:textColor="#ffffff"
-                android:textColorHint="#ffffff"
                 android:textCursorDrawable="@null"
                 android:textSize="18dp" />
 
@@ -110,7 +109,22 @@
                 android:maxLength="20"
                 android:padding="10dp"
                 android:textColor="#ffffff"
-                android:textColorHint="#ffffff"
+                android:textCursorDrawable="@null"
+                android:textSize="18dp" />
+
+            <EditText
+                android:id="@+id/et_register_email_repeat"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="10dp"
+                android:background="@drawable/background_edit_text"
+                android:drawableLeft="@mipmap/ic_edit_text_email"
+                android:drawablePadding="10dp"
+                android:hint="Repeat E-Mail"
+                android:inputType="textEmailAddress"
+                android:maxLength="20"
+                android:padding="10dp"
+                android:textColor="#ffffff"
                 android:textCursorDrawable="@null"
                 android:textSize="18dp" />
 
@@ -127,7 +141,6 @@
                 android:maxLength="16"
                 android:padding="10dp"
                 android:textColor="#ffffff"
-                android:textColorHint="#ffffff"
                 android:textCursorDrawable="@null"
                 android:textSize="18dp" />
 
@@ -139,12 +152,11 @@
                 android:background="@drawable/background_edit_text"
                 android:drawableLeft="@mipmap/ic_edit_text_password"
                 android:drawablePadding="10dp"
-                android:hint="Confirm Password"
+                android:hint="Repeat Password"
                 android:inputType="textPassword"
                 android:maxLength="16"
                 android:padding="10dp"
                 android:textColor="#ffffff"
-                android:textColorHint="#ffffff"
                 android:textCursorDrawable="@null"
                 android:textSize="18dp" />
 
@@ -170,7 +182,6 @@
                     android:maxLength="20"
                     android:padding="10dp"
                     android:textColor="#ffffff"
-                    android:textColorHint="#ffffff"
                     android:textCursorDrawable="@null"
                     android:textSize="18dp" />
 
@@ -196,7 +207,6 @@
                         android:maxLength="2"
                         android:padding="10dp"
                         android:textColor="#ffffff"
-                        android:textColorHint="#ffffff"
                         android:textCursorDrawable="@null"
                         android:textSize="18dp" />
 
@@ -213,7 +223,6 @@
                         android:maxLines="3"
                         android:padding="10dp"
                         android:textColor="#ffffff"
-                        android:textColorHint="#ffffff"
                         android:textCursorDrawable="@null"
                         android:textSize="18dp" />
 
@@ -241,7 +250,6 @@
                         android:maxLength="20"
                         android:padding="10dp"
                         android:textColor="#ffffff"
-                        android:textColorHint="#ffffff"
                         android:textCursorDrawable="@null"
                         android:textSize="18dp" />
 
@@ -258,7 +266,6 @@
                         android:maxLength="4"
                         android:padding="10dp"
                         android:textColor="#ffffff"
-                        android:textColorHint="#ffffff"
                         android:textCursorDrawable="@null"
                         android:textSize="18dp" />
 

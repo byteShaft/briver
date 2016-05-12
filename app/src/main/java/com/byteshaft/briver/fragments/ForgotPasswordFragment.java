@@ -179,7 +179,7 @@ public class ForgotPasswordFragment extends Fragment implements View.OnClickList
             public void run() {
                 getActivity().onBackPressed();
             }
-        }, 2000);
+        }, 1500);
     }
 
     public void onPasswordChangeFailed(String message) {
@@ -214,11 +214,13 @@ public class ForgotPasswordFragment extends Fragment implements View.OnClickList
                 DataOutputStream out = new DataOutputStream(connection.getOutputStream());
 
                 String recoveryString = getRecoveryString(passwordRecoveryEmail);
-                Log.i("Recovery ", "String: " + recoveryString);
                 out.writeBytes(recoveryString);
                 out.flush();
                 out.close();
                 responseCode = connection.getResponseCode();
+
+                Log.i("Response", "Code " + responseCode);
+                Log.i("Response", "Message " + connection.getResponseMessage());
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -229,11 +231,13 @@ public class ForgotPasswordFragment extends Fragment implements View.OnClickList
         protected void onPostExecute(Integer responseCode) {
             super.onPostExecute(responseCode);
             if (responseCode == 200) {
-                Helpers.dismissProgressDialog();
                 onRecoverySuccess();
             } else {
-                onRecoveryFailed("Recovery Failed");
-                Helpers.dismissProgressDialog();
+                if (responseCode == 404 || responseCode == 400) {
+                    onRecoveryFailed("Recovery Failed. User does not exist");
+                } else {
+                    onRecoveryFailed("Recovery Failed");
+                }
             }
         }
     }

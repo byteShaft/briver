@@ -1,6 +1,7 @@
 package com.byteshaft.briver.fragments;
 
 import android.app.Fragment;
+import android.app.FragmentManager;
 import android.app.Service;
 import android.content.Intent;
 import android.os.AsyncTask;
@@ -29,10 +30,15 @@ import com.byteshaft.briver.utils.EndPoints;
 import com.byteshaft.briver.utils.Helpers;
 import com.byteshaft.briver.utils.SoftKeyboard;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.ProtocolException;
 import java.net.URL;
 
 /**
@@ -48,7 +54,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
     TextView tvForgotPassword;
     EditText etLoginEmail;
     EditText etLoginPassword;
-    String sLoginEmail;
+    public static String sLoginEmail;
     String sLoginPassword;
     SoftKeyboard softKeyboard;
     View baseViewLoginFragment;
@@ -65,6 +71,8 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
 
     HttpURLConnection connection;
     public static int responseCode;
+
+    FragmentManager fragmentManager;
 
     @Nullable
     @Override
@@ -92,8 +100,11 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
         RelativeLayout mainLayout = (RelativeLayout) baseViewLoginFragment.findViewById(R.id.layout_fragment_login);
         InputMethodManager im = (InputMethodManager) getActivity().getApplicationContext().getSystemService(Service.INPUT_METHOD_SERVICE);
 
+        fragmentManager = getFragmentManager();
+
         if (AppGlobals.isLoggedIn()) {
-            ivWelcomeLogoMain.startAnimation(animMainLogoFading);
+            ivWelcomeLogoMain.startAnimation(animMainLogoFadingInfinite);
+            new GetUserDataTask().execute();
         } else {
             new Handler().postDelayed(new Runnable() {
                 @Override
@@ -223,15 +234,27 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
     }
 
     public void onLoginSuccess() {
-        Intent intent = new Intent(getActivity(), MainActivity.class);
         AppGlobals.setLoggedIn(true);
+    }
+
+    public void onLoginFailed(String message) {
+        Helpers.showSnackBar(getView(), message, Snackbar.LENGTH_LONG, "#f44336");
+        ivWelcomeLogoMain.startAnimation(animMainLogoTransitionUp);
+    }
+
+    public void onGetUserDataSuccess() {
+        Intent intent = new Intent(getActivity(), MainActivity.class);
         getActivity().finish();
         startActivity(intent);
     }
 
-    public void onLoginFailed() {
-        Helpers.showSnackBar(getView(), "Login Failed! Invalid Email or Password", Snackbar.LENGTH_LONG, "#f44336");
-        ivWelcomeLogoMain.startAnimation(animMainLogoTransitionUp);
+    public void onGetUserDataFailed() {
+        Helpers.showSnackBar(getView(), "Failed to retrieve UserData", Snackbar.LENGTH_LONG, "#f44336");
+        if (AppGlobals.isLoggedIn()) {
+            Helpers.AlertDialogWithPositiveNegativeNeutralFunctions(getActivity(), "Retrieving Failed",
+                    "UserData cannot be retrieved at the moment", "Retry", "Logout", "Exit App",
+                    retryGetUserDataTask, logOut, exitApp);
+        }
     }
 
     @Override
@@ -256,7 +279,6 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
         tx.commit();
     }
 
-
     private class UserLoginTask extends AsyncTask<Void, Integer, Void> {
 
         @Override
@@ -269,6 +291,11 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
         @Override
         protected Void doInBackground(Void... params) {
             try {
+                int accountStatus = getAccountStatus(sLoginEmail);
+                if (accountStatus == 404 || accountStatus == 403) {
+                    responseCode = accountStatus;
+                    return null;
+                }
                 URL url = new URL(EndPoints.LOGIN);
                 connection = (HttpURLConnection) url.openConnection();
                 connection.setDoOutput(true);
@@ -285,7 +312,8 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
                 out.flush();
                 out.close();
                 responseCode = connection.getResponseCode();
-
+                Log.i("ResponseCode", " " + responseCode);
+                Log.i("ResponseMessage", " " + connection.getResponseMessage());
                 InputStream in = (InputStream) connection.getContent();
                 int ch;
                 StringBuilder sb;
@@ -293,7 +321,10 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
                 sb = new StringBuilder();
                 while ((ch = in.read()) != -1)
                     sb.append((char) ch);
-            } catch (IOException e) {
+                JSONObject jsonObject = new JSONObject(sb.toString());
+                AppGlobals.putToken(jsonObject.getString("token"));
+
+            } catch (IOException | JSONException e) {
                 e.printStackTrace();
             }
             return null;
@@ -303,15 +334,21 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
             if (responseCode == 200) {
-                Helpers.dismissProgressDialog();
                 onLoginSuccess();
+                new GetUserDataTask().execute();
             } else {
-                onLoginFailed();
-                Helpers.dismissProgressDialog();
+                if (responseCode == 404) {
+                    onLoginFailed("Login Failed! Account not found");
+                } else if (responseCode == 403) {
+                    onLoginFailed("Login Failed! Account not activated");
+                    loadFragment(new CodeConfirmationFragment());
+                    CodeConfirmationFragment.isFragmentOpenedFromLogin = true;
+                } else {
+                    onLoginFailed("Login Failed! Invalid Email or Password");
+                }
             }
         }
     }
-
 
     public static String getLoginString (
             String email, String password) {
@@ -321,4 +358,102 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
                 "}";
     }
 
+    private class GetUserDataTask extends AsyncTask<Void, Integer, Void> {
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
+
+        @Override
+        protected Void doInBackground(Void... params) {
+            try {
+                Log.i("getUserDetailTask", " RUN");
+                URL url = new URL(EndPoints.BASE_ACCOUNTS + "me");
+                connection = (HttpURLConnection) url.openConnection();
+                connection.setRequestMethod("GET");
+                connection.setRequestProperty("Content-Type", "application/json");
+                connection.setRequestProperty("charset", "utf-8");
+                Log.i("TOKEN: ", "" + AppGlobals.getToken());
+                connection.setRequestProperty("Authorization", "Token " + AppGlobals.getToken());
+
+                InputStream in = (InputStream) connection.getContent();
+                Log.i("InputStream", ": " + in);
+                int ch;
+                StringBuilder sb;
+                sb = new StringBuilder();
+                while ((ch = in.read()) != -1)
+                    sb.append((char) ch);
+                JSONObject jsonObject = new JSONObject(sb.toString());
+                Log.i("IncomingData", " UserData: " + jsonObject);
+                AppGlobals.putPersonName(jsonObject.getString("full_name"));
+                AppGlobals.putUsername(jsonObject.getString("email"));
+                AppGlobals.putUserType(jsonObject.getInt("user_type"));
+                responseCode = connection.getResponseCode();
+            } catch (IOException | JSONException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+            if (responseCode == 200) {
+                onGetUserDataSuccess();
+            } else {
+                onGetUserDataFailed();
+                if (!AppGlobals.isLoggedIn()) {
+                    onLoginFailed("Login Failed! UserData cannot be retrieved");
+                }
+            }
+        }
+    }
+
+    final Runnable exitApp = new Runnable() {
+        public void run() {
+            getActivity().finish();
+            System.exit(0);
+        }
+    };
+
+    final Runnable logOut = new Runnable() {
+        public void run() {
+            AppGlobals.setLoggedIn(false);
+            ivWelcomeLogoMain.startAnimation(animMainLogoTransitionUp);
+        }
+    };
+
+    final Runnable retryGetUserDataTask = new Runnable() {
+        public void run() {
+            new GetUserDataTask().execute();
+        }
+    };
+
+    private static int getAccountStatus(String userEmail) {
+        String request = EndPoints.BASE_ACCOUNTS + "status?email=" + userEmail;
+        int responseCodeStatus = -1;
+        try {
+            URL url = new URL(request);
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("GET");
+            connection.setRequestProperty("Content-Type", "application/json");
+            connection.setRequestProperty("charset", "utf-8");
+            responseCodeStatus = connection.getResponseCode();
+        } catch (ProtocolException | MalformedURLException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return responseCodeStatus;
+    }
+
+
+    public void loadFragment(Fragment fragment) {
+        android.app.FragmentTransaction tx = getFragmentManager().beginTransaction();
+        tx.setCustomAnimations(R.animator.anim_transition_fragment_slide_right_enter, R.animator.anim_transition_fragment_slide_left_exit,
+                R.animator.anim_transition_fragment_slide_left_enter, R.animator.anim_transition_fragment_slide_right_exit);
+        tx.replace(R.id.container, fragment).addToBackStack("Confirmation");
+        tx.commit();
+    }
 }
