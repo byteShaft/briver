@@ -13,6 +13,8 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.TextView;
 
 import com.byteshaft.briver.fragments.ChangePasswordFragment;
 import com.byteshaft.briver.fragments.ContactUsFragment;
@@ -41,11 +43,17 @@ public class MainActivity extends AppCompatActivity
     NavigationView navigationView;
     DrawerLayout drawer;
     Toolbar toolbar;
+    private static MainActivity sInstance;
+
+    public static MainActivity getInstance() {
+        return sInstance;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        sInstance = this;
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         fragmentManager = getSupportFragmentManager();
@@ -59,6 +67,21 @@ public class MainActivity extends AppCompatActivity
         navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
         disableNavigationViewScrollbars(navigationView);
+
+        navigationView.getMenu().getItem(0).setChecked(true);
+
+        navigationView.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
+            @Override
+            public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
+                navigationView.removeOnLayoutChangeListener(this);
+
+                TextView tvPersonName = (TextView) navigationView.findViewById(R.id.tv_nav_header_person_name);
+                TextView tvPersonEmail = (TextView) navigationView.findViewById(R.id.tv_nav_header_person_email);
+
+                tvPersonName.setText(AppGlobals.getPeronName());
+                tvPersonEmail.setText(AppGlobals.getUsername());
+            }
+        });
     }
 
     @Override
@@ -155,7 +178,6 @@ public class MainActivity extends AppCompatActivity
     protected void onResume() {
         super.onResume();
         isMainActivityRunning = true;
-//        MainActivity.this.startService(new Intent(MainActivity.this, DriverService.class));
     }
 
     @Override
@@ -163,6 +185,5 @@ public class MainActivity extends AppCompatActivity
         super.onPause();
         isMainActivityRunning = false;
     }
-
 
 }
