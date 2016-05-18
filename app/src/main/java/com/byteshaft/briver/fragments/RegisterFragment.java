@@ -13,6 +13,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.RadioButton;
@@ -23,6 +24,7 @@ import com.byteshaft.briver.R;
 import com.byteshaft.briver.utils.DriverService;
 import com.byteshaft.briver.utils.EndPoints;
 import com.byteshaft.briver.utils.Helpers;
+import com.byteshaft.briver.utils.LocationService;
 import com.google.android.gms.maps.model.LatLng;
 
 import java.io.DataOutputStream;
@@ -34,7 +36,7 @@ import java.net.URL;
 /**
  * Created by fi8er1 on 28/04/2016.
  */
-public class RegisterFragment extends Fragment implements View.OnClickListener {
+public class RegisterFragment extends Fragment implements View.OnClickListener, CompoundButton.OnCheckedChangeListener {
 
     EditText etRegisterUserFullName;
     EditText etRegisterUserEmail;
@@ -52,9 +54,13 @@ public class RegisterFragment extends Fragment implements View.OnClickListener {
     LinearLayout llRegisterElementsCustomer;
 
     RadioGroup rgRegisterSelectUserType;
-    RadioGroup rgRegisterSelectVehicleType;
     RadioButton rbRegisterCustomer;
     RadioButton rbRegisterDriver;
+
+    RadioButton rbVehicleTypeMini;
+    RadioButton rbVehicleTypeHatchback;
+    RadioButton rbVehicleTypeSedan;
+    RadioButton rbVehicleTypeLuxury;
 
     String userRegisterFullName;
     static String userRegisterEmail;
@@ -67,13 +73,14 @@ public class RegisterFragment extends Fragment implements View.OnClickListener {
     String userRegisterVehicleMake;
     String userRegisterVehicleModel;
     static int registerUserType = -1;
-    String userRegisterVehicleType = "-1";
+    int userRegisterVehicleType = -1;
     public static LatLng latLngDriverLocationForRegistration;
     public static boolean isRegistrationFragmentOpen;
     static String driverLocationToString;
 
     HttpURLConnection connection;
     public static int responseCode;
+    LocationService mLocationService;
 
     Button btnCreateUser;
 
@@ -99,10 +106,19 @@ public class RegisterFragment extends Fragment implements View.OnClickListener {
         baseViewRegisterFragment.findViewById(R.id.ll_register).requestFocus();
 
         rgRegisterSelectUserType = (RadioGroup) baseViewRegisterFragment.findViewById(R.id.rg_register_select_user_type);
-        rgRegisterSelectVehicleType = (RadioGroup) baseViewRegisterFragment.findViewById(R.id.rg_register_select_vehicle_type);
 
         rbRegisterCustomer = (RadioButton) baseViewRegisterFragment.findViewById(R.id.rb_register_customer);
         rbRegisterDriver = (RadioButton) baseViewRegisterFragment.findViewById(R.id.rb_register_driver);
+
+        rbVehicleTypeMini = (RadioButton) baseViewRegisterFragment.findViewById(R.id.rb_register_customer_vehicle_type_mini);
+        rbVehicleTypeHatchback = (RadioButton) baseViewRegisterFragment.findViewById(R.id.rb_register_customer_vehicle_type_hatchback);
+        rbVehicleTypeSedan = (RadioButton) baseViewRegisterFragment.findViewById(R.id.rb_register_customer_vehicle_type_sedan);
+        rbVehicleTypeLuxury = (RadioButton) baseViewRegisterFragment.findViewById(R.id.rb_register_customer_vehicle_type_luxury);
+
+        rbVehicleTypeMini.setOnCheckedChangeListener(this);
+        rbVehicleTypeHatchback.setOnCheckedChangeListener(this);
+        rbVehicleTypeSedan.setOnCheckedChangeListener(this);
+        rbVehicleTypeLuxury.setOnCheckedChangeListener(this);
 
         btnCreateUser = (Button) baseViewRegisterFragment.findViewById(R.id.btn_register_create_account);
         btnCreateUser.setOnClickListener(this);
@@ -119,13 +135,15 @@ public class RegisterFragment extends Fragment implements View.OnClickListener {
                     llRegisterElements.setVisibility(View.VISIBLE);
                     llRegisterElementsCustomer.setVisibility(View.VISIBLE);
                     registerUserType = 0;
+
+                    rbVehicleTypeSedan.setChecked(true);
                 } else if (checkedId == R.id.rb_register_driver) {
                     rbRegisterCustomer.setVisibility(View.INVISIBLE);
                     llRegisterElements.setVisibility(View.VISIBLE);
                     llRegisterElementsDriver.setVisibility(View.VISIBLE);
                     registerUserType = 1;
                     if (Helpers.isAnyLocationServiceAvailable()) {
-                        getActivity().startService(new Intent(getActivity(), DriverService.class));
+                        mLocationService = new LocationService(getActivity());
                         Helpers.showSnackBar(baseViewRegisterFragment, "Acquiring location for registration", Snackbar.LENGTH_SHORT, "#ffffff");
                     } else {
                         Helpers.AlertDialogWithPositiveNegativeNeutralFunctions(getActivity(), "Location Service disabled",
@@ -136,19 +154,6 @@ public class RegisterFragment extends Fragment implements View.OnClickListener {
             }
         });
 
-        rgRegisterSelectVehicleType.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(RadioGroup group, int checkedId) {
-                if (checkedId == R.id.rb_register_customer_vehicle_type_economy) {
-                    userRegisterVehicleType = "0";
-                } else if (checkedId == R.id.rb_register_customer_vehicle_type_luxury) {
-                    userRegisterVehicleType = "1";
-                }
-            }
-        });
-
-
-        rgRegisterSelectVehicleType.check(R.id.rb_register_customer_vehicle_type_economy);
         return baseViewRegisterFragment;
     }
 
@@ -263,7 +268,7 @@ public class RegisterFragment extends Fragment implements View.OnClickListener {
             }
         }
 
-        if (valid && registerUserType == 0 && userRegisterVehicleType.equals("-1")) {
+        if (valid && registerUserType == 0 && userRegisterVehicleType == -1) {
             Toast.makeText(getActivity(), "Select Vehicle Type", Toast.LENGTH_SHORT).show();
             valid = false;
         }
@@ -311,7 +316,7 @@ public class RegisterFragment extends Fragment implements View.OnClickListener {
         isRegistrationFragmentOpen = true;
         if (rgRegisterSelectUserType.getCheckedRadioButtonId() == R.id.rb_register_driver) {
             if (Helpers.isAnyLocationServiceAvailable()) {
-                getActivity().startService(new Intent(getActivity(), DriverService.class));
+                mLocationService = new LocationService(getActivity());
                 Helpers.showSnackBar(baseViewRegisterFragment, "Acquiring location for registration", Snackbar.LENGTH_SHORT, "#ffffff");
             } else {
                 Helpers.AlertDialogWithPositiveNegativeNeutralFunctions(getActivity(), "Location Service disabled",
@@ -321,6 +326,31 @@ public class RegisterFragment extends Fragment implements View.OnClickListener {
         }
     }
 
+    @Override
+    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+        rbVehicleTypeMini.setChecked(false);
+        rbVehicleTypeHatchback.setChecked(false);
+        rbVehicleTypeSedan.setChecked(false);
+        rbVehicleTypeLuxury.setChecked(false);
+        switch (buttonView.getId()){
+            case R.id.rb_register_customer_vehicle_type_mini:
+                userRegisterVehicleType = 0;
+                rbVehicleTypeMini.setChecked(isChecked);
+                break;
+            case R.id.rb_register_customer_vehicle_type_hatchback:
+                userRegisterVehicleType = 1;
+                rbVehicleTypeHatchback.setChecked(isChecked);
+                break;
+            case R.id.rb_register_customer_vehicle_type_sedan:
+                userRegisterVehicleType = 2;
+                rbVehicleTypeSedan.setChecked(isChecked);
+                break;
+            case R.id.rb_register_customer_vehicle_type_luxury:
+                userRegisterVehicleType = 3;
+                rbVehicleTypeLuxury.setChecked(isChecked);
+                break;
+            }
+    }
 
     private class RegisterUserTask extends AsyncTask<Void, Integer, Void> {
 
@@ -403,7 +433,7 @@ public class RegisterFragment extends Fragment implements View.OnClickListener {
     }
 
     public static String getRegistrationStringForCustomer(
-            String fullName, String email, String password, String phone, String vehicleType,
+            String fullName, String email, String password, String phone, int vehicleType,
             String vehicleMake, String vehicleModel) {
 
         return "{" +

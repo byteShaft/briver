@@ -1,50 +1,22 @@
 package com.byteshaft.briver.utils;
 
-import android.Manifest;
 import android.app.Service;
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.location.Location;
 import android.os.AsyncTask;
-import android.os.Bundle;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
-import android.support.design.widget.Snackbar;
-import android.support.v4.app.ActivityCompat;
-import android.util.Log;
-import android.widget.Toast;
 
-import com.byteshaft.briver.fragments.PreferencesFragment;
-import com.byteshaft.briver.fragments.RegisterFragment;
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.location.LocationListener;
-import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.maps.model.LatLng;
-
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
 
-public class DriverService extends Service implements LocationListener,
-        GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
+public class DriverService extends Service {
 
     public static boolean driverLocationReportingServiceIsRunning;
     public static int responseCode;
-    public static int onLocationChangedCounter = 0;
 
-    GoogleApiClient mGoogleApiClient;
-    LocationRequest mLocationRequest;
     HttpURLConnection connection;
-
-    public static String driverCurrentSpeedInKilometers;
-    public static LatLng driverCurrentLocation = null;
-    public static LatLng driverLastKnownLocation = null;
 
     @Nullable
     @Override
@@ -55,108 +27,17 @@ public class DriverService extends Service implements LocationListener,
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         driverLocationReportingServiceIsRunning = true;
-        connectGoogleApiClient();
-        return START_NOT_STICKY;
+//        startService(new Intent(getApplicationContext(), LocationService.class));
+        return START_STICKY;
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
         driverLocationReportingServiceIsRunning = false;
-        stopLocationService();
-        DriverService.onLocationChangedCounter = 0;
+//        stopService(new Intent(getApplicationContext(), LocationService.class));
     }
 
-    @Override
-    public void onConnected(@Nullable Bundle bundle) {
-        startLocationUpdates();
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
-        }
-        Location tempLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
-        driverLastKnownLocation = new LatLng(tempLocation.getLatitude(), tempLocation.getLongitude());
-    }
-
-    @Override
-    public void onConnectionSuspended(int i) {
-
-    }
-
-    @Override
-    public void onLocationChanged(Location location) {
-        onLocationChangedCounter++;
-        Log.i("onLocationChange", "Called: " + onLocationChangedCounter);
-        if (RegisterFragment.isRegistrationFragmentOpen && onLocationChangedCounter == 3) {
-            RegisterFragment.latLngDriverLocationForRegistration = driverCurrentLocation;
-            Log.i("onLocationChange", "reg");
-            Helpers.showSnackBar(RegisterFragment.baseViewRegisterFragment, "Location Acquired", Snackbar.LENGTH_SHORT, "#A4C639");
-        } else if (PreferencesFragment.isPreferencesFragmentOpen && onLocationChangedCounter == 3) {
-            Log.i("onLocationChange", "pref");
-            PreferencesFragment.latLngDriverLocationFixed = driverCurrentLocation;
-            PreferencesFragment.setFixedLocationDisplay();
-        }
-
-        if (onLocationChangedCounter > 3) {
-            onDestroy();
-        }
-
-
-        driverCurrentLocation = new LatLng(location.getLatitude(), location.getLongitude());
-    }
-
-    @Override
-    public void onConnectionFailed(ConnectionResult connectionResult) {
-        Toast.makeText(getApplicationContext(), "Failed to start Location Service", Toast.LENGTH_LONG).show();
-    }
-
-    private void connectGoogleApiClient() {
-        createLocationRequest();
-        mGoogleApiClient = new GoogleApiClient.Builder(this)
-                .addConnectionCallbacks(this)
-                .addOnConnectionFailedListener(this)
-                .addApi(LocationServices.API)
-                .build();
-        mGoogleApiClient.connect();
-    }
-
-    protected void createLocationRequest() {
-        long INTERVAL = 0;
-        long FASTEST_INTERVAL = 0;
-        mLocationRequest = new LocationRequest();
-        mLocationRequest.setInterval(INTERVAL);
-        mLocationRequest.setFastestInterval(FASTEST_INTERVAL);
-        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-    }
-
-    public void startLocationUpdates() {
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
-        }
-        LocationServices.FusedLocationApi.requestLocationUpdates(
-                mGoogleApiClient, mLocationRequest, this);
-    }
-
-    public void stopLocationService() {
-        LocationServices.FusedLocationApi.removeLocationUpdates(
-                mGoogleApiClient, this);
-        mGoogleApiClient.disconnect();
-    }
 
     private class DriverLocationPostingTask extends AsyncTask<Void, Integer, Void> {
 
@@ -173,26 +54,6 @@ public class DriverService extends Service implements LocationListener,
                 connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
                 connection.setRequestProperty("charset", "utf-8");
                 connection.setRequestProperty("X-Api-Key", AppGlobals.getToken());
-
-                Calendar rightNow = Calendar.getInstance();
-                SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
-                String time = sdf.format(rightNow.getTime());
-                int day = rightNow.get(Calendar.DATE);
-                int month = rightNow.get(Calendar.MONTH) + 1;
-                int year = rightNow.get(Calendar.YEAR);
-                String timeStamp = day + "/" + month + "/" + year + " - " + time;
-
-                DataOutputStream out = new DataOutputStream(connection.getOutputStream());
-
-                String driverSpeedWithTimeStamp = driverCurrentSpeedInKilometers + "   " + timeStamp;
-                out.writeBytes("speed=" + driverSpeedWithTimeStamp +
-                        "&" + "latitude=" + driverCurrentLocation.latitude +
-                        "&" + "longitude=" + driverCurrentLocation.longitude);
-                out.flush();
-                out.close();
-                responseCode = connection.getResponseCode();
-
-                System.out.println("Location Poster Response Code: " + responseCode);
 
                 InputStream in = (InputStream) connection.getContent();
                 int ch;

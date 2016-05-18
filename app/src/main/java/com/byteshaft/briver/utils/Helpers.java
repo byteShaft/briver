@@ -5,13 +5,16 @@ import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.graphics.Color;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.Uri;
 import android.os.CountDownTimer;
+import android.provider.Settings;
 import android.support.design.widget.Snackbar;
 import android.view.Gravity;
 import android.view.View;
@@ -249,5 +252,53 @@ public class Helpers {
         snackBarText.setTextColor(Color.parseColor(textColor));
         snackbar.show();
     }
+
+    public static void openAppDetailsActivityForSettingPermissions(final Activity context) {
+        if (context == null) {
+            return;
+        }
+        final Intent i = new Intent();
+        i.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+        i.addCategory(Intent.CATEGORY_DEFAULT);
+        i.setData(Uri.parse("package:" + context.getPackageName()));
+        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        i.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
+        i.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
+        context.startActivity(i);
+    }
+
+
+    public static void openInstallationActivityForPlayServices(final Activity context) {
+        if (context == null) {
+            return;
+        }
+        Intent i = new Intent();
+        i.setAction(Intent.ACTION_VIEW);
+        i.addCategory(Intent.CATEGORY_BROWSABLE);
+        i.setData(Uri.parse("https://play.google.com/store/apps/details?id=com.google.android.gms&hl=en"));
+        context.startActivity(i);
+    }
+
+
+    public static final Runnable exitApp = new Runnable() {
+        public void run() {
+            AppGlobals.getRunningActivityInstance().finish();
+            System.exit(0);
+        }
+    };
+
+    public static Runnable openPermissionsSettingsForMarshmallow = new Runnable() {
+        public void run() {
+            Helpers.openAppDetailsActivityForSettingPermissions(AppGlobals.getRunningActivityInstance());
+            AppGlobals.getRunningActivityInstance().onBackPressed();
+        }
+    };
+
+    public static Runnable openPlayServicesInstallation = new Runnable() {
+        public void run() {
+            Helpers.openAppDetailsActivityForSettingPermissions(AppGlobals.getRunningActivityInstance());
+            AppGlobals.getRunningActivityInstance().onBackPressed();
+        }
+    };
 
 }

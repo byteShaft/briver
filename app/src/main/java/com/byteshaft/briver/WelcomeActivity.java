@@ -6,6 +6,7 @@ import android.app.FragmentManager;
 import android.os.Bundle;
 
 import com.byteshaft.briver.fragments.LoginFragment;
+import com.byteshaft.briver.utils.AppGlobals;
 import com.byteshaft.briver.utils.Helpers;
 
 
@@ -65,8 +66,8 @@ public class WelcomeActivity extends Activity {
     protected void onResume() {
         super.onResume();
         isWelcomeActivityRunning = true;
-        if (!Helpers.isNetworkAvailable(getActivityToShowDialogOnNetworkChange())) {
-            Helpers.AlertDialogWithPositiveNegativeFunctions(getActivityToShowDialogOnNetworkChange(),
+        if (!Helpers.isNetworkAvailable(AppGlobals.getRunningActivityInstance())) {
+            Helpers.AlertDialogWithPositiveNegativeFunctions(AppGlobals.getRunningActivityInstance(),
                     "Network Unavailable", "Device is disconnected from the network. Check Network Connectivity.",
                     "Exit App", "ReCheck", exitApp, recheckNetworkConnectivity);
         }
@@ -89,19 +90,10 @@ public class WelcomeActivity extends Activity {
         }
     };
 
-    private static Activity getActivityToShowDialogOnNetworkChange() {
-        if (MainActivity.isMainActivityRunning) {
-            return MainActivity.getInstance();
-        } else if (WelcomeActivity.isWelcomeActivityRunning) {
-            return WelcomeActivity.getInstance();
-        }
-        return null;
-    }
-
     final Runnable recheckNetworkConnectivity = new Runnable() {
         public void run() {
-            if (!Helpers.isNetworkAvailable(getActivityToShowDialogOnNetworkChange())) {
-                Helpers.AlertDialogWithPositiveNegativeFunctions(getActivityToShowDialogOnNetworkChange(),
+            if (!Helpers.isNetworkAvailable(AppGlobals.getRunningActivityInstance())) {
+                Helpers.AlertDialogWithPositiveNegativeFunctions(AppGlobals.getRunningActivityInstance(),
                         "Network Unavailable", "Device is disconnected from the network. Check Network Connectivity.",
                         "Exit App", "ReCheck", exitApp, recheckNetworkConnectivity);
             }
