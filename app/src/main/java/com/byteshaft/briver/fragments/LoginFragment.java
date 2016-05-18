@@ -1,14 +1,21 @@
 package com.byteshaft.briver.fragments;
 
+import android.Manifest;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.Service;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
+import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -22,14 +29,18 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.byteshaft.briver.MainActivity;
 import com.byteshaft.briver.R;
+import com.byteshaft.briver.gcm.QuickstartPreferences;
+import com.byteshaft.briver.gcm.RegistrationIntentService;
 import com.byteshaft.briver.utils.AppGlobals;
 import com.byteshaft.briver.utils.EndPoints;
 import com.byteshaft.briver.utils.Helpers;
 import com.byteshaft.briver.utils.SoftKeyboard;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -37,8 +48,6 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.ProtocolException;
 import java.net.URL;
 
 /**
@@ -73,6 +82,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
     public static int responseCode;
 
     FragmentManager fragmentManager;
+    public static BroadcastReceiver mRegistrationBroadcastReceiver;
 
     @Nullable
     @Override
@@ -153,6 +163,14 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
             @Override
             public void onAnimationEnd(Animation animation) {
                 llWelcomeLogin.setVisibility(View.VISIBLE);
+                if (ContextCompat.checkSelfPermission(getActivity(),
+                        Manifest.permission.ACCESS_FINE_LOCATION)
+                        != PackageManager.PERMISSION_GRANTED) {
+                    Helpers.AlertDialogWithPositiveNegativeFunctions(AppGlobals.getRunningActivityInstance(), "Permission Denied",
+                            "You need to grant permissions to use Location Services for Briver", "Settings",
+                            "Exit App", Helpers.openPermissionsSettingsForMarshmallow, Helpers.exitApp);
+                }
+                AppGlobals.checkPlayServicesAvailability();
             }
 
             @Override
@@ -234,7 +252,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
     }
 
     public void onLoginSuccess() {
-        AppGlobals.setLoggedIn(true);
+        new GetUserDataTask().execute();
     }
 
     public void onLoginFailed(String message) {
@@ -244,8 +262,13 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
 
     public void onGetUserDataSuccess() {
         Intent intent = new Intent(getActivity(), MainActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
         getActivity().finish();
         startActivity(intent);
+        AppGlobals.setLoggedIn(true);
+
+
+        startGcmService();
     }
 
     public void onGetUserDataFailed() {
@@ -335,7 +358,6 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
             super.onPostExecute(aVoid);
             if (responseCode == 200) {
                 onLoginSuccess();
-                new GetUserDataTask().execute();
             } else {
                 if (responseCode == 404) {
                     onLoginFailed("Login Failed! Account not found");
@@ -440,8 +462,6 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
             connection.setRequestProperty("Content-Type", "application/json");
             connection.setRequestProperty("charset", "utf-8");
             responseCodeStatus = connection.getResponseCode();
-        } catch (ProtocolException | MalformedURLException e) {
-            e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -456,4 +476,86 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
         tx.replace(R.id.container, fragment).addToBackStack("Confirmation");
         tx.commit();
     }
+
+    public void startGcmService() {
+        mRegistrationBroadcastReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                SharedPreferences sharedPreferences =
+                        PreferenceManager.getDefaultSharedPreferences(context);
+                boolean sentToken = sharedPreferences
+                        .getBoolean(QuickstartPreferences.SENT_TOKEN_TO_SERVER, false);
+                if (sentToken) {
+                    System.out.println(R.string.gcm_send_message);
+                } else {
+                    System.out.println(R.string.token_error_message);
+                }
+            }
+
+        };
+
+        if (AppGlobals.checkPlayServicesAvailability()) {
+            Log.i("PlayService", "Available");
+            // Start IntentService to register this application with GCM.
+            Intent intent = new Intent(getActivity(), RegistrationIntentService.class);
+            getActivity().startService(intent);
+        }
+    }
+
+
+    public class EnablePushNotifications extends AsyncTask<Void, Integer, Void> {
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            Helpers.showProgressDialog(getActivity(), "Enabling Push Notifications");
+        }
+
+        @Override
+        protected Void doInBackground(Void... params) {
+            try {
+                JSONArray jsonArray = new JSONArray(AppGlobals.getToken());
+                JSONObject jsonObject = jsonArray.getJSONObject(0);
+                String ID = jsonObject.getString("id");
+                URL url = new URL("http://46.101.75.194:8080/users/" + ID);
+
+                connection = (HttpURLConnection) url.openConnection();
+                connection.setDoOutput(true);
+                connection.setDoInput(true);
+                connection.setInstanceFollowRedirects(false);
+                connection.setRequestMethod("PUT");
+                connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+                connection.setRequestProperty("charset", "utf-8");
+                connection.setRequestProperty("X-Api-Key", AppGlobals.getToken());
+                DataOutputStream out = new DataOutputStream(connection.getOutputStream());
+                out.writeBytes("token=" + AppGlobals.getGcmToken());
+                out.flush();
+                out.close();
+
+                responseCode = connection.getResponseCode();
+
+            } catch (IOException | JSONException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+            Helpers.dismissProgressDialog();
+            if (responseCode == 200) {
+                Toast.makeText(getActivity(), "Push Notifications Enabled", Toast.LENGTH_LONG).show();
+//                Intent intent = new Intent(getActivity(), MainActivity.class);
+//                intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
+//                getActivity().finish();
+//                startActivity(intent);
+            } else {
+                Toast.makeText(getActivity(), "Cannot enable push notifications", Toast.LENGTH_LONG).show();
+                AppGlobals.putToken(null);
+                AppGlobals.putGcmToken(null);
+            }
+        }
+    }
+
 }

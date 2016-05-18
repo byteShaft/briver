@@ -2,6 +2,7 @@ package com.byteshaft.briver.fragments;
 
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,6 +18,7 @@ public class HomeFragment extends android.support.v4.app.Fragment implements Vie
 
     View baseViewHomeFragment;
     TextView tvShowUserType;
+    public static boolean isHomeFragmentOpen;
 
     @Nullable
     @Override
@@ -25,9 +27,9 @@ public class HomeFragment extends android.support.v4.app.Fragment implements Vie
         tvShowUserType = (TextView) baseViewHomeFragment.findViewById(R.id.tv_home_fragment_user_type);
 
         if (AppGlobals.getUserType() == 0) {
-            tvShowUserType.setText("UserType: CUSTOMER");
+            tvShowUserType.setText("CUSTOMER");
         } else {
-            tvShowUserType.setText("UserType: DRIVER");
+            tvShowUserType.setText("DRIVER");
         }
 
         return baseViewHomeFragment;
@@ -36,5 +38,19 @@ public class HomeFragment extends android.support.v4.app.Fragment implements Vie
     @Override
     public void onClick(View v) {
 
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        isHomeFragmentOpen = true;
+        Log.i("resume", "home");
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        isHomeFragmentOpen = false;
+        Log.i("pause", "home");
     }
 }

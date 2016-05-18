@@ -12,17 +12,19 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
-import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.Switch;
 import android.widget.TextView;
 
 import com.byteshaft.briver.R;
+import com.byteshaft.briver.utils.AppGlobals;
 import com.byteshaft.briver.utils.DriverService;
 import com.byteshaft.briver.utils.Helpers;
+import com.byteshaft.briver.utils.LocationService;
 import com.google.android.gms.maps.model.LatLng;
 
 import java.util.Timer;
@@ -31,15 +33,23 @@ import java.util.TimerTask;
 /**
  * Created by fi8er1 on 01/05/2016.
  */
-public class PreferencesFragment extends android.support.v4.app.Fragment implements View.OnClickListener {
+public class PreferencesFragment extends android.support.v4.app.Fragment implements View.OnClickListener, CompoundButton.OnCheckedChangeListener {
 
     public static View baseViewPreferencesFragment;
+
+    LinearLayout llDriverPreferences;
+    LinearLayout llCustomerPreferences;
 
     Switch switchPreferencesDriverServiceStatus;
 
     RadioGroup rgPreferencesDriverLocation;
     RadioButton rbPreferencesDriverLocationFixed;
     RadioButton rbPreferencesDriverLocationInterval;
+
+    RadioButton rbVehicleTypeMini;
+    RadioButton rbVehicleTypeHatchback;
+    RadioButton rbVehicleTypeSedan;
+    RadioButton rbVehicleTypeLuxury;
 
     EditText etPreferencesDriverLocationIntervalTime;
     final Runnable handleDriverLocationIntervalInputError = new Runnable() {
@@ -48,7 +58,8 @@ public class PreferencesFragment extends android.support.v4.app.Fragment impleme
         }
     };
     EditText etPreferencesCustomerDriverSearchRadiusInput;
-    Button btnPreferencesDriverLocationGetFixedLocation;
+    EditText etPreferencesCustomerVehicleMake;
+    EditText etPreferencesCustomerVehicleModel;
     static TextView tvPreferencesDriverLocationDisplay;
     int intLocationIntervalTime;
 
@@ -56,6 +67,10 @@ public class PreferencesFragment extends android.support.v4.app.Fragment impleme
 
     public static LatLng latLngDriverLocationFixed;
     public static boolean isPreferencesFragmentOpen;
+    
+    int userPreferencesVehicleType = -1;
+
+    LocationService mLocationService;
 
     @Nullable
     @Override
@@ -67,15 +82,35 @@ public class PreferencesFragment extends android.support.v4.app.Fragment impleme
         rbPreferencesDriverLocationInterval = (RadioButton) baseViewPreferencesFragment.findViewById(R.id.rb_preferences_driver_location_interval);
 
         switchPreferencesDriverServiceStatus = (Switch) baseViewPreferencesFragment.findViewById(R.id.switch_driver_availability);
-        btnPreferencesDriverLocationGetFixedLocation = (Button) baseViewPreferencesFragment.findViewById(R.id.btn_preferences_driver_location_fixed_set);
 
         etPreferencesDriverLocationIntervalTime = (EditText) baseViewPreferencesFragment.findViewById(R.id.et_preferences_driver_location_interval_time);
         etPreferencesCustomerDriverSearchRadiusInput = (EditText) baseViewPreferencesFragment.findViewById(R.id.et_preferences_customer_radius_for_driver);
+        etPreferencesCustomerVehicleMake = (EditText) baseViewPreferencesFragment.findViewById(R.id.et_preferences_customer_vehicle_make);
+        etPreferencesCustomerVehicleModel = (EditText) baseViewPreferencesFragment.findViewById(R.id.et_preferences_customer_vehicle_model);
 
-        btnPreferencesDriverLocationGetFixedLocation = (Button) baseViewPreferencesFragment.findViewById(R.id.btn_preferences_driver_location_fixed_set);
         tvPreferencesDriverLocationDisplay = (TextView) baseViewPreferencesFragment.findViewById(R.id.tv_preferences_driver_location);
         animTexViewFading = AnimationUtils.loadAnimation(getActivity(), R.anim.anim_text_complete_fading);
-        btnPreferencesDriverLocationGetFixedLocation.setOnClickListener(this);
+
+        rbVehicleTypeMini = (RadioButton) baseViewPreferencesFragment.findViewById(R.id.rb_preferences_customer_vehicle_type_mini);
+        rbVehicleTypeHatchback = (RadioButton) baseViewPreferencesFragment.findViewById(R.id.rb_preferences_customer_vehicle_type_hatchback);
+        rbVehicleTypeSedan = (RadioButton) baseViewPreferencesFragment.findViewById(R.id.rb_preferences_customer_vehicle_type_sedan);
+        rbVehicleTypeLuxury = (RadioButton) baseViewPreferencesFragment.findViewById(R.id.rb_preferences_customer_vehicle_type_luxury);
+
+        rbVehicleTypeMini.setOnCheckedChangeListener(this);
+        rbVehicleTypeHatchback.setOnCheckedChangeListener(this);
+        rbVehicleTypeSedan.setOnCheckedChangeListener(this);
+        rbVehicleTypeLuxury.setOnCheckedChangeListener(this);
+
+        llCustomerPreferences = (LinearLayout) baseViewPreferencesFragment.findViewById(R.id.layout_preferences_customer);
+        llDriverPreferences = (LinearLayout) baseViewPreferencesFragment.findViewById(R.id.layout_preferences_driver);
+
+        if (AppGlobals.getUserType() == 0) {
+            llCustomerPreferences.setVisibility(View.VISIBLE);
+            llCustomerPreferences.setVisibility(View.GONE);
+        } else {
+            llCustomerPreferences.setVisibility(View.GONE);
+            llDriverPreferences.setVisibility(View.VISIBLE);
+        }
 
         switchPreferencesDriverServiceStatus.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -93,12 +128,23 @@ public class PreferencesFragment extends android.support.v4.app.Fragment impleme
             public void onCheckedChanged(RadioGroup group, int checkedId) {
                 if (checkedId == R.id.rb_preferences_driver_location_fixed) {
                     etPreferencesDriverLocationIntervalTime.setVisibility(View.GONE);
-                    btnPreferencesDriverLocationGetFixedLocation.setVisibility(View.VISIBLE);
-                    tvPreferencesDriverLocationDisplay.setText("Your location will remain fixed on the map for the customer");
-                    tvPreferencesDriverLocationDisplay.setTextColor(Color.parseColor("#ffffff"));
+                    if (Helpers.isAnyLocationServiceAvailable()) {
+                        mLocationService = new LocationService(getActivity());
+                        tvPreferencesDriverLocationDisplay.setText("Acquiring Location");
+                        tvPreferencesDriverLocationDisplay.setTextColor(Color.parseColor("#ffa500"));
+                        tvPreferencesDriverLocationDisplay.startAnimation(animTexViewFading);
+                    } else {
+                        Helpers.AlertDialogWithPositiveNegativeNeutralFunctions(getActivity(), "Location Service disabled",
+                                "Enable device GPS to continue driver registration", "Settings", "Exit", "Re-Check",
+                                openLocationServiceSettings, closeRegistration, recheckLocationServiceStatus);
+                    }
+
                 } else if (checkedId == R.id.rb_preferences_driver_location_interval) {
+                    if (mLocationService != null) {
+                        mLocationService.stopLocationService();
+                    }
                     etPreferencesDriverLocationIntervalTime.setVisibility(View.VISIBLE);
-                    btnPreferencesDriverLocationGetFixedLocation.setVisibility(View.GONE);
+                    tvPreferencesDriverLocationDisplay.clearAnimation();
                     tvPreferencesDriverLocationDisplay.setText("Your location will be refreshed on set interval");
                     tvPreferencesDriverLocationDisplay.setTextColor(Color.parseColor("#ffffff"));
                 }
@@ -162,17 +208,6 @@ public class PreferencesFragment extends android.support.v4.app.Fragment impleme
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.btn_preferences_driver_location_fixed_set:
-                if (Helpers.isAnyLocationServiceAvailable()) {
-                    getActivity().startService(new Intent(getActivity(), DriverService.class));
-                    tvPreferencesDriverLocationDisplay.setText("Acquiring Location");
-                    tvPreferencesDriverLocationDisplay.setTextColor(Color.parseColor("#ffa500"));
-                    tvPreferencesDriverLocationDisplay.startAnimation(animTexViewFading);
-                } else {
-                    Helpers.AlertDialogWithPositiveNegativeNeutralFunctions(getActivity(), "Location Service disabled",
-                            "Enable device GPS to continue driver registration", "Settings", "Exit", "Re-Check",
-                            openLocationServiceSettings, closeRegistration, recheckLocationServiceStatus);
-                }
-
                 break;
         }
     }
@@ -223,5 +258,31 @@ public class PreferencesFragment extends android.support.v4.app.Fragment impleme
         tvPreferencesDriverLocationDisplay.clearAnimation();
         tvPreferencesDriverLocationDisplay.setText("Current location set as fixed location");
         tvPreferencesDriverLocationDisplay.setTextColor(Color.parseColor("#A4C639"));
+    }
+
+    @Override
+    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+        rbVehicleTypeMini.setChecked(false);
+        rbVehicleTypeHatchback.setChecked(false);
+        rbVehicleTypeSedan.setChecked(false);
+        rbVehicleTypeLuxury.setChecked(false);
+        switch (buttonView.getId()){
+            case R.id.rb_preferences_customer_vehicle_type_mini:
+                userPreferencesVehicleType = 0;
+                rbVehicleTypeMini.setChecked(isChecked);
+                break;
+            case R.id.rb_preferences_customer_vehicle_type_hatchback:
+                userPreferencesVehicleType = 1;
+                rbVehicleTypeHatchback.setChecked(isChecked);
+                break;
+            case R.id.rb_preferences_customer_vehicle_type_sedan:
+                userPreferencesVehicleType = 2;
+                rbVehicleTypeSedan.setChecked(isChecked);
+                break;
+            case R.id.rb_preferences_customer_vehicle_type_luxury:
+                userPreferencesVehicleType = 3;
+                rbVehicleTypeLuxury.setChecked(isChecked);
+                break;
+        }
     }
 }

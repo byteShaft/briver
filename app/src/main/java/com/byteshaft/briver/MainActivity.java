@@ -7,11 +7,13 @@ import android.support.design.internal.NavigationMenuView;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
@@ -69,6 +71,9 @@ public class MainActivity extends AppCompatActivity
         disableNavigationViewScrollbars(navigationView);
 
         navigationView.getMenu().getItem(0).setChecked(true);
+        FragmentTransaction tx = getSupportFragmentManager().beginTransaction();
+        tx.replace(R.id.container_main, new HomeFragment()).addToBackStack("HomeFragment");
+        tx.commit();
 
         navigationView.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
             @Override
@@ -82,6 +87,10 @@ public class MainActivity extends AppCompatActivity
                 tvPersonEmail.setText(AppGlobals.getUsername());
             }
         });
+
+        if (AppGlobals.getUserType() == 1) {
+            navigationView.getMenu().getItem(1).setVisible(false);
+        }
     }
 
     @Override
@@ -90,12 +99,15 @@ public class MainActivity extends AppCompatActivity
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
         } else {
-            if (fragmentManager.getBackStackEntryCount() > 0) {
-                fragmentManager.popBackStack(0, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+            if (fragmentManager.getBackStackEntryCount() > 1) {
+                fragmentManager.popBackStack(1, FragmentManager.POP_BACK_STACK_INCLUSIVE);
                 navigationView.getMenu().getItem(0).setChecked(true);
                 toolbar.setTitle("Home");
+                Log.i("Back", "Frag");
             } else {
                 super.onBackPressed();
+                super.onBackPressed();
+                Log.i("Back", "Main");
             }
         }
     }

@@ -1,18 +1,26 @@
 package com.byteshaft.briver.utils;
 
+import android.Manifest;
+import android.app.Activity;
 import android.app.Application;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.preference.PreferenceManager;
+import android.support.v4.app.ActivityCompat;
+
+import com.byteshaft.briver.MainActivity;
+import com.byteshaft.briver.WelcomeActivity;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GoogleApiAvailability;
 
 /**
  * Created by fi8er1 on 26/04/2016.
  */
 public class AppGlobals extends Application {
 
-
-    private static Context sContext;
-    private static SharedPreferences sPreferences;
+    public static final int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
     private static final String LOGGED_IN = "logged_in";
     private static final String USER_NAME = "user_name";
     private static final String PERSON_NAME = "person_name";
@@ -22,24 +30,19 @@ public class AppGlobals extends Application {
     private static final String TOKEN = "token";
     private static final String GCM_TOKEN = "gcm_token";
     private static final String USER_DATA = "user_data";
+    private static Context sContext;
+    private static SharedPreferences sPreferences;
 
-    @Override
-    public void onCreate() {
-        super.onCreate();
-        sContext = getApplicationContext();
-        sPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-    }
-
-    public static Context getContext()   {
+    public static Context getContext() {
         return sContext;
-    }
-
-    public static void setLoggedIn(boolean loggedIn) {
-        sPreferences.edit().putBoolean(LOGGED_IN, loggedIn).apply();
     }
 
     public static boolean isLoggedIn() {
         return sPreferences.getBoolean(LOGGED_IN, false);
+    }
+
+    public static void setLoggedIn(boolean loggedIn) {
+        sPreferences.edit().putBoolean(LOGGED_IN, loggedIn).apply();
     }
 
     public static void putUsername(String username) {
@@ -49,7 +52,6 @@ public class AppGlobals extends Application {
     public static String getUsername() {
         return sPreferences.getString(USER_NAME, null);
     }
-
 
     public static void saveUserDataForPushNotifications(String userData) {
         sPreferences.edit().putString(USER_DATA, userData).apply();
@@ -78,9 +80,11 @@ public class AppGlobals extends Application {
     public static String getPeronName() {
         return sPreferences.getString(PERSON_NAME, null);
     }
+
     public static void putPersonName(String name) {
         sPreferences.edit().putString(PERSON_NAME, name).apply();
     }
+
     public static int getUserType() {
         return sPreferences.getInt(USER_TYPE, 0);
     }
@@ -88,7 +92,6 @@ public class AppGlobals extends Application {
     public static void putUserType(int userType) {
         sPreferences.edit().putInt(USER_TYPE, userType).apply();
     }
-
 
     public static int getDriverLocationReportingIntervalTime() {
         return sPreferences.getInt(LOCATION_INTERVAL, 2);
@@ -98,12 +101,48 @@ public class AppGlobals extends Application {
         sPreferences.edit().putInt(LOCATION_INTERVAL, interval).apply();
     }
 
-
     public static void putUserPassword(String password) {
         sPreferences.edit().putString(USER_PASSWORD, password).apply();
     }
 
     public static String getUserPassword() {
         return sPreferences.getString(USER_PASSWORD, null);
+    }
+
+    public static boolean locationPermissionsAllowedForMarshmallow() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            return true;
+        }
+        return ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED;
+    }
+
+    public static Activity getRunningActivityInstance() {
+        if (MainActivity.isMainActivityRunning) {
+            return MainActivity.getInstance();
+        } else if (WelcomeActivity.isWelcomeActivityRunning) {
+            return WelcomeActivity.getInstance();
+        }
+        return null;
+    }
+
+    public static boolean checkPlayServicesAvailability() {
+        GoogleApiAvailability apiAvailability = GoogleApiAvailability.getInstance();
+        int resultCode = apiAvailability.isGooglePlayServicesAvailable(getRunningActivityInstance());
+        if (resultCode != ConnectionResult.SUCCESS) {
+            Helpers.AlertDialogWithPositiveNegativeFunctions(getRunningActivityInstance(), "PlayServices not found",
+                    "You need to install Google Play Services to continue using Briver", "Install", "Exit App", Helpers.openPlayServicesInstallation, Helpers.exitApp);
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        sContext = getApplicationContext();
+        sPreferences = PreferenceManager.getDefaultSharedPreferences(this);
     }
 }

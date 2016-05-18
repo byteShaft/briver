@@ -1,8 +1,10 @@
 package com.byteshaft.briver.fragments;
 
+import android.Manifest;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.content.DialogInterface;
+import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
@@ -11,6 +13,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AlertDialog;
 import android.text.Editable;
@@ -82,7 +85,7 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
     private String inputMapSearch;
     int totalHoursOfService;
     private int mYear, mMonth, mDay, mHour, mMinute;
-    final CharSequence[] itemsForHoursSelectingDialog = {" 2 Hours ", " 4 Hours ", " 6 Hours ", " 8 Hours "};
+    final CharSequence[] itemsForHoursSelectingDialog = {"2 Hours", "4 Hours", "6 Hours", "8 Hours", "12 Hours", "24 Hours", "48 Hours"};
 
     @Nullable
     @Override
@@ -114,6 +117,19 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
                 mMap = googleMap;
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(22.685677, 79.408410), 4.0f));
 
+                if (ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                    // TODO: Consider calling
+                    //    ActivityCompat#requestPermissions
+                    // here to request the missing permissions, and then overriding
+                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                    //                                          int[] grantResults)
+                    // to handle the case where the user grants the permission. See the documentation
+                    // for ActivityCompat#requestPermissions for more details.
+                        Helpers.AlertDialogWithPositiveNegativeFunctions(AppGlobals.getRunningActivityInstance(), "Permission Denied",
+                                "You need to grant permissions to use Location Services for Briver", "Settings",
+                                "Exit App", Helpers.openPermissionsSettingsForMarshmallow, Helpers.exitApp);
+                    return;
+                }
                 mMap.setMyLocationEnabled(true);
                 mMap.getUiSettings().setMyLocationButtonEnabled(false);
                 mMap.getUiSettings().setCompassEnabled(true);
@@ -259,7 +275,7 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
                 AlertDialog levelDialogQuickHire;
 
                 final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-                builder.setTitle("Select service duration");
+                builder.setTitle("Choose Service Duration");
                 builder.setCancelable(false);
                 builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
                     @Override
@@ -283,8 +299,17 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
                             case 3:
                                 totalHoursOfService = 8;
                                 break;
+                            case 4:
+                                totalHoursOfService = 12;
+                                break;
+                            case 5:
+                                totalHoursOfService = 24;
+                                break;
+                            case 6:
+                                totalHoursOfService = 48;
+                                break;
                         }
-                        Log.i("SelectedHoursOfService", " " + totalHoursOfService);
+                        Log.i("SelectedHoursOfService", "" + totalHoursOfService);
                         dialog.dismiss();
                     }
                 });
@@ -320,8 +345,17 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
                             case 3:
                                 totalHoursOfService = 8;
                                 break;
+                            case 4:
+                                totalHoursOfService = 12;
+                                break;
+                            case 5:
+                                totalHoursOfService = 24;
+                                break;
+                            case 6:
+                                totalHoursOfService = 48;
+                                break;
                         }
-                        Log.i("SelectedHoursOfService", " " + totalHoursOfService);
+                        Log.i("SelectedHoursOfService", "" + totalHoursOfService);
                         final TimePickerDialog tpd = new TimePickerDialog(getActivity(),
                                 new TimePickerDialog.OnTimeSetListener() {
                                     @Override
@@ -362,7 +396,7 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
         inflater.inflate(R.menu.menu_map, menu);
         actionsMenu = menu;
         if (AppGlobals.getUserType() == 1) {
-            actionsMenu.getItem(0).setVisible(false);
+//            actionsMenu.getItem(0).setVisible(false);
         }
     }
 
@@ -375,39 +409,13 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
             case R.id.action_current_location:
                 if (Helpers.isAnyLocationServiceAvailable()) {
                     if (mMap != null) {
-                        if (AppGlobals.getUserType() == 0) {
                             currentLatLngAuto = new LatLng(mMap.getMyLocation().getLatitude(), mMap.getMyLocation().getLongitude());
-                            if (currentLatLngAuto != null) {
-                                CameraPosition cameraPosition =
-                                        new CameraPosition.Builder()
-                                                .target(currentLatLngAuto)
-                                                .zoom(16.0f)
-                                                .build();
-                                mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
-                            } else {
-                                Toast.makeText(getActivity(), "Location is not available at the moment", Toast.LENGTH_SHORT).show();
-                            }
-                        }
-//                     if (AppGlobals.getUserType() == 1) {
-//                         if (DriverService.driverLocationReportingServiceIsRunning && DriverService.driverCurrentLocation != null) {
-//                             CameraPosition cameraPosition =
-//                                     new CameraPosition.Builder()
-//                                             .target(DriverService.driverCurrentLocation)
-//                                             .zoom(16.0f)
-//                                             .build();
-//                             mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
-//                         } else if (!DriverService.driverLocationReportingServiceIsRunning && mMap != null) {
-//                             currentLatLngAuto = new LatLng(mMap.getMyLocation().getLatitude(), mMap.getMyLocation().getLongitude());
-//                             CameraPosition cameraPosition =
-//                                     new CameraPosition.Builder()
-//                                             .target(currentLatLngAuto)
-//                                             .zoom(16.0f)
-//                                             .build();
-//                             mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
-//                         } else {
-//                             Toast.makeText(getActivity(), "Location is not available at the moment", Toast.LENGTH_SHORT).show();
-//                         }
-//                     }
+                        CameraPosition cameraPosition =
+                                new CameraPosition.Builder()
+                                        .target(currentLatLngAuto)
+                                        .zoom(16.0f)
+                                        .build();
+                        mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
                     } else {
                         Toast.makeText(getActivity(), "Error: Map not ready", Toast.LENGTH_SHORT).show();
                     }
