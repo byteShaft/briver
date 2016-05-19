@@ -21,6 +21,7 @@ import com.google.android.gms.common.GoogleApiAvailability;
 public class AppGlobals extends Application {
 
     public static final int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
+    private static final String DRIVER_SEARCH_RADIUS = "driver_radius";
     private static final String LOGGED_IN = "logged_in";
     private static final String USER_NAME = "user_name";
     private static final String PERSON_NAME = "person_name";
@@ -30,6 +31,7 @@ public class AppGlobals extends Application {
     private static final String TOKEN = "token";
     private static final String GCM_TOKEN = "gcm_token";
     private static final String USER_DATA = "user_data";
+    private static final String FIRST_RUN_HIRE_FRAGMENT = "first_run_hire_fragment";
     private static Context sContext;
     private static SharedPreferences sPreferences;
 
@@ -45,12 +47,28 @@ public class AppGlobals extends Application {
         sPreferences.edit().putBoolean(LOGGED_IN, loggedIn).apply();
     }
 
+    public static boolean isHireFragmentFirstRun() {
+        return sPreferences.getBoolean(FIRST_RUN_HIRE_FRAGMENT, true);
+    }
+
+    public static void setHireFragementFirstRun(boolean firstRunHireFragment) {
+        sPreferences.edit().putBoolean(FIRST_RUN_HIRE_FRAGMENT, firstRunHireFragment).apply();
+    }
+
     public static void putUsername(String username) {
         sPreferences.edit().putString(USER_NAME, username).apply();
     }
 
     public static String getUsername() {
         return sPreferences.getString(USER_NAME, null);
+    }
+
+    public static void putDriverSearchRadius(int radius) {
+        sPreferences.edit().putInt(DRIVER_SEARCH_RADIUS, radius).apply();
+    }
+
+    public static int getDriverSearchRadius() {
+        return sPreferences.getInt(DRIVER_SEARCH_RADIUS, 15);
     }
 
     public static void saveUserDataForPushNotifications(String userData) {
