@@ -11,8 +11,7 @@ import com.byteshaft.briver.R;
 /**
  * Created by fi8er1 on 18/05/2016.
  */
-public class NearbyDriversFragment extends android.support.v4.app.Fragment implements {
-
+public class NearbyDriversFragment extends android.support.v4.app.Fragment {
 
     View baseViewNearbyDriversFragment;
 
@@ -22,11 +21,6 @@ public class NearbyDriversFragment extends android.support.v4.app.Fragment imple
         baseViewNearbyDriversFragment = inflater.inflate(R.layout.fragment_contact_us, container, false);
 
         return baseViewNearbyDriversFragment;
-    }
-
-    @Override
-    public void onClick(View v) {
-
     }
 
 }

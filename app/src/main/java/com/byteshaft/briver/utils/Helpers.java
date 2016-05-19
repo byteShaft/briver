@@ -2,6 +2,7 @@ package com.byteshaft.briver.utils;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -19,8 +20,10 @@ import android.support.design.widget.Snackbar;
 import android.view.Gravity;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.Button;
 import android.widget.TextView;
 
+import com.byteshaft.briver.R;
 import com.google.android.gms.maps.model.LatLng;
 
 import java.io.IOException;
@@ -68,15 +71,15 @@ public class Helpers {
     public static String getAddress(Context context, LatLng latLng) {
         Geocoder geocoder;
         List<Address> addresses;
-        String address = null;
+        String address;
         geocoder = new Geocoder(context, Locale.getDefault());
         try {
             addresses = geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1);
             address = addresses.get(0).getAddressLine(0);
         } catch (IOException e) {
+            address = "Address not found";
             e.printStackTrace();
         }
-
         return address;
     }
 
@@ -216,6 +219,73 @@ public class Helpers {
                     }
                 })
                 .show();
+    }
+
+
+
+    public static void customDialogWithPositiveFunctionNegativeButtonForOnMapMarkerClickHiring (
+            Context context, String fullName, String eMail, String contact, String address,
+            String locationLastUpdated, String experience, String numberOfHires, String bio,
+            final Runnable listenerYes) {
+        final Dialog onMapMarkerClickHireDialog = new Dialog(context);
+        onMapMarkerClickHireDialog.setContentView(R.layout.layout_on_map_marker_click_hire_dialog);
+
+        onMapMarkerClickHireDialog.setCancelable(false);
+        onMapMarkerClickHireDialog.setTitle("QuickHire this driver?");
+
+        TextView tvFullName = (TextView) onMapMarkerClickHireDialog.findViewById(R.id.tv_driver_hire_dialog_full_name);
+        tvFullName.setText("Name: " + fullName);
+
+        TextView tvEmail = (TextView) onMapMarkerClickHireDialog.findViewById(R.id.tv_driver_hire_dialog_email);
+        tvEmail.setText("Email: " + eMail);
+
+        TextView tvContact = (TextView) onMapMarkerClickHireDialog.findViewById(R.id.tv_driver_hire_dialog_contact);
+        tvContact.setText("Contact: " + contact);
+
+        TextView tvNumberOfHires = (TextView) onMapMarkerClickHireDialog.findViewById(R.id.tv_driver_hire_dialog_number_of_hires);
+        tvNumberOfHires.setText("Total Hires: " + numberOfHires);
+
+        TextView tvAddress = (TextView) onMapMarkerClickHireDialog.findViewById(R.id.tv_driver_hire_dialog_address);
+        tvAddress.setText("Address: " + address);
+
+        TextView tvLocationLastUpdated = (TextView) onMapMarkerClickHireDialog.findViewById(R.id.tv_driver_hire_dialog_location_last_updated);
+        tvLocationLastUpdated.setText("Location Last Updated: " + locationLastUpdated);
+
+        TextView tvExperience = (TextView) onMapMarkerClickHireDialog.findViewById(R.id.tv_driver_hire_dialog_driving_experience);
+        int experienceInt = -1;
+        try {
+            experienceInt = Integer.parseInt(experience);
+        } catch (NumberFormatException ignored) {}
+
+        if (experienceInt < 2) {
+            tvExperience.setText("Driving Experience: " + experience + " " + "Year");
+        } else {
+            tvExperience.setText("Driving Experience: " + experience + " " + "Years");
+        }
+
+        TextView tvBio = (TextView) onMapMarkerClickHireDialog.findViewById(R.id.tv_driver_hire_dialog_bio);
+        if (bio.trim().length() > 1) {
+            tvBio.setText("Bio: " + bio);
+        } else {
+            tvBio.setVisibility(View.GONE);
+        }
+
+        Button buttonNo = (Button) onMapMarkerClickHireDialog.findViewById(R.id.btn_driver_hire_dialog_cancel);
+        buttonNo.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onMapMarkerClickHireDialog.dismiss();
+            }
+        });
+
+        Button buttonYes = (Button) onMapMarkerClickHireDialog.findViewById(R.id.btn_driver_hire_dialog_hire);
+        buttonYes.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                listenerYes.run();
+            }
+        });
+        onMapMarkerClickHireDialog.show();
     }
 
     public static String secondsToMinutesSeconds(int seconds) {
