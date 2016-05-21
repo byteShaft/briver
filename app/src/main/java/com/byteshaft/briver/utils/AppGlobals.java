@@ -1,14 +1,10 @@
 package com.byteshaft.briver.utils;
 
-import android.Manifest;
 import android.app.Activity;
 import android.app.Application;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
-import android.os.Build;
 import android.preference.PreferenceManager;
-import android.support.v4.app.ActivityCompat;
 
 import com.byteshaft.briver.MainActivity;
 import com.byteshaft.briver.WelcomeActivity;
@@ -31,6 +27,12 @@ public class AppGlobals extends Application {
     private static final String TOKEN = "token";
     private static final String GCM_TOKEN = "gcm_token";
     private static final String USER_DATA = "user_data";
+    private static final String DRIVER_BIO = "driver_bio";
+    private static final String DRIVING_EXPERIENCE = "driving_experience";
+    private static final String VEHICLE_TYPE = "vehicle_type";
+    private static final String VEHICLE_MAKE = "vehicle_make";
+    private static final String VEHICLE_MODEL = "vehicle_model";
+    private static final String NUMBER_OF_HIRES = "total_hires";
     private static final String FIRST_RUN_HIRE_FRAGMENT = "first_run_hire_fragment";
     private static Context sContext;
     private static SharedPreferences sPreferences;
@@ -51,7 +53,7 @@ public class AppGlobals extends Application {
         return sPreferences.getBoolean(FIRST_RUN_HIRE_FRAGMENT, true);
     }
 
-    public static void setHireFragementFirstRun(boolean firstRunHireFragment) {
+    public static void setHireFragmentFirstRun(boolean firstRunHireFragment) {
         sPreferences.edit().putBoolean(FIRST_RUN_HIRE_FRAGMENT, firstRunHireFragment).apply();
     }
 
@@ -61,6 +63,46 @@ public class AppGlobals extends Application {
 
     public static String getUsername() {
         return sPreferences.getString(USER_NAME, null);
+    }
+
+    public static void putVehicleMake(String vehicleMake) {
+        sPreferences.edit().putString(VEHICLE_MAKE, vehicleMake).apply();
+    }
+
+    public static String getVehicleMake() {
+        return sPreferences.getString(VEHICLE_MAKE, null);
+    }
+
+    public static void putVehicleModel(String vehicleModel) {
+        sPreferences.edit().putString(VEHICLE_MODEL, vehicleModel).apply();
+    }
+
+    public static String getVehicleModel() {
+        return sPreferences.getString(USER_NAME, null);
+    }
+
+    public static void putDriverBio(String bio) {
+        sPreferences.edit().putString(DRIVER_BIO, bio).apply();
+    }
+
+    public static String getDriverBio() {
+        return sPreferences.getString(DRIVER_BIO, null);
+    }
+
+    public static void putVehicleType(int vehicleType) {
+        sPreferences.edit().putInt(VEHICLE_TYPE, vehicleType).apply();
+    }
+
+    public static int getVehicleType() {
+        return sPreferences.getInt(VEHICLE_TYPE, 2);
+    }
+
+    public static void putDrivingExperience(int drivingExperience) {
+        sPreferences.edit().putInt(DRIVING_EXPERIENCE, drivingExperience).apply();
+    }
+
+    public static int getDrivingExperience() {
+        return sPreferences.getInt(DRIVING_EXPERIENCE, -1);
     }
 
     public static void putDriverSearchRadius(int radius) {
@@ -103,6 +145,14 @@ public class AppGlobals extends Application {
         sPreferences.edit().putString(PERSON_NAME, name).apply();
     }
 
+    public static int getNumberOfHires() {
+        return sPreferences.getInt(NUMBER_OF_HIRES, 0);
+    }
+
+    public static void putNumberOfHires(int hires) {
+        sPreferences.edit().putInt(NUMBER_OF_HIRES, hires).apply();
+    }
+
     public static int getUserType() {
         return sPreferences.getInt(USER_TYPE, 0);
     }
@@ -110,6 +160,7 @@ public class AppGlobals extends Application {
     public static void putUserType(int userType) {
         sPreferences.edit().putInt(USER_TYPE, userType).apply();
     }
+
 
     public static int getDriverLocationReportingIntervalTime() {
         return sPreferences.getInt(LOCATION_INTERVAL, 2);
@@ -126,15 +177,15 @@ public class AppGlobals extends Application {
     public static String getUserPassword() {
         return sPreferences.getString(USER_PASSWORD, null);
     }
-
-    public static boolean locationPermissionsAllowedForMarshmallow() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-            return true;
-        }
-        return ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION)
-                == PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION)
-                == PackageManager.PERMISSION_GRANTED;
-    }
+//
+//    public static boolean locationPermissionsAllowedForMarshmallow() {
+//        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+//            return true;
+//        }
+//        return ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION)
+//                == PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION)
+//                == PackageManager.PERMISSION_GRANTED;
+//    }
 
     public static Activity getRunningActivityInstance() {
         if (MainActivity.isMainActivityRunning) {

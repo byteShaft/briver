@@ -21,6 +21,7 @@ import android.widget.RadioGroup;
 import android.widget.Toast;
 
 import com.byteshaft.briver.R;
+import com.byteshaft.briver.utils.AppGlobals;
 import com.byteshaft.briver.utils.DriverService;
 import com.byteshaft.briver.utils.EndPoints;
 import com.byteshaft.briver.utils.Helpers;
@@ -84,6 +85,9 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
 
     Button btnCreateUser;
 
+    RegisterUserTask taskRegisterUser;
+    boolean isUserRegistrationTaskRunning;
+
     public static View baseViewRegisterFragment;
 
     @Nullable
@@ -142,6 +146,7 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
                     llRegisterElements.setVisibility(View.VISIBLE);
                     llRegisterElementsDriver.setVisibility(View.VISIBLE);
                     registerUserType = 1;
+                    if (AppGlobals.checkPlayServicesAvailability()) {
                     if (Helpers.isAnyLocationServiceAvailable()) {
                         mLocationService = new LocationService(getActivity());
                         Helpers.showSnackBar(baseViewRegisterFragment, "Acquiring location for registration", Snackbar.LENGTH_SHORT, "#ffffff");
@@ -150,10 +155,11 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
                                 "Enable device GPS to continue driver registration", "Settings", "Exit", "Re-Check",
                                 openLocationServiceSettings, closeRegistration, recheckLocationServiceStatus);
                     }
+
+                    }
                 }
             }
         });
-
         return baseViewRegisterFragment;
     }
 
@@ -177,7 +183,7 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
                     if (registerUserType == 1) {
                     if (latLngDriverLocationForRegistration != null) {
                         driverLocationToString = latLngDriverLocationForRegistration.latitude + "," + latLngDriverLocationForRegistration.longitude;
-                        new RegisterUserTask().execute();
+                        taskRegisterUser = (RegisterUserTask) new RegisterUserTask().execute();
                     } else {
                         driverLocationToString = null;
                         Helpers.AlertDialogWithPositiveFunctionNegativeButton(getActivity(), "Location Unavailable",
@@ -308,6 +314,9 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
         if (DriverService.driverLocationReportingServiceIsRunning) {
             getActivity().stopService(new Intent(getActivity(), DriverService.class));
         }
+        if (isUserRegistrationTaskRunning) {
+            taskRegisterUser.cancel(true);
+        }
     }
 
     @Override
@@ -403,7 +412,6 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
                         sb.append((char) ch);
                 } catch (IOException e) {
                     e.printStackTrace();
-                    onRegistrationFailed();
                 }
             return null;
         }
@@ -414,8 +422,10 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
             Helpers.dismissProgressDialog();
             if (responseCode == 201) {
                 onRegistrationSuccess();
+            } else if (responseCode == 400) {
+                onRegistrationFailed("Registration failed. Email already in use");
             } else {
-                onRegistrationFailed();
+                onRegistrationFailed("Registration failed. Check internet and retry");
             }
         }
     }
@@ -428,8 +438,8 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
         CodeConfirmationFragment.isFragmentOpenedFromLogin = false;
     }
 
-    public void onRegistrationFailed() {
-        Helpers.showSnackBar(baseViewRegisterFragment, "Registration failed, check internet and retry", Snackbar.LENGTH_SHORT, "#f44336");
+    public void onRegistrationFailed(String message) {
+        Helpers.showSnackBar(baseViewRegisterFragment, message, Snackbar.LENGTH_SHORT, "#f44336");
     }
 
     public static String getRegistrationStringForCustomer(
@@ -474,4 +484,6 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
             new RegisterUserTask().execute();
         }
     };
+
+
 }

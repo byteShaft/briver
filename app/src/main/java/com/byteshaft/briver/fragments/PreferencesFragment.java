@@ -106,7 +106,7 @@ public class PreferencesFragment extends android.support.v4.app.Fragment impleme
 
         if (AppGlobals.getUserType() == 0) {
             llCustomerPreferences.setVisibility(View.VISIBLE);
-            llCustomerPreferences.setVisibility(View.GONE);
+            llDriverPreferences.setVisibility(View.GONE);
         } else {
             llCustomerPreferences.setVisibility(View.GONE);
             llDriverPreferences.setVisibility(View.VISIBLE);

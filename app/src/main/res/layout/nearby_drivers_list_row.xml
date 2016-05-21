@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_margin="10dp"
+        android:padding="10dp"
+        android:background="@drawable/background_edit_text">
+
+        <RatingBar
+            android:id="@+id/rBar_nearby_drivers_list"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:numStars="5"
+            android:rating="4.3"
+            android:isIndicator="true"/>
+
+        <TextView
+            android:id="@+id/tv_rBar_nearby_driver_list"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="(43)"
+            android:layout_gravity="center_horizontal"
+            android:textColor="#ffffff"
+            android:textSize="16dp" />
+
+        <TextView
+            android:id="@+id/tv_nearby_drivers_list_full_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="15dp"
+            android:layout_marginLeft="10dp"
+            android:textColor="#ffffff"
+            android:textSize="16dp"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="30dp"
+            android:layout_marginRight="10dp"
+            android:layout_marginBottom="10dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tv_nearby_drivers_list_email"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#ffffff"
+                android:textSize="14dp" />
+
+            <TextView
+                android:id="@+id/tv_nearby_drivers_contact"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#ffffff"
+                android:textSize="14dp" />
+
+            <TextView
+                android:id="@+id/tv_nearby_drivers_total_hires"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#ffffff"
+                android:textSize="14dp" />
+
+            <TextView
+                android:id="@+id/tv_nearby_drivers_address"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#ffffff"
+                android:textSize="14dp" />
+
+            <TextView
+                android:id="@+id/tv_nearby_drivers_driving_experience"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#ffffff"
+                android:textSize="14dp" />
+
+            <TextView
+                android:id="@+id/tv_nearby_drivers_location_last_updated"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#ffffff"
+                android:textSize="14dp" />
+
+
+            <TextView
+                android:id="@+id/tv_nearby_drivers_bio"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#ffffff"
+                android:textSize="14dp" />
+        </LinearLayout>
+    </LinearLayout>
+
+</LinearLayout>

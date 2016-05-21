@@ -99,7 +99,9 @@ public class MainActivity extends AppCompatActivity
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
         } else {
-            if (fragmentManager.getBackStackEntryCount() > 1) {
+            if (fragmentManager.getBackStackEntryCount() == 2) {
+                fragmentManager.popBackStack();
+            } else if (fragmentManager.getBackStackEntryCount() > 2) {
                 fragmentManager.popBackStack(1, FragmentManager.POP_BACK_STACK_INCLUSIVE);
                 navigationView.getMenu().getItem(0).setChecked(true);
                 toolbar.setTitle("Home");
@@ -161,7 +163,6 @@ public class MainActivity extends AppCompatActivity
             new Handler().postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    FragmentManager fragmentManager = getSupportFragmentManager();
                     fragmentManager.beginTransaction().replace(R.id.container_main, fragment).addToBackStack(fragmentName).commit();
                 }
             }, 350);

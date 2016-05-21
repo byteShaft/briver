@@ -37,6 +37,8 @@ public class ChangePasswordFragment extends android.support.v4.app.Fragment impl
 
     Button btnChangePassword;
 
+    ChangePasswordTask taskChangePassword;
+    boolean isChangePasswordTaskRunning;
 
     HttpURLConnection connection;
     public static int responseCode;
@@ -118,6 +120,7 @@ public class ChangePasswordFragment extends android.support.v4.app.Fragment impl
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
+            isChangePasswordTaskRunning = true;
         }
 
         @Override
@@ -150,6 +153,7 @@ public class ChangePasswordFragment extends android.support.v4.app.Fragment impl
         @Override
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
+            isChangePasswordTaskRunning = false;
             if (responseCode == 200) {
                 Helpers.dismissProgressDialog();
                 onPasswordChangeSuccess();
@@ -157,6 +161,12 @@ public class ChangePasswordFragment extends android.support.v4.app.Fragment impl
                 onPasswordChangeFailed("Password Change Failed");
                 Helpers.dismissProgressDialog();
             }
+        }
+
+        @Override
+        protected void onCancelled() {
+            super.onCancelled();
+            isChangePasswordTaskRunning = false;
         }
     }
 
@@ -184,4 +194,11 @@ public class ChangePasswordFragment extends android.support.v4.app.Fragment impl
         Helpers.showSnackBar(getView(), message, Snackbar.LENGTH_LONG, "#f44336");
     }
 
+    @Override
+    public void onPause() {
+        super.onPause();
+        if (isChangePasswordTaskRunning) {
+            taskChangePassword.cancel(true);
+        }
+    }
 }
