@@ -17,6 +17,7 @@ import com.byteshaft.briver.R;
 /**
  * Created by fi8er1 on 01/05/2016.
  */
+
 public class TimelineFragment extends android.support.v4.app.Fragment implements View.OnClickListener {
 
     View baseViewTimelineFragment;
@@ -32,7 +33,6 @@ public class TimelineFragment extends android.support.v4.app.Fragment implements
 
         mViewPager = (ViewPager) baseViewTimelineFragment.findViewById(R.id.container_timeline_tabs);
         mViewPager.setAdapter(mSectionsPagerAdapter);
-
 
         TabLayout tabLayout = (TabLayout) baseViewTimelineFragment.findViewById(R.id.tabs_timeline);
         tabLayout.setupWithViewPager(mViewPager);
@@ -83,8 +83,6 @@ public class TimelineFragment extends android.support.v4.app.Fragment implements
          * fragment.
          */
 
-        private FragmentManager fm;
-
         public PlaceholderFragment() {
 
         }
@@ -109,7 +107,6 @@ public class TimelineFragment extends android.support.v4.app.Fragment implements
             View rootView = null;
             if (tabCount == 1) {
                 rootView = inflater.inflate(R.layout.timeline_tab_fragment_confirmed_hires, container, false);
-
 
             } else if (tabCount == 2) {
                 rootView = inflater.inflate(R.layout.timeline_tab_fragement_pending_hires, container, false);

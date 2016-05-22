@@ -237,7 +237,9 @@ public class Helpers {
                 .setNegativeButton(negativeButtonText, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        listenerNo.run();
+                        if (listenerNo != null) {
+                            listenerNo.run();
+                        }
                     }
                 })
                 .setNeutralButton(neutralButtonText, new DialogInterface.OnClickListener() {
@@ -453,6 +455,22 @@ public class Helpers {
 
     public static String replaceFirstThreeCharacters(String s) {
         return "***" + s.substring(3);
+    }
+
+    public static void initiateCallIntent(Activity activity, String number) {
+        Intent intent = new Intent(Intent.ACTION_DIAL);
+        intent.setData(Uri.parse("tel:" + number));
+        activity.startActivity(intent);
+    }
+
+    public static void initiateEmailIntent(Activity activity, String email, String subject, String message) {
+        Intent intent = new Intent(Intent.ACTION_SEND);
+        intent.setType("message/plain");
+        intent.putExtra(Intent.EXTRA_EMAIL, new String[] {email});
+        intent.putExtra(Intent.EXTRA_SUBJECT, subject);
+        intent.putExtra(Intent.EXTRA_TEXT, message);
+        Intent mailer = Intent.createChooser(intent, null);
+        activity.startActivity(mailer);
     }
 
 }

@@ -265,6 +265,18 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
                 AppGlobals.putPersonName(jsonObject.getString("full_name"));
                 AppGlobals.putUsername(jsonObject.getString("email"));
                 AppGlobals.putUserType(jsonObject.getInt("user_type"));
+                AppGlobals.putNumberOfHires(jsonObject.getInt("number_of_hires"));
+                AppGlobals.putPhoneNumber(jsonObject.getString("phone_number"));
+
+                if (jsonObject.getInt("user_type") == 0) {
+//                    AppGlobals.putDriverSearchRadius(jsonObject.getInt(""));
+                    AppGlobals.putVehicleType(jsonObject.getInt("vehicle_type"));
+                    AppGlobals.putVehicleMake(jsonObject.getString("vehicle_make"));
+                    AppGlobals.putVehicleModel(jsonObject.getString("vehicle_model"));
+                } else if (jsonObject.getInt("user_type") == 1) {
+                    AppGlobals.putDrivingExperience(jsonObject.getInt("driving_experience"));
+                    AppGlobals.putDriverBio(jsonObject.getString("bio"));
+                }
 
             } catch (IOException e) {
                 e.printStackTrace();

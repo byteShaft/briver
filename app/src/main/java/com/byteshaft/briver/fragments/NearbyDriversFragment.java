@@ -17,6 +17,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import com.byteshaft.briver.R;
+import com.byteshaft.briver.utils.AppGlobals;
 import com.byteshaft.briver.utils.Helpers;
 import com.google.android.gms.maps.model.LatLng;
 
@@ -83,8 +84,8 @@ public class NearbyDriversFragment extends android.support.v4.app.Fragment {
                 viewHolder = (ViewHolder) convertView.getTag();
             }
             viewHolder.tvNearbyDriversListFullName.setText("Driver Name: " + HireFragment.hashMapDriverData.get(arrayListIntIds.get(position)).get(0));
-            viewHolder.tvNearbyDriversListEmail.setText("Email: " + HireFragment.hashMapDriverData.get(arrayListIntIds.get(position)).get(1));
-            viewHolder.tvNearbyDriversListContact.setText("Contact: " + HireFragment.hashMapDriverData.get(arrayListIntIds.get(position)).get(2));
+            viewHolder.tvNearbyDriversListEmail.setText("Email: " + Helpers.replaceFirstThreeCharacters(HireFragment.hashMapDriverData.get(arrayListIntIds.get(position)).get(1)));
+            viewHolder.tvNearbyDriversListContact.setText("Contact: " + Helpers.replaceLastThreeCharacters(HireFragment.hashMapDriverData.get(arrayListIntIds.get(position)).get(2)));
             viewHolder.tvNearbyDriversListTotalHires.setText("Total Hires: " + HireFragment.hashMapDriverData.get(arrayListIntIds.get(position)).get(6));
             viewHolder.tvNearbyDriversListAddress.setText("Address: " + hashMapDriverAddresses.get(driversId.get(position)));
             viewHolder.tvNearbyDriversListDrivingExperience.setText("Driving Experience: " + HireFragment.hashMapDriverData.get(arrayListIntIds.get(position)).get(5));
@@ -147,6 +148,10 @@ public class NearbyDriversFragment extends android.support.v4.app.Fragment {
             Helpers.dismissProgressDialog();
             CustomRoutesListAdapter customRoutesListAdapter = new CustomRoutesListAdapter(getActivity(), R.layout.nearby_drivers_list_row, HireFragment.driversIdList);
             nearbyDriversList.setAdapter(customRoutesListAdapter);
+            if (AppGlobals.isNearbyDriversFragmentFirstRun()) {
+                Helpers.AlertDialogMessage(getActivity(), "One Time Message", "Tap and hold on a specific driver to hire", "Ok");
+                AppGlobals.setNearbyDriversFragmentFirstRun(false);
+            }
         }
     }
 

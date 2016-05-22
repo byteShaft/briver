@@ -31,11 +31,10 @@ public class LocationService extends ContextWrapper implements LocationListener,
 
     public static int onLocationChangedCounter = 0;
 
-    GoogleApiClient mGoogleApiClient;
+    public GoogleApiClient mGoogleApiClient;
     LocationRequest mLocationRequest;
 
     public static LatLng driverCurrentLocation = null;
-    public static LatLng driverLastKnownLocation = null;
     private static int recursionCounter = 0;
 
     public LocationService(Context base) {
@@ -47,6 +46,9 @@ public class LocationService extends ContextWrapper implements LocationListener,
 //                    "Exit App", Helpers.openPermissionsSettingsForMarshmallow, Helpers.exitApp);
 //            return;
 //        }
+    }
+
+    public void startLocationServices() {
         connectGoogleApiClient();
     }
 

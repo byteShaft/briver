@@ -18,12 +18,15 @@ public class AppGlobals extends Application {
 
     public static final int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
     private static final String DRIVER_SEARCH_RADIUS = "driver_radius";
+    private static final String DRIVER_SERVICE_STATUS = "driver_service_status";
     private static final String LOGGED_IN = "logged_in";
     private static final String USER_NAME = "user_name";
     private static final String PERSON_NAME = "person_name";
+    private static final String PHONE_NUMBER = "phone_number";
     private static final String USER_PASSWORD = "user_password";
     private static final String USER_TYPE = "user_type";
     private static final String LOCATION_INTERVAL = "location_interval";
+    private static final String LOCATION_REPORTING_TYPE = "location_reporting_type";
     private static final String TOKEN = "token";
     private static final String GCM_TOKEN = "gcm_token";
     private static final String USER_DATA = "user_data";
@@ -34,6 +37,7 @@ public class AppGlobals extends Application {
     private static final String VEHICLE_MODEL = "vehicle_model";
     private static final String NUMBER_OF_HIRES = "total_hires";
     private static final String FIRST_RUN_HIRE_FRAGMENT = "first_run_hire_fragment";
+    private static final String FIRST_RUN_NEARBY_DRIVERS_FRAGMENT = "first_run__fragment";
     private static Context sContext;
     private static SharedPreferences sPreferences;
 
@@ -57,6 +61,14 @@ public class AppGlobals extends Application {
         sPreferences.edit().putBoolean(FIRST_RUN_HIRE_FRAGMENT, firstRunHireFragment).apply();
     }
 
+    public static boolean isNearbyDriversFragmentFirstRun() {
+        return sPreferences.getBoolean(FIRST_RUN_NEARBY_DRIVERS_FRAGMENT, true);
+    }
+
+    public static void setNearbyDriversFragmentFirstRun(boolean firstRunHireFragment) {
+        sPreferences.edit().putBoolean(FIRST_RUN_NEARBY_DRIVERS_FRAGMENT, firstRunHireFragment).apply();
+    }
+
     public static void putUsername(String username) {
         sPreferences.edit().putString(USER_NAME, username).apply();
     }
@@ -64,6 +76,15 @@ public class AppGlobals extends Application {
     public static String getUsername() {
         return sPreferences.getString(USER_NAME, null);
     }
+
+    public static void putPhoneNumber(String phone) {
+        sPreferences.edit().putString(PHONE_NUMBER, phone).apply();
+    }
+
+    public static String getPhoneNumber() {
+        return sPreferences.getString(PHONE_NUMBER, null);
+    }
+
 
     public static void putVehicleMake(String vehicleMake) {
         sPreferences.edit().putString(VEHICLE_MAKE, vehicleMake).apply();
@@ -97,6 +118,16 @@ public class AppGlobals extends Application {
         return sPreferences.getInt(VEHICLE_TYPE, 2);
     }
 
+
+    public static void putLocationReportingType(int locationReportingType) {
+        sPreferences.edit().putInt(LOCATION_REPORTING_TYPE, locationReportingType).apply();
+    }
+
+    public static int getLocationReportingType() {
+        return sPreferences.getInt(LOCATION_REPORTING_TYPE, 1);
+    }
+
+
     public static void putDrivingExperience(int drivingExperience) {
         sPreferences.edit().putInt(DRIVING_EXPERIENCE, drivingExperience).apply();
     }
@@ -112,6 +143,15 @@ public class AppGlobals extends Application {
     public static int getDriverSearchRadius() {
         return sPreferences.getInt(DRIVER_SEARCH_RADIUS, 15);
     }
+
+    public static void putDriverServiceStatus(int status) {
+        sPreferences.edit().putInt(DRIVER_SERVICE_STATUS, status).apply();
+    }
+
+    public static int getDriverServiceStatus() {
+        return sPreferences.getInt(DRIVER_SERVICE_STATUS, 1);
+    }
+
 
     public static void saveUserDataForPushNotifications(String userData) {
         sPreferences.edit().putString(USER_DATA, userData).apply();
@@ -160,7 +200,6 @@ public class AppGlobals extends Application {
     public static void putUserType(int userType) {
         sPreferences.edit().putInt(USER_TYPE, userType).apply();
     }
-
 
     public static int getDriverLocationReportingIntervalTime() {
         return sPreferences.getInt(LOCATION_INTERVAL, 2);

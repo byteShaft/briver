@@ -201,7 +201,6 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
                         if (snippet.equals("-1")) {
                             return true;
                         }
-
                         new AsyncTask<Void, Void, Void>() {
                             int id = -1;
                             String addressString;
@@ -502,9 +501,6 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
         super.onCreateOptionsMenu(menu, inflater);
         inflater.inflate(R.menu.menu_map, menu);
         actionsMenu = menu;
-//        if (AppGlobals.getUserType() == 1) {
-//            actionsMenu.getItem(0).setVisible(false);
-//        }
     }
 
     @Override
@@ -630,6 +626,9 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
                 JSONArray jsonArray = new JSONArray(sb.toString());
                 if (jsonArray.toString().equals("[]") && !gettingNearbyDriversToShowMarkers) {
                     dataEmpty = true;
+                    if (!gettingNearbyDriversToShowMarkers) {
+                        Helpers.dismissProgressDialog();
+                    }
                     return null;
                 }
                 Log.i("IncomingData", " UserData: " + jsonArray);

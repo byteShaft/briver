@@ -135,14 +135,6 @@ public class ChangePasswordFragment extends android.support.v4.app.Fragment impl
                 connection.setRequestProperty("Content-Type", "application/json");
                 connection.setRequestProperty("charset", "utf-8");
                 DataOutputStream out = new DataOutputStream(connection.getOutputStream());
-
-//                String loginString = getPasswordChangeString(passwordRecoveryEmail, forgotPasswordConfirmationCode,
-//                        forgotPasswordNewPassword);
-//
-//                Log.i("Login ", "String: " + loginString);
-//                out.writeBytes(loginString);
-//                out.flush();
-//                out.close();
                 responseCode = connection.getResponseCode();
             } catch (IOException e) {
                 e.printStackTrace();

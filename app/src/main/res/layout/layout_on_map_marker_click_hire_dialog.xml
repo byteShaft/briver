@@ -2,7 +2,9 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:paddingLeft="16dp"
+    android:paddingRight="16dp">
 
     <RatingBar
         android:id="@+id/rBar_driver_hiring_dialog"
@@ -27,7 +29,7 @@
         android:id="@+id/tv_driver_hire_dialog_full_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="15dp"
+        android:layout_marginLeft="10dp"
         android:layout_marginTop="25dp"
         android:textColor="#ffffff"
         android:textSize="14dp" />
@@ -36,7 +38,7 @@
         android:id="@+id/tv_driver_hire_dialog_email"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="15dp"
+        android:layout_marginLeft="10dp"
         android:textColor="#ffffff"
         android:textSize="14dp" />
 
@@ -44,7 +46,7 @@
         android:id="@+id/tv_driver_hire_dialog_contact"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="15dp"
+        android:layout_marginLeft="10dp"
         android:textColor="#ffffff"
         android:textSize="14dp" />
 
@@ -52,7 +54,7 @@
         android:id="@+id/tv_driver_hire_dialog_number_of_hires"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="15dp"
+        android:layout_marginLeft="10dp"
         android:textColor="#ffffff"
         android:textSize="14dp" />
 
@@ -60,7 +62,7 @@
         android:id="@+id/tv_driver_hire_dialog_address"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="15dp"
+        android:layout_marginLeft="10dp"
         android:textColor="#ffffff"
         android:textSize="14dp" />
 
@@ -68,7 +70,7 @@
         android:id="@+id/tv_driver_hire_dialog_driving_experience"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="15dp"
+        android:layout_marginLeft="10dp"
         android:textColor="#ffffff"
         android:textSize="14dp" />
 
@@ -76,7 +78,7 @@
         android:id="@+id/tv_driver_hire_dialog_location_last_updated"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="15dp"
+        android:layout_marginLeft="10dp"
         android:textColor="#ffffff"
         android:textSize="14dp" />
 
@@ -84,7 +86,7 @@
         android:id="@+id/tv_driver_hire_dialog_bio"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="15dp"
+        android:layout_marginLeft="10dp"
         android:textColor="#ffffff"
         android:textSize="14dp" />
 

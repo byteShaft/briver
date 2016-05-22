@@ -5,9 +5,13 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.support.annotation.Nullable;
+import android.support.design.widget.Snackbar;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
@@ -67,15 +71,27 @@ public class PreferencesFragment extends android.support.v4.app.Fragment impleme
 
     public static LatLng latLngDriverLocationFixed;
     public static boolean isPreferencesFragmentOpen;
-    
+
     int userPreferencesVehicleType = -1;
+    static int driverPreferencesLocationReportingType = -1;
 
     LocationService mLocationService;
+
+    EditText etPreferencesRadius;
+    EditText etVehicleMake;
+    EditText etVehicleModel;
+
+    String preferencesSearchRadius;
+    String preferencesVehicleMake;
+    String preferencesVehicleModel;
+    String preferencesLocationReportingIntervalTime;
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         baseViewPreferencesFragment = inflater.inflate(R.layout.fragment_preferences, container, false);
+
+        mLocationService = new LocationService(getActivity());
 
         rgPreferencesDriverLocation = (RadioGroup) baseViewPreferencesFragment.findViewById(R.id.rg_preferences_driver_location);
         rbPreferencesDriverLocationFixed = (RadioButton) baseViewPreferencesFragment.findViewById(R.id.rb_preferences_driver_location_fixed);
@@ -110,6 +126,12 @@ public class PreferencesFragment extends android.support.v4.app.Fragment impleme
         } else {
             llCustomerPreferences.setVisibility(View.GONE);
             llDriverPreferences.setVisibility(View.VISIBLE);
+
+            if (AppGlobals.getDriverServiceStatus() > 0) {
+                switchPreferencesDriverServiceStatus.setChecked(true);
+            }
+            rgPreferencesDriverLocation.check(AppGlobals.getLocationReportingType());
+            etPreferencesDriverLocationIntervalTime.setText(String.valueOf(AppGlobals.getDriverLocationReportingIntervalTime()));
         }
 
         switchPreferencesDriverServiceStatus.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -129,23 +151,29 @@ public class PreferencesFragment extends android.support.v4.app.Fragment impleme
                 if (checkedId == R.id.rb_preferences_driver_location_fixed) {
                     etPreferencesDriverLocationIntervalTime.setVisibility(View.GONE);
                     if (Helpers.isAnyLocationServiceAvailable()) {
-                        mLocationService = new LocationService(getActivity());
+                        mLocationService.startLocationServices();
                         tvPreferencesDriverLocationDisplay.setText("Acquiring Location");
                         tvPreferencesDriverLocationDisplay.setTextColor(Color.parseColor("#ffa500"));
                         tvPreferencesDriverLocationDisplay.startAnimation(animTexViewFading);
                     } else {
                         Helpers.AlertDialogWithPositiveNegativeNeutralFunctions(getActivity(), "Location Service disabled",
-                                "Enable device GPS to continue driver registration", "Settings", "Exit", "Re-Check",
-                                openLocationServiceSettings, closeRegistration, recheckLocationServiceStatus);
+                                "Enable device GPS to set driver's fixed location", "Settings", "Dismiss", "Re-Check",
+                                openLocationServiceSettings, null, recheckLocationServiceStatus);
                     }
 
                 } else if (checkedId == R.id.rb_preferences_driver_location_interval) {
-                    if (mLocationService != null) {
+                    if (mLocationService.mGoogleApiClient != null && mLocationService.mGoogleApiClient.isConnected()) {
                         mLocationService.stopLocationService();
                     }
+                    driverPreferencesLocationReportingType = 1;
                     etPreferencesDriverLocationIntervalTime.setVisibility(View.VISIBLE);
                     tvPreferencesDriverLocationDisplay.clearAnimation();
-                    tvPreferencesDriverLocationDisplay.setText("Your location will be refreshed on set interval");
+                    int intervalValue = Integer.parseInt(etPreferencesDriverLocationIntervalTime.getText().toString());
+                    if (intervalValue > 1) {
+                        tvPreferencesDriverLocationDisplay.setText("Your location will be updated every " + intervalValue + " hours");
+                    } else {
+                        tvPreferencesDriverLocationDisplay.setText("Your location will be updated every " + intervalValue + " hour");
+                    }
                     tvPreferencesDriverLocationDisplay.setTextColor(Color.parseColor("#ffffff"));
                 }
             }
@@ -200,7 +228,6 @@ public class PreferencesFragment extends android.support.v4.app.Fragment impleme
 
             }
         });
-
         return baseViewPreferencesFragment;
     }
 
@@ -208,16 +235,10 @@ public class PreferencesFragment extends android.support.v4.app.Fragment impleme
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.btn_preferences_driver_location_fixed_set:
+
                 break;
         }
     }
-
-
-    final Runnable closeRegistration = new Runnable() {
-        public void run() {
-            getActivity().onBackPressed();
-        }
-    };
 
     final Runnable openLocationServiceSettings = new Runnable() {
         public void run() {
@@ -226,15 +247,14 @@ public class PreferencesFragment extends android.support.v4.app.Fragment impleme
         }
     };
 
-
     final Runnable recheckLocationServiceStatus = new Runnable() {
         public void run() {
             if (Helpers.isAnyLocationServiceAvailable()) {
                 getActivity().startService(new Intent(getActivity(), DriverService.class));
             } else {
                 Helpers.AlertDialogWithPositiveNegativeNeutralFunctions(getActivity(), "Location Service disabled",
-                        "Enable device GPS to continue driver registration", "Settings", "Exit", "Re-Check",
-                        openLocationServiceSettings, closeRegistration, recheckLocationServiceStatus);
+                        "Enable device GPS to continue driver registration", "Settings", "Dismiss", "Re-Check",
+                        openLocationServiceSettings, null, recheckLocationServiceStatus);
             }
         }
     };
@@ -255,6 +275,7 @@ public class PreferencesFragment extends android.support.v4.app.Fragment impleme
     }
 
     public static void setFixedLocationDisplay() {
+        driverPreferencesLocationReportingType = 0;
         tvPreferencesDriverLocationDisplay.clearAnimation();
         tvPreferencesDriverLocationDisplay.setText("Current location set as fixed location");
         tvPreferencesDriverLocationDisplay.setTextColor(Color.parseColor("#A4C639"));
@@ -285,4 +306,93 @@ public class PreferencesFragment extends android.support.v4.app.Fragment impleme
                 break;
         }
     }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setHasOptionsMenu(true);
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        super.onCreateOptionsMenu(menu, inflater);
+        inflater.inflate(R.menu.menu_done, menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.action_done:
+
+                if (AppGlobals.getUserType() == 1) {
+                    preferencesLocationReportingIntervalTime = etPreferencesDriverLocationIntervalTime.getText().toString();
+//                    profileBio = etProfileBio.getText().toString();
+                } else {
+                    preferencesSearchRadius = etPreferencesRadius.getText().toString();
+                    preferencesVehicleMake = etVehicleMake.getText().toString();
+                    preferencesVehicleModel = etVehicleModel.getText().toString();
+                }
+
+                validateProfileChangeInfo();
+                break;
+            default:
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    public boolean validateProfileChangeInfo() {
+        boolean valid = true;
+
+        if (AppGlobals.getUserType() == 1) {
+            if (preferencesLocationReportingIntervalTime.trim().isEmpty()) {
+                etPreferencesDriverLocationIntervalTime.setError("Empty");
+                valid = false;
+            } else {
+                etPreferencesDriverLocationIntervalTime.setError(null);
+            }
+
+            if (preferencesLocationReportingIntervalTime.equals(AppGlobals.getDriverLocationReportingIntervalTime()) &&
+                    driverPreferencesLocationReportingType == AppGlobals.getLocationReportingType()) {
+                Helpers.showSnackBar(getView(), "No changes to submit", Snackbar.LENGTH_LONG, "#ffffff");
+                valid = false;
+            }
+        } else {
+            if (preferencesSearchRadius.trim().isEmpty()) {
+                etPreferencesCustomerDriverSearchRadiusInput.setError("Empty");
+                valid = false;
+            } else {
+                etPreferencesCustomerDriverSearchRadiusInput.setError(null);
+            }
+
+            if (preferencesVehicleMake.trim().isEmpty()) {
+                etPreferencesCustomerVehicleMake.setError("empty");
+                valid = false;
+            } else if (preferencesVehicleMake.trim().length() < 3) {
+                etPreferencesCustomerVehicleMake.setError("at least 3 characters");
+                valid = false;
+            } else {
+                etPreferencesCustomerVehicleMake.setError(null);
+            }
+
+            if (preferencesVehicleModel.trim().isEmpty()) {
+                etPreferencesCustomerVehicleModel.setError("empty");
+                valid = false;
+            } else if (preferencesVehicleModel.trim().length() < 4) {
+                etPreferencesCustomerVehicleModel.setError("at least 4 characters");
+                valid = false;
+            } else {
+                etPreferencesCustomerVehicleModel.setError(null);
+            }
+
+            if (preferencesSearchRadius.equals(AppGlobals.getDriverSearchRadius()) &&
+                    preferencesVehicleMake.equals(AppGlobals.getVehicleMake()) &&
+                    preferencesVehicleModel.equals(AppGlobals.getVehicleModel()) &&
+                    userPreferencesVehicleType == AppGlobals.getVehicleType()) {
+                Helpers.showSnackBar(getView(), "No changes to submit", Snackbar.LENGTH_LONG, "#ffffff");
+                valid = false;
+            }
+        }
+        return valid;
+    }
+
 }

@@ -22,7 +22,6 @@ import android.widget.Toast;
 
 import com.byteshaft.briver.R;
 import com.byteshaft.briver.utils.AppGlobals;
-import com.byteshaft.briver.utils.DriverService;
 import com.byteshaft.briver.utils.EndPoints;
 import com.byteshaft.briver.utils.Helpers;
 import com.byteshaft.briver.utils.LocationService;
@@ -96,6 +95,8 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
 
         baseViewRegisterFragment = inflater.inflate(R.layout.fragment_register, container, false);
 
+        mLocationService = new LocationService(getActivity());
+
         etRegisterUserFullName = (EditText) baseViewRegisterFragment.findViewById(R.id.et_register_full_name);
         etRegisterUserEmail = (EditText) baseViewRegisterFragment.findViewById(R.id.et_register_email);
         etRegisterUserEmailRepeat = (EditText) baseViewRegisterFragment.findViewById(R.id.et_register_email_repeat);
@@ -148,7 +149,7 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
                     registerUserType = 1;
                     if (AppGlobals.checkPlayServicesAvailability()) {
                     if (Helpers.isAnyLocationServiceAvailable()) {
-                        mLocationService = new LocationService(getActivity());
+                        mLocationService.startLocationServices();
                         Helpers.showSnackBar(baseViewRegisterFragment, "Acquiring location for registration", Snackbar.LENGTH_SHORT, "#ffffff");
                     } else {
                         Helpers.AlertDialogWithPositiveNegativeNeutralFunctions(getActivity(), "Location Service disabled",
@@ -298,7 +299,7 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
     final Runnable recheckLocationServiceStatus = new Runnable() {
         public void run() {
             if (Helpers.isAnyLocationServiceAvailable()) {
-                getActivity().startService(new Intent(getActivity(), DriverService.class));
+                mLocationService.startLocationServices();
             } else {
                 Helpers.AlertDialogWithPositiveNegativeNeutralFunctions(getActivity(), "Location Service disabled",
                         "Enable device GPS to continue driver registration", "Settings", "Exit", "Re-Check",
@@ -311,8 +312,8 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
     public void onPause() {
         super.onPause();
         isRegistrationFragmentOpen = false;
-        if (DriverService.driverLocationReportingServiceIsRunning) {
-            getActivity().stopService(new Intent(getActivity(), DriverService.class));
+        if (mLocationService.mGoogleApiClient.isConnected()) {
+            mLocationService.startLocationUpdates();
         }
         if (isUserRegistrationTaskRunning) {
             taskRegisterUser.cancel(true);
@@ -325,7 +326,7 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
         isRegistrationFragmentOpen = true;
         if (rgRegisterSelectUserType.getCheckedRadioButtonId() == R.id.rb_register_driver) {
             if (Helpers.isAnyLocationServiceAvailable()) {
-                mLocationService = new LocationService(getActivity());
+                mLocationService.startLocationServices();
                 Helpers.showSnackBar(baseViewRegisterFragment, "Acquiring location for registration", Snackbar.LENGTH_SHORT, "#ffffff");
             } else {
                 Helpers.AlertDialogWithPositiveNegativeNeutralFunctions(getActivity(), "Location Service disabled",
