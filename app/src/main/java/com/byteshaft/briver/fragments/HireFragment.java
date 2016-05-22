@@ -17,6 +17,7 @@ import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AlertDialog;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -94,10 +95,12 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
     public static int responseCode;
 
     String serviceStartTime;
-    boolean gettingNearbyDriverOnMapReady;
+    boolean gettingNearbyDriversToShowMarkers;
     boolean driversMarkersShownOnMap;
 
     boolean isGetNearbyDriversTaskRunning;
+
+    TimePickerDialog tpd;
 
     Marker hireMeetUpPointMarker;
     
@@ -163,12 +166,19 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
                         Helpers.AlertDialogWithPositiveNegativeFunctions(AppGlobals.getRunningActivityInstance(), "Permission Denied",
                                 "You need to grant permissions to use Location Services for Briver", "Settings",
                                 "Exit App", Helpers.openPermissionsSettingsForMarshmallow, Helpers.exitApp);
-                    return;
+                    getActivity().onBackPressed();
+                } else if (!AppGlobals.checkPlayServicesAvailability()) {
+                        Helpers.AlertDialogWithPositiveNegativeFunctions(getActivity(), "Location components missing",
+                                "You need to install GooglePlayServices to continue using Briver", "Install",
+                                "Exit App", Helpers.openPlayServicesInstallation, Helpers.exitApp);
+                    getActivity().onBackPressed();
                 } else if (!Helpers.isAnyLocationServiceAvailable()) {
                     Helpers.AlertDialogWithPositiveNegativeFunctions(getActivity(), "Location Service disabled",
                             "Enable device GPS to continue driver hiring", "Settings", "ReCheck",
                             openLocationServiceSettings, recheckLocationServiceStatus);
                     getActivity().onBackPressed();
+                } else {
+                    Helpers.showProgressDialogWithPositiveButton(getActivity(), "Acquiring current location", "Dismiss", null);
                 }
 
                 mMap.setMyLocationEnabled(true);
@@ -184,67 +194,64 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
                     }
                 });
 
-
                 mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
                     @Override
-                    public boolean onMarkerClick(Marker marker) {
-                        try {
-                            int id = Integer.parseInt(marker.getSnippet());
+                    public boolean onMarkerClick(final Marker marker) {
+                        final String snippet = marker.getSnippet();
+                        if (snippet.equals("-1")) {
+                            return true;
+                        }
+                        new AsyncTask<Void, Void, Void>() {
+                            int id = -1;
+                            String addressString;
+                            boolean taskSuccess;
+                            @Override
+                            protected void onPreExecute() {
+                                super.onPreExecute();
+                                Helpers.showProgressDialog(getActivity(), "Retrieving driver info");
+                                if (llMapHireButtons.isShown()) {
+                                    btnMapHireRemoveMarker.callOnClick();
+                                }
+                                if (isSearchEditTextVisible) {
+                                    setSearchBarVisibility(false);
+                                }
+                            }
 
-                            String[] latLngToString = hashMapDriverData.get(driversIdList.get(id)).get(3).split(",");
-                            double latitude = Double.parseDouble(latLngToString[0]);
-                            double longitude = Double.parseDouble(latLngToString[1]);
-                            String addressString = Helpers.getAddress(getActivity(), new LatLng(latitude, longitude));
+                            @Override
+                            protected Void doInBackground(Void... params) {
+                                try {
+                                    id = Integer.parseInt(snippet);
+                                    String[] latLngToString = hashMapDriverData.get(driversIdList.get(id)).get(3).split(",");
+                                    double latitude = Double.parseDouble(latLngToString[0]);
+                                    double longitude = Double.parseDouble(latLngToString[1]);
+                                    addressString = Helpers.getAddress(getActivity(), new LatLng(latitude, longitude));
+                                    taskSuccess = true;
+                                } catch (NumberFormatException e) {
+                                    taskSuccess = false;
+                                }
+                                return null;
+                            }
 
-                            Helpers.customDialogWithPositiveFunctionNegativeButtonForOnMapMarkerClickHiring(getActivity(),
-                                    hashMapDriverData.get(driversIdList.get(id)).get(0), hashMapDriverData.get(driversIdList.get(id)).get(1),
-                                    hashMapDriverData.get(driversIdList.get(id)).get(2), addressString, hashMapDriverData.get(driversIdList.get(id)).get(4),
-                                    hashMapDriverData.get(driversIdList.get(id)).get(5), hashMapDriverData.get(driversIdList.get(id)).get(6),
-                                    hashMapDriverData.get(driversIdList.get(id)).get(7), btnCustomHireDialogHire);
-                        } catch (NumberFormatException ignored) {}
+                            @Override
+                            protected void onPostExecute(Void aVoid) {
+                                super.onPostExecute(aVoid);
+                                Helpers.dismissProgressDialog();
+                                if (taskSuccess) {
+                                    Helpers.customDialogWithPositiveFunctionNegativeButtonForOnMapMarkerClickHiring(getActivity(),
+                                            hashMapDriverData.get(driversIdList.get(id)).get(0), hashMapDriverData.get(driversIdList.get(id)).get(1),
+                                            hashMapDriverData.get(driversIdList.get(id)).get(2), addressString, hashMapDriverData.get(driversIdList.get(id)).get(4),
+                                            hashMapDriverData.get(driversIdList.get(id)).get(5), hashMapDriverData.get(driversIdList.get(id)).get(6),
+                                            hashMapDriverData.get(driversIdList.get(id)).get(7), btnCustomHireDialogHire);
+                                } else {
+                                    Helpers.showSnackBar(getView(), "Driver info cannot be retrieved at the moment", Snackbar.LENGTH_LONG, "#f44336");
+                                }
+                            }
+                        }.execute();
                         return true;
                     }
                 });
 
-                mMap.setOnMyLocationChangeListener(new GoogleMap.OnMyLocationChangeListener() {
-                    @Override
-                    public void onMyLocationChange(Location location) {
-                        currentLatLngAuto = new LatLng(location.getLatitude(), location.getLongitude());
-                        if (!cameraAnimatedToCurrentLocation) {
-                            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentLatLngAuto, 15.0f), new GoogleMap.CancelableCallback() {
-                                @Override
-                                public void onFinish() {
-                                    if (AppGlobals.isHireFragmentFirstRun()) {
-                                        Helpers.AlertDialogMessage(getActivity(), "One Time Message",
-                                                "Tap and hold anywhere on the MapView to set MeetUp point and hire a driver\n" +
-                                                        "\nYou can also QuickHire a driver by tapping on the driver location marker", "Ok");
-                                        AppGlobals.setHireFragementFirstRun(false);
-                                    } else {
-                                        Helpers.showSnackBar(baseViewHireFragment, "Tap and hold to set MeetUp point",
-                                                Snackbar.LENGTH_LONG, "#ffffff");
-                                    }
-                                }
-
-                                @Override
-                                public void onCancel() {
-                                    if (AppGlobals.isHireFragmentFirstRun()) {
-                                        Helpers.AlertDialogMessage(getActivity(), "One Time Message",
-                                                "Tap and hold on the MapView to set MeetUp point and hire a driver\n" +
-                                                        "\nYou can also QuickHire a driver by tapping on the driver location marker", "Ok");
-                                        AppGlobals.setHireFragementFirstRun(false);
-                                    } else {
-                                        Helpers.showSnackBar(baseViewHireFragment, "Tap and hold to set MeetUp point",
-                                                Snackbar.LENGTH_LONG, "#ffffff");
-                                    }
-                                }
-                            });
-                            cameraAnimatedToCurrentLocation = true;
-                        }
-                        if (!driversMarkersShownOnMap) {
-                            functionToSetDriverMarkersOnMap(location.getLatitude() + "," + location.getLongitude());
-                        }
-                    }
-                });
+                mMap.setOnMyLocationChangeListener(myLocationChangeListener);
 
                 mMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
                     @Override
@@ -255,7 +262,7 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
                         if (!hireMarkerAdded) {
                             hireMeetUpPoint = latLng.latitude + "," + latLng.longitude;
                             hireMeetUpPointMarker = mMap.addMarker(new MarkerOptions().position(latLng)
-                                    .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_marker_hire)));
+                                    .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_marker_hire)).snippet("-1"));
                             llMapHireButtons.setVisibility(View.VISIBLE);
                             llMapHireButtons.startAnimation(animLayoutBottomUp);
                             hireMarkerAdded = true;
@@ -387,7 +394,7 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
                         dialog.dismiss();
                         serviceStartTime = android.text.format.DateFormat.format("yyyy-MM-ddThh:mm:ss", new java.util.Date()).toString();
                         Log.i("ServiceStartTime", "" + serviceStartTime);
-                        gettingNearbyDriverOnMapReady = false;
+                        gettingNearbyDriversToShowMarkers = false;
                         if (isGetNearbyDriversTaskRunning) {
                             getNearbyDriversTask.cancel(true);
                         }
@@ -437,8 +444,11 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
                                 break;
                         }
                         Log.i("SelectedHoursOfService", "" + totalHoursOfService);
-                        final TimePickerDialog tpd = new TimePickerDialog(getActivity(),
+                        Calendar newCalendar = Calendar.getInstance();
+
+                        tpd = new TimePickerDialog(getActivity(),
                                 new TimePickerDialog.OnTimeSetListener() {
+
                                     @Override
                                     public void onTimeSet(TimePicker view, int hourOfDay,
                                                           int minute) {
@@ -446,17 +456,21 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
                                         mMinute = minute;
                                         Calendar newCalendar = Calendar.getInstance();
                                         DatePickerDialog datePickerDialog = new DatePickerDialog(getActivity(), new DatePickerDialog.OnDateSetListener() {
-
                                             public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
                                                 Calendar newDate = Calendar.getInstance();
                                                 newDate.set(year, monthOfYear, dayOfMonth);
                                                 Log.i("Date", "Set: " + dayOfMonth + "-" + monthOfYear + "-" + year);
                                                 mDay = dayOfMonth;
-                                                mMonth = monthOfYear;
+                                                mMonth = monthOfYear + 1;
                                                 mYear = year;
-                                                gettingNearbyDriverOnMapReady = false;
+                                                gettingNearbyDriversToShowMarkers = false;
                                                 serviceStartTime = mYear + "-" + mMonth + "-" + mDay + "T" + mHour + ":" + mMinute + ":" + "00";
                                                 Log.i("ServiceStartTime", "Scheduled: " + serviceStartTime);
+                                                Calendar c = Calendar.getInstance();
+                                                if(!(Helpers.getTimeInMillis(serviceStartTime) >= c.getTimeInMillis() - 120000)){
+                                                    Helpers.showSnackBar(getView(), "Selected schedule time is invalid, select a future time", Snackbar.LENGTH_LONG, "#f44336");
+                                                    return;
+                                                }
                                                 if (isGetNearbyDriversTaskRunning) {
                                                     getNearbyDriversTask.cancel(true);
                                                 }
@@ -465,7 +479,7 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
                                         }, newCalendar.get(Calendar.YEAR), newCalendar.get(Calendar.MONTH), newCalendar.get(Calendar.DAY_OF_MONTH));
                                         datePickerDialog.show();
                                     }
-                                }, mHour, mMinute, false);
+                                }, newCalendar.get(Calendar.HOUR_OF_DAY), newCalendar.get(Calendar.MINUTE), false);
                         tpd.show();
                         dialog.dismiss();
                     }
@@ -487,9 +501,6 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
         super.onCreateOptionsMenu(menu, inflater);
         inflater.inflate(R.menu.menu_map, menu);
         actionsMenu = menu;
-//        if (AppGlobals.getUserType() == 1) {
-//            actionsMenu.getItem(0).setVisible(false);
-//        }
     }
 
     @Override
@@ -501,13 +512,16 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
             case R.id.action_current_location:
                 if (Helpers.isAnyLocationServiceAvailable()) {
                     if (mMap != null) {
-                            currentLatLngAuto = new LatLng(mMap.getMyLocation().getLatitude(), mMap.getMyLocation().getLongitude());
-                        CameraPosition cameraPosition =
-                                new CameraPosition.Builder()
-                                        .target(currentLatLngAuto)
-                                        .zoom(16.0f)
-                                        .build();
-                        mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+                        if (currentLatLngAuto != null) {
+                            CameraPosition cameraPosition =
+                                    new CameraPosition.Builder()
+                                            .target(currentLatLngAuto)
+                                            .zoom(16.0f)
+                                            .build();
+                            mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+                        } else {
+                            Toast.makeText(getActivity(), "Error: Location not available", Toast.LENGTH_SHORT).show();
+                        }
                     } else {
                         Toast.makeText(getActivity(), "Error: Map not ready", Toast.LENGTH_SHORT).show();
                     }
@@ -565,7 +579,7 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
                 mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLngSearch, 15.0f));
                 mMap.clear();
                 btnMapHireRemoveMarker.callOnClick();
-                gettingNearbyDriverOnMapReady = true;
+                gettingNearbyDriversToShowMarkers = true;
                 functionToSetDriverMarkersOnMap(addressForSearch.getLatitude() + "," + addressForSearch.getLongitude());
             }
         });
@@ -574,10 +588,12 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
 
     private class GetNearbyDriversAvailableToHire extends AsyncTask<Void, Integer, Void> {
 
+        boolean dataEmpty;
+
         @Override
         protected void onPreExecute() {
             isGetNearbyDriversTaskRunning = true;
-            if (!gettingNearbyDriverOnMapReady) {
+            if (!gettingNearbyDriversToShowMarkers) {
                 Helpers.showProgressDialog(getActivity(), "Retrieving nearby drivers");
             }
             super.onPreExecute();
@@ -588,7 +604,7 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
             try {
                 Log.i("getNearbyDrivers", " RUN");
                 URL url;
-                if (gettingNearbyDriverOnMapReady) {
+                if (gettingNearbyDriversToShowMarkers) {
                     url = new URL(EndPoints.BASE_FILTER_DRIVERS + getNearbyDriversString(
                             hireMeetUpPoint, 500, serviceStartTime, totalHoursOfService * 60));
                 } else {
@@ -608,6 +624,13 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
                 while ((ch = in.read()) != -1)
                     sb.append((char) ch);
                 JSONArray jsonArray = new JSONArray(sb.toString());
+                if (jsonArray.toString().equals("[]") && !gettingNearbyDriversToShowMarkers) {
+                    dataEmpty = true;
+                    if (!gettingNearbyDriversToShowMarkers) {
+                        Helpers.dismissProgressDialog();
+                    }
+                    return null;
+                }
                 Log.i("IncomingData", " UserData: " + jsonArray);
 
                 for (int i = 0; i < jsonArray.length(); i++) {
@@ -637,8 +660,14 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
         @Override
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
-            if (!gettingNearbyDriverOnMapReady) {
+            if (dataEmpty) {
+                Helpers.AlertDialogMessage(getActivity(), "List is empty", "No drivers found in the nearby area for the set criteria", "Ok");
+            } else  {
+            if (!gettingNearbyDriversToShowMarkers) {
                 Helpers.dismissProgressDialog();
+                if (responseCode == 200) {
+                    loadFragment(new NearbyDriversFragment());
+                }
             }
             if (responseCode == 200) {
                 onGetNearbyDriversSuccess();
@@ -646,6 +675,7 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
                 onGetNearbyDriversFailed();
             }
             isGetNearbyDriversTaskRunning = false;
+            }
         }
 
         @Override
@@ -661,7 +691,6 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
 
     public void onGetNearbyDriversFailed() {
         Helpers.showSnackBar(getView(), "Failed to retrieve nearby available drivers", Snackbar.LENGTH_LONG, "#f44336");
-
     }
 
     public static String getNearbyDriversString (
@@ -689,7 +718,7 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
     public void functionToSetDriverMarkersOnMap(String latitudeLongitude) {
         serviceStartTime = android.text.format.DateFormat.format("yyyy-MM-ddThh:mm:ss", new java.util.Date()).toString();
         hireMeetUpPoint = latitudeLongitude;
-        gettingNearbyDriverOnMapReady = true;
+        gettingNearbyDriversToShowMarkers = true;
         totalHoursOfService = 2 * 60;
         if (isGetNearbyDriversTaskRunning) {
             getNearbyDriversTask.cancel(true);
@@ -730,4 +759,62 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
             }
         }
     };
+
+
+    public void loadFragment(android.support.v4.app.Fragment fragment) {
+        FragmentManager fm = getFragmentManager();
+        FragmentTransaction ft = fm.beginTransaction();
+        ft.setCustomAnimations(R.anim.anim_transition_fragment_slide_right_enter, R.anim.anim_transition_fragment_slide_left_exit,
+                R.anim.anim_transition_fragment_slide_left_enter, R.anim.anim_transition_fragment_slide_right_exit);
+        ft.replace(R.id.container_main, fragment, "NearbyDriversFragment").addToBackStack("NearbyDriversFragment");
+        ft.commit();
+    }
+
+    private GoogleMap.OnMyLocationChangeListener myLocationChangeListener = new GoogleMap.OnMyLocationChangeListener() {
+        @Override
+        public void onMyLocationChange(Location location) {
+            Helpers.dismissProgressWithPositiveButtonDialog();
+            currentLatLngAuto = new LatLng(location.getLatitude(), location.getLongitude());
+            if (!cameraAnimatedToCurrentLocation) {
+                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentLatLngAuto, 15.0f), new GoogleMap.CancelableCallback() {
+                    @Override
+                    public void onFinish() {
+                        if (AppGlobals.isHireFragmentFirstRun()) {
+                            Helpers.AlertDialogMessage(getActivity(), "One Time Message",
+                                    "Tap and hold anywhere on the MapView to set MeetUp point and hire a driver\n" +
+                                            "\nYou can also QuickHire a driver by tapping on the driver location marker", "Ok");
+                            AppGlobals.setHireFragmentFirstRun(false);
+                        } else {
+                            Helpers.showSnackBar(baseViewHireFragment, "Tap and hold to set MeetUp point",
+                                    Snackbar.LENGTH_LONG, "#ffffff");
+                        }
+                    }
+
+                    @Override
+                    public void onCancel() {
+                        if (AppGlobals.isHireFragmentFirstRun()) {
+                            Helpers.AlertDialogMessage(getActivity(), "One Time Message",
+                                    "Tap and hold on the MapView to set MeetUp point and hire a driver\n" +
+                                            "\nYou can also QuickHire a driver by tapping on the driver location marker", "Ok");
+                            AppGlobals.setHireFragmentFirstRun(false);
+                        } else {
+                            Helpers.showSnackBar(baseViewHireFragment, "Tap and hold to set MeetUp point",
+                                    Snackbar.LENGTH_LONG, "#ffffff");
+                        }
+                    }
+                });
+                cameraAnimatedToCurrentLocation = true;
+            }
+            if (!driversMarkersShownOnMap) {
+                functionToSetDriverMarkersOnMap(location.getLatitude() + "," + location.getLongitude());
+            }
+        }
+    };
+
+    class ShowDialogForEmptyListNearbyDrivers extends AsyncTask {
+        @Override
+        protected Object doInBackground(Object... params) {
+            return new Object();
+        }
+    }
 }

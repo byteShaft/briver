@@ -39,6 +39,7 @@ import com.byteshaft.briver.utils.AppGlobals;
 import com.byteshaft.briver.utils.EndPoints;
 import com.byteshaft.briver.utils.Helpers;
 import com.byteshaft.briver.utils.SoftKeyboard;
+import com.byteshaft.briver.utils.WebServiceHelpers;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -84,6 +85,14 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
     FragmentManager fragmentManager;
     public static BroadcastReceiver mRegistrationBroadcastReceiver;
 
+    UserLoginTask taskUserLogin;
+    GetUserDataTask taskGetUserData;
+    EnablePushNotifications taskEnablePushNotification;
+
+    boolean isUserLoginTaskRunning;
+    boolean isGetUserDataTaskRunning;
+    boolean isEnablePushNotificationTaskRunning;
+
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -114,7 +123,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
 
         if (AppGlobals.isLoggedIn()) {
             ivWelcomeLogoMain.startAnimation(animMainLogoFadingInfinite);
-            new GetUserDataTask().execute();
+            taskGetUserData = (GetUserDataTask) new GetUserDataTask().execute();
         } else {
             new Handler().postDelayed(new Runnable() {
                 @Override
@@ -195,7 +204,6 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
 
             }
         });
-
         return baseViewLoginFragment;
     }
 
@@ -209,7 +217,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
                     if (isSoftKeyboardOpen) {
                         softKeyboard.closeSoftKeyboard();
                     }
-                    new UserLoginTask().execute();
+                    taskUserLogin = (UserLoginTask) new UserLoginTask().execute();
                 }
                 break;
             case R.id.btn_login_register:
@@ -252,7 +260,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
     }
 
     public void onLoginSuccess() {
-        new GetUserDataTask().execute();
+        taskGetUserData = (GetUserDataTask) new GetUserDataTask().execute();
     }
 
     public void onLoginFailed(String message) {
@@ -278,6 +286,12 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
                     "UserData cannot be retrieved at the moment", "Retry", "Logout", "Exit App",
                     retryGetUserDataTask, logOut, exitApp);
         }
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        cancelAllTasks();
     }
 
     @Override
@@ -307,6 +321,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
+            isUserLoginTaskRunning = true;
             llWelcomeLogin.setVisibility(View.GONE);
             ivWelcomeLogoMain.startAnimation(animMainLogoTransitionDown);
         }
@@ -356,6 +371,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
         @Override
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
+            isUserLoginTaskRunning = false;
             if (responseCode == 200) {
                 onLoginSuccess();
             } else {
@@ -369,6 +385,12 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
                     onLoginFailed("Login Failed! Invalid Email or Password");
                 }
             }
+        }
+
+        @Override
+        protected void onCancelled(Void aVoid) {
+            super.onCancelled(aVoid);
+            isUserLoginTaskRunning = false;
         }
     }
 
@@ -385,32 +407,32 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
+            isGetUserDataTaskRunning = true;
         }
 
         @Override
         protected Void doInBackground(Void... params) {
             try {
-                Log.i("getUserDetailTask", " RUN");
-                URL url = new URL(EndPoints.BASE_ACCOUNTS + "me");
-                connection = (HttpURLConnection) url.openConnection();
-                connection.setRequestMethod("GET");
-                connection.setRequestProperty("Content-Type", "application/json");
-                connection.setRequestProperty("charset", "utf-8");
-                Log.i("TOKEN: ", "" + AppGlobals.getToken());
-                connection.setRequestProperty("Authorization", "Token " + AppGlobals.getToken());
-
-                InputStream in = (InputStream) connection.getContent();
-                Log.i("InputStream", ": " + in);
-                int ch;
-                StringBuilder sb;
-                sb = new StringBuilder();
-                while ((ch = in.read()) != -1)
-                    sb.append((char) ch);
-                JSONObject jsonObject = new JSONObject(sb.toString());
+                connection = WebServiceHelpers.openConnectionForUrl(EndPoints.BASE_ACCOUNTS + "me", "GET");
+                JSONObject jsonObject = new JSONObject(WebServiceHelpers.readResponse(connection));
                 Log.i("IncomingData", " UserData: " + jsonObject);
+
                 AppGlobals.putPersonName(jsonObject.getString("full_name"));
                 AppGlobals.putUsername(jsonObject.getString("email"));
+                AppGlobals.putNumberOfHires(jsonObject.getInt("number_of_hires"));
                 AppGlobals.putUserType(jsonObject.getInt("user_type"));
+
+                if (jsonObject.getInt("user_type") == 0) {
+//                    AppGlobals.putDriverSearchRadius(jsonObject.getInt(""));
+                    AppGlobals.putVehicleType(jsonObject.getInt("vehicle_type"));
+                    AppGlobals.putVehicleMake(jsonObject.getString("vehicle_make"));
+                    AppGlobals.putVehicleModel(jsonObject.getString("vehicle_model"));
+                    AppGlobals.putPhoneNumber(jsonObject.getString("phone_number"));
+
+                } else if (jsonObject.getInt("user_type") == 1) {
+                    AppGlobals.putDrivingExperience(jsonObject.getInt("driving_experience"));
+                    AppGlobals.putDriverBio(jsonObject.getString("bio"));
+                }
                 responseCode = connection.getResponseCode();
             } catch (IOException | JSONException e) {
                 e.printStackTrace();
@@ -421,6 +443,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
         @Override
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
+            isGetUserDataTaskRunning = false;
             if (responseCode == 200) {
                 onGetUserDataSuccess();
             } else {
@@ -429,6 +452,12 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
                     onLoginFailed("Login Failed! UserData cannot be retrieved");
                 }
             }
+        }
+
+        @Override
+        protected void onCancelled(Void aVoid) {
+            super.onCancelled(aVoid);
+            isGetUserDataTaskRunning = false;
         }
     }
 
@@ -448,7 +477,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
 
     final Runnable retryGetUserDataTask = new Runnable() {
         public void run() {
-            new GetUserDataTask().execute();
+            taskGetUserData = (GetUserDataTask) new GetUserDataTask().execute();
         }
     };
 
@@ -508,6 +537,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
+            isEnablePushNotificationTaskRunning = true;
             Helpers.showProgressDialog(getActivity(), "Enabling Push Notifications");
         }
 
@@ -543,6 +573,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
         @Override
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
+            isEnablePushNotificationTaskRunning = false;
             Helpers.dismissProgressDialog();
             if (responseCode == 200) {
                 Toast.makeText(getActivity(), "Push Notifications Enabled", Toast.LENGTH_LONG).show();
@@ -555,6 +586,26 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
                 AppGlobals.putToken(null);
                 AppGlobals.putGcmToken(null);
             }
+        }
+
+        @Override
+        protected void onCancelled(Void aVoid) {
+            super.onCancelled(aVoid);
+            isEnablePushNotificationTaskRunning = false;
+        }
+    }
+
+    private void cancelAllTasks() {
+        if (isUserLoginTaskRunning) {
+            taskUserLogin.cancel(true);
+        }
+
+        if (isGetUserDataTaskRunning) {
+            taskGetUserData.cancel(true);
+        }
+
+        if (isEnablePushNotificationTaskRunning) {
+            taskEnablePushNotification.cancel(true);
         }
     }
 

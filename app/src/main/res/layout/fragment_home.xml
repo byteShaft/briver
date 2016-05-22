@@ -2,6 +2,29 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="match_parent">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_marginTop="10dp">
+        <RatingBar
+            android:id="@+id/rBar_home"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:numStars="5"
+            android:rating="4.3"
+            android:isIndicator="true"/>
+
+        <TextView
+            android:id="@+id/tv_rBar_home"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="(43)"
+            android:layout_gravity="center_horizontal"
+            android:textColor="#ffffff"
+            android:textSize="16dp" />
+    </LinearLayout>
 
     <TextView
         android:id="@+id/tv_home_fragment_user_type"
@@ -12,5 +35,4 @@
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
         android:layout_margin="5dp"/>
-
 </RelativeLayout>

@@ -29,6 +29,9 @@ import com.google.android.gms.maps.model.LatLng;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
@@ -36,6 +39,7 @@ public class Helpers {
 
     public static int countDownTimerMillisUntilFinished;
     private static ProgressDialog progressDialog;
+    private static ProgressDialog progressDialogWithPositiveButton;
     private static CountDownTimer countdownTimer;
     private static boolean isCountDownTimerRunning;
 
@@ -52,6 +56,30 @@ public class Helpers {
     public static void dismissProgressDialog() {
         if (progressDialog != null) {
             progressDialog.dismiss();
+        }
+    }
+
+    public static void showProgressDialogWithPositiveButton(Context context, String message, String positiveButtonText, final Runnable listenerOk) {
+        progressDialogWithPositiveButton = new ProgressDialog(context);
+        progressDialogWithPositiveButton.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+        progressDialogWithPositiveButton.setMessage(message);
+        progressDialogWithPositiveButton.setCancelable(false);
+        progressDialogWithPositiveButton.setIndeterminate(true);
+        progressDialogWithPositiveButton.setCanceledOnTouchOutside(false);
+        progressDialogWithPositiveButton.setButton(DialogInterface.BUTTON_POSITIVE, positiveButtonText, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                if (listenerOk != null) {
+                    listenerOk.run();
+                }
+            }
+        });
+        progressDialogWithPositiveButton.show();
+    }
+
+    public static void dismissProgressWithPositiveButtonDialog() {
+        if (progressDialogWithPositiveButton != null) {
+            progressDialogWithPositiveButton.dismiss();
         }
     }
 
@@ -209,7 +237,9 @@ public class Helpers {
                 .setNegativeButton(negativeButtonText, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        listenerNo.run();
+                        if (listenerNo != null) {
+                            listenerNo.run();
+                        }
                     }
                 })
                 .setNeutralButton(neutralButtonText, new DialogInterface.OnClickListener() {
@@ -237,10 +267,10 @@ public class Helpers {
         tvFullName.setText("Name: " + fullName);
 
         TextView tvEmail = (TextView) onMapMarkerClickHireDialog.findViewById(R.id.tv_driver_hire_dialog_email);
-        tvEmail.setText("Email: " + eMail);
+        tvEmail.setText("Email: " + Helpers.replaceFirstThreeCharacters(eMail));
 
         TextView tvContact = (TextView) onMapMarkerClickHireDialog.findViewById(R.id.tv_driver_hire_dialog_contact);
-        tvContact.setText("Contact: " + contact);
+        tvContact.setText("Contact: " + Helpers.replaceLastThreeCharacters(contact));
 
         TextView tvNumberOfHires = (TextView) onMapMarkerClickHireDialog.findViewById(R.id.tv_driver_hire_dialog_number_of_hires);
         tvNumberOfHires.setText("Total Hires: " + numberOfHires);
@@ -249,7 +279,7 @@ public class Helpers {
         tvAddress.setText("Address: " + address);
 
         TextView tvLocationLastUpdated = (TextView) onMapMarkerClickHireDialog.findViewById(R.id.tv_driver_hire_dialog_location_last_updated);
-        tvLocationLastUpdated.setText("Location Last Updated: " + locationLastUpdated);
+        tvLocationLastUpdated.setText("Location Last Updated: " + Helpers.getTimeAgo(Helpers.getTimeInMillis(locationLastUpdated)));
 
         TextView tvExperience = (TextView) onMapMarkerClickHireDialog.findViewById(R.id.tv_driver_hire_dialog_driving_experience);
         int experienceInt = -1;
@@ -285,7 +315,9 @@ public class Helpers {
                 listenerYes.run();
             }
         });
+        Helpers.dismissProgressDialog();
         onMapMarkerClickHireDialog.show();
+
     }
 
     public static String secondsToMinutesSeconds(int seconds) {
@@ -370,5 +402,75 @@ public class Helpers {
             AppGlobals.getRunningActivityInstance().onBackPressed();
         }
     };
+
+    private static final int SECOND_MILLIS = 1000;
+    private static final int MINUTE_MILLIS = 60 * SECOND_MILLIS;
+    private static final int HOUR_MILLIS = 60 * MINUTE_MILLIS;
+    private static final int DAY_MILLIS = 24 * HOUR_MILLIS;
+
+    public static String getTimeAgo(long time) {
+        if (time < 1000000000000L) {
+            time *= 1000;
+        }
+
+        long now = System.currentTimeMillis();
+        if (time > now || time <= 0) {
+            return null;
+        }
+
+        final long diff = now - time;
+        if (diff < MINUTE_MILLIS) {
+            return "just now";
+        } else if (diff < 2 * MINUTE_MILLIS) {
+            return "a minute ago";
+        } else if (diff < 50 * MINUTE_MILLIS) {
+            return diff / MINUTE_MILLIS + " minutes ago";
+        } else if (diff < 90 * MINUTE_MILLIS) {
+            return "an hour ago";
+        } else if (diff < 24 * HOUR_MILLIS) {
+            return diff / HOUR_MILLIS + " hours ago";
+        } else if (diff < 48 * HOUR_MILLIS) {
+            return "yesterday";
+        } else {
+            return diff / DAY_MILLIS + " days ago";
+        }
+    }
+
+    public static long getTimeInMillis(String time) {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+        long timeInMilliseconds = 0;
+        try {
+            Date mDate = sdf.parse(time);
+            timeInMilliseconds = mDate.getTime();
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        return timeInMilliseconds;
+    }
+
+    public static String replaceLastThreeCharacters(String s) {
+        int length = s.length();
+        return s.substring(0, length - 3) + "***";
+    }
+
+    public static String replaceFirstThreeCharacters(String s) {
+        return "***" + s.substring(3);
+    }
+
+    public static void initiateCallIntent(Activity activity, String number) {
+        Intent intent = new Intent(Intent.ACTION_DIAL);
+        intent.setData(Uri.parse("tel:" + number));
+        activity.startActivity(intent);
+    }
+
+    public static void initiateEmailIntent(Activity activity, String email, String subject, String message) {
+        Intent intent = new Intent(Intent.ACTION_SEND);
+        intent.setType("message/plain");
+        intent.putExtra(Intent.EXTRA_EMAIL, new String[] {email});
+        intent.putExtra(Intent.EXTRA_SUBJECT, subject);
+        intent.putExtra(Intent.EXTRA_TEXT, message);
+        Intent mailer = Intent.createChooser(intent, null);
+        activity.startActivity(mailer);
+    }
 
 }

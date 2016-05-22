@@ -1,6 +1,115 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-</LinearLayout>
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:overScrollMode="never"
+        android:paddingBottom="10dp"
+        android:paddingTop="10dp"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:id="@+id/ll_register"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="42dp"
+            android:layout_marginRight="42dp"
+            android:focusableInTouchMode="true"
+            android:orientation="vertical">
+
+            <EditText
+                android:id="@+id/et_profile_full_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="10dp"
+                android:background="@drawable/background_edit_text"
+                android:drawableLeft="@mipmap/ic_edit_text_full_name"
+                android:drawablePadding="10dp"
+                android:hint="Full Name"
+                android:inputType="textPersonName"
+                android:maxLength="20"
+                android:padding="10dp"
+                android:textColor="#ffffff"
+                android:textCursorDrawable="@null"
+                android:textSize="18dp" />
+
+            <EditText
+                android:id="@+id/et_profile_email"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="10dp"
+                android:background="@drawable/background_edit_text"
+                android:drawableLeft="@mipmap/ic_edit_text_email"
+                android:drawablePadding="10dp"
+                android:hint="E-Mail"
+                android:inputType="textEmailAddress"
+                android:enabled="false"
+                android:maxLength="32"
+                android:padding="10dp"
+                android:textColor="#ffffff"
+                android:textCursorDrawable="@null"
+                android:textSize="18dp" />
+                <EditText
+                    android:id="@+id/et_profile_phone_number"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="10dp"
+                    android:background="@drawable/background_edit_text"
+                    android:drawableLeft="@mipmap/ic_edit_text_phone"
+                    android:drawablePadding="10dp"
+                    android:hint="Contact Number"
+                    android:inputType="phone"
+                    android:maxLength="20"
+                    android:padding="10dp"
+                    android:textColor="#ffffff"
+                    android:textCursorDrawable="@null"
+                    android:textSize="18dp" />
+
+                <LinearLayout
+                    android:id="@+id/layout_profile_elements_driver"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="10dp"
+                    android:animateLayoutChanges="true"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <EditText
+                        android:id="@+id/et_profile_driving_experience"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="10dp"
+                        android:background="@drawable/background_edit_text"
+                        android:drawableLeft="@mipmap/ic_edit_text_experience"
+                        android:drawablePadding="10dp"
+                        android:hint="Driving Experience (Yrs)"
+                        android:inputType="number"
+                        android:maxLength="2"
+                        android:padding="10dp"
+                        android:textColor="#ffffff"
+                        android:textCursorDrawable="@null"
+                        android:textSize="18dp" />
+
+                    <EditText
+                        android:id="@+id/et_profile_bio"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/background_edit_text"
+                        android:drawableLeft="@mipmap/ic_edit_text_biography"
+                        android:drawablePadding="10dp"
+                        android:hint="Basic Biography"
+                        android:inputType="textShortMessage"
+                        android:maxLength="160"
+                        android:maxLines="3"
+                        android:padding="10dp"
+                        android:textColor="#ffffff"
+                        android:textCursorDrawable="@null"
+                        android:textSize="18dp" />
+                </LinearLayout>
+                </LinearLayout>
+    </ScrollView>
+</RelativeLayout>

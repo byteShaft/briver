@@ -6,6 +6,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.RatingBar;
 import android.widget.TextView;
 
 import com.byteshaft.briver.R;
@@ -19,12 +20,17 @@ public class HomeFragment extends android.support.v4.app.Fragment implements Vie
     View baseViewHomeFragment;
     TextView tvShowUserType;
     public static boolean isHomeFragmentOpen;
+    RatingBar ratingBarHome;
+    TextView tvRatingBarHome;
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         baseViewHomeFragment = inflater.inflate(R.layout.fragment_home, container, false);
         tvShowUserType = (TextView) baseViewHomeFragment.findViewById(R.id.tv_home_fragment_user_type);
+
+        ratingBarHome = (RatingBar) baseViewHomeFragment.findViewById(R.id.rBar_home);
+        tvRatingBarHome = (TextView) baseViewHomeFragment.findViewById(R.id.tv_rBar_home);
 
         if (AppGlobals.getUserType() == 0) {
             tvShowUserType.setText("CUSTOMER");

@@ -85,6 +85,11 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
                 "}";
     }
 
+    UserConfirmationTask taskUserConfirmation;
+    UserResendEmail taskResendEmail;
+    boolean isUserConfirmationTaskRunning;
+    boolean isResendEmailTaskRunning;
+
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -129,7 +134,7 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
                 textEmailEntry = etCodeConfirmationEmail.getText().toString();
                 confirmationCode = etCodeConfirmationCode.getText().toString();
                 if (validateConfirmationCode()) {
-                    new UserConfirmationTask().execute();
+                    taskUserConfirmation = (UserConfirmationTask) new UserConfirmationTask().execute();
                 }
                 Helpers.closeSoftKeyboard(getActivity());
                 break;
@@ -140,7 +145,7 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
                             "Code already sent - Wait for the CountDown",
                             Snackbar.LENGTH_SHORT, "#ffffff");
                 } else {
-                    new UserResendEmail().execute();
+                    taskResendEmail = (UserResendEmail) new UserResendEmail().execute();
                 }
                 Helpers.closeSoftKeyboard(getActivity());
                 break;
@@ -205,6 +210,14 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
     public void onPause() {
         super.onPause();
 
+        if (isUserConfirmationTaskRunning) {
+            taskUserConfirmation.cancel(true);
+        }
+
+        if (isResendEmailTaskRunning) {
+            taskResendEmail.cancel(true);
+        }
+
     }
 
     private class UserConfirmationTask extends AsyncTask<Void, Integer, Void> {
@@ -212,6 +225,7 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
+            isUserConfirmationTaskRunning = true;
             btnCodeConfirmationResendCode.setEnabled(false);
             btnCodeConfirmationSubmitCode.setEnabled(false);
             Helpers.showProgressDialog(getActivity(), "Activating User");
@@ -251,6 +265,18 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
                 AppGlobals.putPersonName(jsonObject.getString("full_name"));
                 AppGlobals.putUsername(jsonObject.getString("email"));
                 AppGlobals.putUserType(jsonObject.getInt("user_type"));
+                AppGlobals.putNumberOfHires(jsonObject.getInt("number_of_hires"));
+                AppGlobals.putPhoneNumber(jsonObject.getString("phone_number"));
+
+                if (jsonObject.getInt("user_type") == 0) {
+//                    AppGlobals.putDriverSearchRadius(jsonObject.getInt(""));
+                    AppGlobals.putVehicleType(jsonObject.getInt("vehicle_type"));
+                    AppGlobals.putVehicleMake(jsonObject.getString("vehicle_make"));
+                    AppGlobals.putVehicleModel(jsonObject.getString("vehicle_model"));
+                } else if (jsonObject.getInt("user_type") == 1) {
+                    AppGlobals.putDrivingExperience(jsonObject.getInt("driving_experience"));
+                    AppGlobals.putDriverBio(jsonObject.getString("bio"));
+                }
 
             } catch (IOException e) {
                 e.printStackTrace();
@@ -264,6 +290,7 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
         @Override
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
+            isUserConfirmationTaskRunning = false;
             Helpers.dismissProgressDialog();
             btnCodeConfirmationResendCode.setEnabled(true);
             btnCodeConfirmationSubmitCode.setEnabled(true);
@@ -273,6 +300,12 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
                 onConfirmationFailed();
             }
         }
+
+        @Override
+        protected void onCancelled() {
+            super.onCancelled();
+            isUserConfirmationTaskRunning = false;
+        }
     }
 
     private class UserResendEmail extends AsyncTask<Void, Integer, Void> {
@@ -280,6 +313,7 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
+            isResendEmailTaskRunning = true;
             btnCodeConfirmationResendCode.setEnabled(false);
             btnCodeConfirmationSubmitCode.setEnabled(false);
             tvCodeConfirmationStatusDisplay.setText("Resending Email");
@@ -316,6 +350,7 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
         @Override
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
+            isResendEmailTaskRunning = false;
             btnCodeConfirmationResendCode.setEnabled(true);
             btnCodeConfirmationSubmitCode.setEnabled(true);
             if (responseCode == 200) {
@@ -324,6 +359,12 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
                 onResendFailed();
                 Helpers.dismissProgressDialog();
             }
+        }
+
+        @Override
+        protected void onCancelled() {
+            super.onCancelled();
+            isResendEmailTaskRunning = false;
         }
     }
 

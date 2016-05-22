@@ -32,4 +32,8 @@
         <item name="windowNoTitle">true</item>
         <item name="android:backgroundDimEnabled">true</item>
     </style>
+
+    <!--<style name="buttonCallPressed" parent="@android:style/Widget.Button">-->
+        <!--<item name="android:background">@mipmap/ic_call_green</item>-->
+    <!--</style>-->
 </resources>
