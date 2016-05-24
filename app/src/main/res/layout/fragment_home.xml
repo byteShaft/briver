@@ -13,14 +13,12 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
             android:numStars="5"
-            android:rating="4.3"
             android:isIndicator="true"/>
 
         <TextView
             android:id="@+id/tv_rBar_home"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="(43)"
             android:layout_gravity="center_horizontal"
             android:textColor="#ffffff"
             android:textSize="16dp" />

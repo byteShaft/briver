@@ -13,14 +13,12 @@
         android:layout_marginTop="15dp"
         android:layout_gravity="center_horizontal"
         android:numStars="5"
-        android:rating="4.3"
         android:isIndicator="true"/>
 
     <TextView
         android:id="@+id/tv_rBar_hiring_dialog_number_of_ratings"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="(43)"
         android:layout_gravity="center_horizontal"
         android:textColor="#ffffff"
         android:textSize="16dp" />
@@ -44,6 +42,14 @@
 
     <TextView
         android:id="@+id/tv_driver_hire_dialog_contact"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="10dp"
+        android:textColor="#ffffff"
+        android:textSize="14dp" />
+
+    <TextView
+        android:id="@+id/tv_driver_hire_dialog_status"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginLeft="10dp"

@@ -21,6 +21,7 @@ import android.view.Gravity;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
+import android.widget.RatingBar;
 import android.widget.TextView;
 
 import com.byteshaft.briver.R;
@@ -255,13 +256,25 @@ public class Helpers {
 
     public static void customDialogWithPositiveFunctionNegativeButtonForOnMapMarkerClickHiring (
             Context context, String fullName, String eMail, String contact, String address,
-            String locationLastUpdated, String experience, String numberOfHires, String bio,
+            String locationLastUpdated, String experience, String numberOfHires, String bio, String status, String numberOfRatings, String numberOfStars,
             final Runnable listenerYes) {
         final Dialog onMapMarkerClickHireDialog = new Dialog(context);
         onMapMarkerClickHireDialog.setContentView(R.layout.layout_on_map_marker_click_hire_dialog);
 
         onMapMarkerClickHireDialog.setCancelable(false);
         onMapMarkerClickHireDialog.setTitle("QuickHire this driver?");
+
+        RatingBar rBarMarkerDialog = (RatingBar) onMapMarkerClickHireDialog.findViewById(R.id.rBar_driver_hiring_dialog);
+        Float starsRatingBar = Float.parseFloat(numberOfStars);
+
+        if (starsRatingBar > 0.0) {
+            rBarMarkerDialog.setRating(starsRatingBar);
+        } else {
+            rBarMarkerDialog.setRating((float) 0.0);
+        }
+
+        TextView tvNumberOfStars = (TextView) onMapMarkerClickHireDialog.findViewById(R.id.tv_rBar_hiring_dialog_number_of_ratings);
+        tvNumberOfStars.setText("(" + numberOfRatings +")");
 
         TextView tvFullName = (TextView) onMapMarkerClickHireDialog.findViewById(R.id.tv_driver_hire_dialog_full_name);
         tvFullName.setText("Name: " + fullName);
@@ -271,6 +284,14 @@ public class Helpers {
 
         TextView tvContact = (TextView) onMapMarkerClickHireDialog.findViewById(R.id.tv_driver_hire_dialog_contact);
         tvContact.setText("Contact: " + Helpers.replaceLastThreeCharacters(contact));
+
+        TextView tvStatus = (TextView) onMapMarkerClickHireDialog.findViewById(R.id.tv_driver_hire_dialog_status);
+        int statusInt = Integer.parseInt(status);
+        if (statusInt == 1) {
+            tvStatus.setText("Status: Available");
+        } else if (statusInt == 2) {
+            tvStatus.setText("Status: Online");
+        }
 
         TextView tvNumberOfHires = (TextView) onMapMarkerClickHireDialog.findViewById(R.id.tv_driver_hire_dialog_number_of_hires);
         tvNumberOfHires.setText("Total Hires: " + numberOfHires);
@@ -464,13 +485,10 @@ public class Helpers {
     }
 
     public static void initiateEmailIntent(Activity activity, String email, String subject, String message) {
-        Intent intent = new Intent(Intent.ACTION_SEND);
-        intent.setType("message/plain");
-        intent.putExtra(Intent.EXTRA_EMAIL, new String[] {email});
-        intent.putExtra(Intent.EXTRA_SUBJECT, subject);
-        intent.putExtra(Intent.EXTRA_TEXT, message);
-        Intent mailer = Intent.createChooser(intent, null);
-        activity.startActivity(mailer);
+        Intent intent = new Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:" + email));
+        intent.putExtra("subject", subject);
+        intent.putExtra("body", message);
+        activity.startActivity(intent);
     }
 
 }

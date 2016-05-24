@@ -24,7 +24,10 @@ public class AppGlobals extends Application {
     private static final String PERSON_NAME = "person_name";
     private static final String PHONE_NUMBER = "phone_number";
     private static final String USER_PASSWORD = "user_password";
+    private static final String USER_ID = "user_id";
     private static final String USER_TYPE = "user_type";
+    private static final String REVIEW_COUNT = "review_count";
+    private static final String STARS_VALUE = "stars_value";
     private static final String LOCATION_INTERVAL = "location_interval";
     private static final String LOCATION_REPORTING_TYPE = "location_reporting_type";
     private static final String TOKEN = "token";
@@ -51,6 +54,14 @@ public class AppGlobals extends Application {
 
     public static void setLoggedIn(boolean loggedIn) {
         sPreferences.edit().putBoolean(LOGGED_IN, loggedIn).apply();
+    }
+
+    public static float getStarsValue() {
+        return sPreferences.getFloat(STARS_VALUE, (float) 0.0);
+    }
+
+    public static void putStarsValue(float value) {
+        sPreferences.edit().putFloat(STARS_VALUE, value).apply();
     }
 
     public static boolean isHireFragmentFirstRun() {
@@ -118,6 +129,21 @@ public class AppGlobals extends Application {
         return sPreferences.getInt(VEHICLE_TYPE, 2);
     }
 
+    public static void putRatingCount(String reviewCount) {
+         sPreferences.edit().putString(REVIEW_COUNT, reviewCount).apply();
+    }
+
+    public static String getRatingCount() {
+        return sPreferences.getString(REVIEW_COUNT, "0");
+    }
+
+    public static void putUserID(int userID) {
+        sPreferences.edit().putInt(USER_ID, userID).apply();
+    }
+
+    public static int getUserID() {
+        return sPreferences.getInt(USER_ID, -1);
+    }
 
     public static void putLocationReportingType(int locationReportingType) {
         sPreferences.edit().putInt(LOCATION_REPORTING_TYPE, locationReportingType).apply();
@@ -128,12 +154,12 @@ public class AppGlobals extends Application {
     }
 
 
-    public static void putDrivingExperience(int drivingExperience) {
-        sPreferences.edit().putInt(DRIVING_EXPERIENCE, drivingExperience).apply();
+    public static void putDrivingExperience(String drivingExperience) {
+        sPreferences.edit().putString(DRIVING_EXPERIENCE, drivingExperience).apply();
     }
 
-    public static int getDrivingExperience() {
-        return sPreferences.getInt(DRIVING_EXPERIENCE, -1);
+    public static String getDrivingExperience() {
+        return sPreferences.getString(DRIVING_EXPERIENCE, "-1");
     }
 
     public static void putDriverSearchRadius(int radius) {

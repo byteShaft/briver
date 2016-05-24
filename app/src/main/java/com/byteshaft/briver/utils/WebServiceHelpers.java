@@ -11,21 +11,21 @@ import java.net.URL;
 
 public class WebServiceHelpers {
 
-    public static HttpURLConnection openConnectionForUrl(String path, String RequestType)
+    public static HttpURLConnection openConnectionForUrl(String path, String RequestType, boolean tokenRequired)
             throws IOException {
-
         URL url = new URL(path);
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         connection.setRequestProperty("Content-Type", "application/json");
         connection.setRequestMethod(RequestType);
         connection.setRequestProperty("charset", "utf-8");
-        connection.setRequestProperty("Authorization", "Token " + AppGlobals.getToken());
+        if (tokenRequired) {
+            connection.setRequestProperty("Authorization", "Token " + AppGlobals.getToken());
+        }
         return connection;
     }
 
     public static String readResponse(HttpURLConnection connection)
             throws IOException, JSONException {
-
         InputStream is = connection.getInputStream();
         BufferedReader rd = new BufferedReader(new InputStreamReader(is));
         String line;
