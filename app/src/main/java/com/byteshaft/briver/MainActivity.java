@@ -43,6 +43,7 @@ public class MainActivity extends AppCompatActivity
     Fragment fragment;
     String fragmentName = "";
     NavigationView navigationView;
+    public static TextView tvPersonName;
     DrawerLayout drawer;
     Toolbar toolbar;
     private static MainActivity sInstance;
@@ -80,7 +81,7 @@ public class MainActivity extends AppCompatActivity
             public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
                 navigationView.removeOnLayoutChangeListener(this);
 
-                TextView tvPersonName = (TextView) navigationView.findViewById(R.id.tv_nav_header_person_name);
+                tvPersonName = (TextView) navigationView.findViewById(R.id.tv_nav_header_person_name);
                 TextView tvPersonEmail = (TextView) navigationView.findViewById(R.id.tv_nav_header_person_email);
 
                 tvPersonName.setText(AppGlobals.getPeronName());

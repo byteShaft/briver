@@ -22,7 +22,7 @@
             android:isIndicator="true"/>
 
         <TextView
-            android:id="@+id/tv_rBar_nearby_driver_list"
+            android:id="@+id/tv_total_rating_nearby_driver_list"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="(43)"
@@ -62,6 +62,12 @@
                 android:textColor="#ffffff"
                 android:textSize="14dp" />
 
+            <TextView
+                android:id="@+id/tv_nearby_drivers_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#ffffff"
+                android:textSize="14dp" />
             <TextView
                 android:id="@+id/tv_nearby_drivers_total_hires"
                 android:layout_width="wrap_content"

@@ -312,8 +312,8 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
     public void onPause() {
         super.onPause();
         isRegistrationFragmentOpen = false;
-        if (mLocationService.mGoogleApiClient.isConnected()) {
-            mLocationService.startLocationUpdates();
+        if (mLocationService.mGoogleApiClient != null && mLocationService.mGoogleApiClient.isConnected()) {
+            mLocationService.stopLocationService();
         }
         if (isUserRegistrationTaskRunning) {
             taskRegisterUser.cancel(true);

@@ -44,6 +44,7 @@ import com.byteshaft.briver.utils.AppGlobals;
 import com.byteshaft.briver.utils.DriverService;
 import com.byteshaft.briver.utils.EndPoints;
 import com.byteshaft.briver.utils.Helpers;
+import com.byteshaft.briver.utils.WebServiceHelpers;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -59,9 +60,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -241,7 +240,9 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
                                             hashMapDriverData.get(driversIdList.get(id)).get(0), hashMapDriverData.get(driversIdList.get(id)).get(1),
                                             hashMapDriverData.get(driversIdList.get(id)).get(2), addressString, hashMapDriverData.get(driversIdList.get(id)).get(4),
                                             hashMapDriverData.get(driversIdList.get(id)).get(5), hashMapDriverData.get(driversIdList.get(id)).get(6),
-                                            hashMapDriverData.get(driversIdList.get(id)).get(7), btnCustomHireDialogHire);
+                                            hashMapDriverData.get(driversIdList.get(id)).get(7), hashMapDriverData.get(driversIdList.get(id)).get(8),
+                                            hashMapDriverData.get(driversIdList.get(id)).get(9), hashMapDriverData.get(driversIdList.get(id)).get(10),
+                                            btnCustomHireDialogHire);
                                 } else {
                                     Helpers.showSnackBar(getView(), "Driver info cannot be retrieved at the moment", Snackbar.LENGTH_LONG, "#f44336");
                                 }
@@ -603,27 +604,16 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
         protected Void doInBackground(Void... params) {
             try {
                 Log.i("getNearbyDrivers", " RUN");
-                URL url;
+                String url;
                 if (gettingNearbyDriversToShowMarkers) {
-                    url = new URL(EndPoints.BASE_FILTER_DRIVERS + getNearbyDriversString(
-                            hireMeetUpPoint, 500, serviceStartTime, totalHoursOfService * 60));
+                    url = EndPoints.BASE_FILTER_DRIVERS + getNearbyDriversString(
+                            hireMeetUpPoint, 50, serviceStartTime, totalHoursOfService * 60);
                 } else {
-                    url = new URL(EndPoints.BASE_FILTER_DRIVERS + getNearbyDriversString(
-                            hireMeetUpPoint, AppGlobals.getDriverSearchRadius(), serviceStartTime, totalHoursOfService * 60));
+                    url = EndPoints.BASE_FILTER_DRIVERS + getNearbyDriversString(
+                            hireMeetUpPoint, AppGlobals.getDriverSearchRadius(), serviceStartTime, totalHoursOfService * 60);
                 }
-                connection = (HttpURLConnection) url.openConnection();
-                connection.setRequestMethod("GET");
-                connection.setRequestProperty("Content-Type", "application/json");
-                connection.setRequestProperty("charset", "utf-8");
-                connection.setRequestProperty("Authorization", "Token " + AppGlobals.getToken());
-                InputStream in = (InputStream) connection.getContent();
-                Log.i("InputStream", "" + in);
-                int ch;
-                StringBuilder sb;
-                sb = new StringBuilder();
-                while ((ch = in.read()) != -1)
-                    sb.append((char) ch);
-                JSONArray jsonArray = new JSONArray(sb.toString());
+                connection = WebServiceHelpers.openConnectionForUrl(url, "GET", true);
+                JSONArray jsonArray = new JSONArray(WebServiceHelpers.readResponse(connection));
                 if (jsonArray.toString().equals("[]") && !gettingNearbyDriversToShowMarkers) {
                     dataEmpty = true;
                     if (!gettingNearbyDriversToShowMarkers) {
@@ -632,10 +622,9 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
                     return null;
                 }
                 Log.i("IncomingData", " UserData: " + jsonArray);
-
                 for (int i = 0; i < jsonArray.length(); i++) {
                     JSONObject jsonObject = jsonArray.getJSONObject(i);
-                    if (!driversIdList.contains(jsonObject.getInt("id"))) {
+                    if (!driversIdList.contains(jsonObject.getInt("id")) && Integer.parseInt(jsonObject.getString("status")) != 0) {
                         driversIdList.add(jsonObject.getInt("id"));
                         ArrayList<String> arrayListString = new ArrayList<>();
                         arrayListString.add(jsonObject.getString("full_name"));
@@ -646,6 +635,9 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
                         arrayListString.add(jsonObject.getString("driving_experience"));
                         arrayListString.add(jsonObject.getString("number_of_hires"));
                         arrayListString.add(jsonObject.getString("bio"));
+                        arrayListString.add(jsonObject.getString("status"));
+                        arrayListString.add(jsonObject.getString("review_count"));
+                        arrayListString.add(jsonObject.getString("review_stars"));
                         hashMapDriverData.put(jsonObject.getInt("id"), arrayListString);
                     }
                 }
@@ -661,7 +653,8 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
             if (dataEmpty) {
-                Helpers.AlertDialogMessage(getActivity(), "List is empty", "No drivers found in the nearby area for the set criteria", "Ok");
+                Helpers.AlertDialogMessage(getActivity(), "List is empty",
+                        "No drivers found in the nearby area for the set criteria", "Ok");
             } else  {
             if (!gettingNearbyDriversToShowMarkers) {
                 Helpers.dismissProgressDialog();
@@ -690,7 +683,8 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
     }
 
     public void onGetNearbyDriversFailed() {
-        Helpers.showSnackBar(getView(), "Failed to retrieve nearby available drivers", Snackbar.LENGTH_LONG, "#f44336");
+        Helpers.showSnackBar(getView(), "Failed to retrieve nearby available drivers",
+                Snackbar.LENGTH_LONG, "#f44336");
     }
 
     public static String getNearbyDriversString (
@@ -716,7 +710,8 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
         }
 
     public void functionToSetDriverMarkersOnMap(String latitudeLongitude) {
-        serviceStartTime = android.text.format.DateFormat.format("yyyy-MM-ddThh:mm:ss", new java.util.Date()).toString();
+        serviceStartTime = android.text.format.DateFormat.format("yyyy-MM-ddThh:mm:ss",
+                new java.util.Date()).toString();
         hireMeetUpPoint = latitudeLongitude;
         gettingNearbyDriversToShowMarkers = true;
         totalHoursOfService = 2 * 60;
@@ -759,7 +754,6 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
             }
         }
     };
-
 
     public void loadFragment(android.support.v4.app.Fragment fragment) {
         FragmentManager fm = getFragmentManager();
@@ -811,10 +805,4 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
         }
     };
 
-    class ShowDialogForEmptyListNearbyDrivers extends AsyncTask {
-        @Override
-        protected Object doInBackground(Object... params) {
-            return new Object();
-        }
-    }
 }

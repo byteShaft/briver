@@ -209,15 +209,12 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
     @Override
     public void onPause() {
         super.onPause();
-
         if (isUserConfirmationTaskRunning) {
             taskUserConfirmation.cancel(true);
         }
-
         if (isResendEmailTaskRunning) {
             taskResendEmail.cancel(true);
         }
-
     }
 
     private class UserConfirmationTask extends AsyncTask<Void, Integer, Void> {
@@ -269,12 +266,12 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
                 AppGlobals.putPhoneNumber(jsonObject.getString("phone_number"));
 
                 if (jsonObject.getInt("user_type") == 0) {
-//                    AppGlobals.putDriverSearchRadius(jsonObject.getInt(""));
+                    AppGlobals.putDriverSearchRadius(jsonObject.getInt("driver_filter_radius"));
                     AppGlobals.putVehicleType(jsonObject.getInt("vehicle_type"));
                     AppGlobals.putVehicleMake(jsonObject.getString("vehicle_make"));
                     AppGlobals.putVehicleModel(jsonObject.getString("vehicle_model"));
                 } else if (jsonObject.getInt("user_type") == 1) {
-                    AppGlobals.putDrivingExperience(jsonObject.getInt("driving_experience"));
+                    AppGlobals.putDrivingExperience(jsonObject.getString("driving_experience"));
                     AppGlobals.putDriverBio(jsonObject.getString("bio"));
                 }
 

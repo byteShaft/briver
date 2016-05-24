@@ -47,7 +47,6 @@ import org.json.JSONObject;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
@@ -334,14 +333,8 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
                     responseCode = accountStatus;
                     return null;
                 }
-                URL url = new URL(EndPoints.LOGIN);
-                connection = (HttpURLConnection) url.openConnection();
-                connection.setDoOutput(true);
-                connection.setDoInput(true);
-                connection.setInstanceFollowRedirects(false);
-                connection.setRequestMethod("POST");
-                connection.setRequestProperty("Content-Type", "application/json");
-                connection.setRequestProperty("charset", "utf-8");
+                String url = EndPoints.LOGIN;
+                connection = WebServiceHelpers.openConnectionForUrl(url, "POST", false);
                 DataOutputStream out = new DataOutputStream(connection.getOutputStream());
 
                 String loginString = getLoginString(sLoginEmail, sLoginPassword);
@@ -350,16 +343,8 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
                 out.flush();
                 out.close();
                 responseCode = connection.getResponseCode();
-                Log.i("ResponseCode", " " + responseCode);
-                Log.i("ResponseMessage", " " + connection.getResponseMessage());
-                InputStream in = (InputStream) connection.getContent();
-                int ch;
-                StringBuilder sb;
 
-                sb = new StringBuilder();
-                while ((ch = in.read()) != -1)
-                    sb.append((char) ch);
-                JSONObject jsonObject = new JSONObject(sb.toString());
+                JSONObject jsonObject = new JSONObject(WebServiceHelpers.readResponse(connection));
                 AppGlobals.putToken(jsonObject.getString("token"));
 
             } catch (IOException | JSONException e) {
@@ -413,24 +398,27 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
         @Override
         protected Void doInBackground(Void... params) {
             try {
-                connection = WebServiceHelpers.openConnectionForUrl(EndPoints.BASE_ACCOUNTS + "me", "GET");
+                connection = WebServiceHelpers.openConnectionForUrl(EndPoints.BASE_ACCOUNTS + "me", "GET", true);
                 JSONObject jsonObject = new JSONObject(WebServiceHelpers.readResponse(connection));
                 Log.i("IncomingData", " UserData: " + jsonObject);
-
                 AppGlobals.putPersonName(jsonObject.getString("full_name"));
                 AppGlobals.putUsername(jsonObject.getString("email"));
                 AppGlobals.putNumberOfHires(jsonObject.getInt("number_of_hires"));
                 AppGlobals.putUserType(jsonObject.getInt("user_type"));
-
+                AppGlobals.putUserID(jsonObject.getInt("id"));
+                AppGlobals.putRatingCount(jsonObject.getString("review_count"));
+                float starsValue = Float.parseFloat(jsonObject.getString("review_stars"));
+                AppGlobals.putStarsValue(starsValue);
                 if (jsonObject.getInt("user_type") == 0) {
-//                    AppGlobals.putDriverSearchRadius(jsonObject.getInt(""));
+                    AppGlobals.putDriverSearchRadius(jsonObject.getInt("driver_filter_radius"));
                     AppGlobals.putVehicleType(jsonObject.getInt("vehicle_type"));
                     AppGlobals.putVehicleMake(jsonObject.getString("vehicle_make"));
                     AppGlobals.putVehicleModel(jsonObject.getString("vehicle_model"));
                     AppGlobals.putPhoneNumber(jsonObject.getString("phone_number"));
-
                 } else if (jsonObject.getInt("user_type") == 1) {
-                    AppGlobals.putDrivingExperience(jsonObject.getInt("driving_experience"));
+                    AppGlobals.putDrivingExperience(jsonObject.getString("driving_experience"));
+                    AppGlobals.putDriverLocationReportingIntervalTime(jsonObject.getInt("location_reporting_interval"));
+                    AppGlobals.putLocationReportingType(jsonObject.getInt("location_reporting_type"));
                     AppGlobals.putDriverBio(jsonObject.getString("bio"));
                 }
                 responseCode = connection.getResponseCode();
@@ -497,7 +485,6 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
         return responseCodeStatus;
     }
 
-
     public void loadFragment(Fragment fragment) {
         android.app.FragmentTransaction tx = getFragmentManager().beginTransaction();
         tx.setCustomAnimations(R.animator.anim_transition_fragment_slide_right_enter, R.animator.anim_transition_fragment_slide_left_exit,
@@ -520,7 +507,6 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
                     System.out.println(R.string.token_error_message);
                 }
             }
-
         };
 
         if (AppGlobals.checkPlayServicesAvailability()) {

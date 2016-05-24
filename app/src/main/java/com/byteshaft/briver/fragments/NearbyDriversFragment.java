@@ -14,6 +14,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.RatingBar;
 import android.widget.TextView;
 
 import com.byteshaft.briver.R;
@@ -79,6 +80,10 @@ public class NearbyDriversFragment extends android.support.v4.app.Fragment {
                 viewHolder.tvNearbyDriversListDrivingExperience = (TextView) convertView.findViewById(R.id.tv_nearby_drivers_driving_experience);
                 viewHolder.tvNearbyDriversListLocationLastUpdated = (TextView) convertView.findViewById(R.id.tv_nearby_drivers_location_last_updated);
                 viewHolder.tvNearbyDriversListBio = (TextView) convertView.findViewById(R.id.tv_nearby_drivers_bio);
+                viewHolder.tvNearbyDriversListStatus = (TextView) convertView.findViewById(R.id.tv_nearby_drivers_status);
+                viewHolder.tvNearbyDriversReviewCount = (TextView) convertView.findViewById(R.id.tv_total_rating_nearby_driver_list);
+                viewHolder.rBarNearbyDrivers = (RatingBar) convertView.findViewById(R.id.rBar_nearby_drivers_list);
+
                 convertView.setTag(viewHolder);
             } else {
                 viewHolder = (ViewHolder) convertView.getTag();
@@ -92,11 +97,25 @@ public class NearbyDriversFragment extends android.support.v4.app.Fragment {
             viewHolder.tvNearbyDriversListLocationLastUpdated.setText("Location Last Updated: " + Helpers.getTimeAgo(Helpers.getTimeInMillis(HireFragment.hashMapDriverData.get(arrayListIntIds.get(position)).get(4))));
 
             String bio = HireFragment.hashMapDriverData.get(arrayListIntIds.get(position)).get(7);
-
             if (bio.length() > 2) {
                 viewHolder.tvNearbyDriversListBio.setText("Bio: " + bio);
             } else {
                 viewHolder.tvNearbyDriversListBio.setVisibility(View.GONE);
+            }
+
+            int status = Integer.parseInt(HireFragment.hashMapDriverData.get(HireFragment.driversIdList.get(position)).get(8));
+            if (status == 1) {
+                viewHolder.tvNearbyDriversListStatus.setText("Status: Available");
+            } else if (status == 2) {
+                viewHolder.tvNearbyDriversListStatus.setText("Status: Online");
+            }
+            viewHolder.tvNearbyDriversReviewCount.setText("(" + HireFragment.hashMapDriverData.get(HireFragment.driversIdList.get(position)).get(9) + ")");
+
+            Float ratingStars = Float.parseFloat(HireFragment.hashMapDriverData.get(HireFragment.driversIdList.get(position)).get(10));
+            if (ratingStars > 0.0) {
+                viewHolder.rBarNearbyDrivers.setRating(ratingStars);
+            } else {
+                viewHolder.rBarNearbyDrivers.setRating((float) 0.0);
             }
             return convertView;
         }
@@ -116,6 +135,9 @@ public class NearbyDriversFragment extends android.support.v4.app.Fragment {
         TextView tvNearbyDriversListDrivingExperience;
         TextView tvNearbyDriversListLocationLastUpdated;
         TextView tvNearbyDriversListBio;
+        TextView tvNearbyDriversListStatus;
+        TextView tvNearbyDriversReviewCount;
+        RatingBar rBarNearbyDrivers;
     }
 
     private class GetDriversAddresses extends AsyncTask<Void, Integer, Void> {

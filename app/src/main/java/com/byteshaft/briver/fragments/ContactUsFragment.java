@@ -23,7 +23,7 @@ public class ContactUsFragment extends android.support.v4.app.Fragment implement
     };
     final Runnable mailByteShaft = new Runnable() {
         public void run() {
-            Helpers.initiateEmailIntent(getActivity(), "byteshaft@gmail.com", "Mail regarding Briver", null);
+            Helpers.initiateEmailIntent(getActivity(), "byteshaft@gmail.com", "Briver", null);
         }
     };
     View baseViewContactUsFragment;
@@ -37,6 +37,9 @@ public class ContactUsFragment extends android.support.v4.app.Fragment implement
 
         btnContactUsCall = (ImageButton) baseViewContactUsFragment.findViewById(R.id.btn_contact_us_call);
         btnContactUsMail = (ImageButton) baseViewContactUsFragment.findViewById(R.id.btn_contact_us_mail);
+
+        btnContactUsCall.setOnClickListener(this);
+        btnContactUsMail.setOnClickListener(this);
 
         return baseViewContactUsFragment;
     }
