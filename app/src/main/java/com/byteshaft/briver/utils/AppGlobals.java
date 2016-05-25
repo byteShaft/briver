@@ -19,6 +19,7 @@ public class AppGlobals extends Application {
     public static final int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
     private static final String DRIVER_SEARCH_RADIUS = "driver_radius";
     private static final String DRIVER_SERVICE_STATUS = "driver_service_status";
+    private static final String ALARM_STATUS = "alarm_status";
     private static final String LOGGED_IN = "logged_in";
     private static final String USER_NAME = "user_name";
     private static final String PERSON_NAME = "person_name";
@@ -31,6 +32,7 @@ public class AppGlobals extends Application {
     private static final String LOCATION_INTERVAL = "location_interval";
     private static final String LOCATION_REPORTING_TYPE = "location_reporting_type";
     private static final String TOKEN = "token";
+    private static final String PENDING_LOCATION_UPLOAD = "pending_location_update";
     private static final String GCM_TOKEN = "gcm_token";
     private static final String USER_DATA = "user_data";
     private static final String DRIVER_BIO = "driver_bio";
@@ -55,6 +57,24 @@ public class AppGlobals extends Application {
     public static void setLoggedIn(boolean loggedIn) {
         sPreferences.edit().putBoolean(LOGGED_IN, loggedIn).apply();
     }
+
+
+    public static boolean isLocationUploadPending() {
+        return sPreferences.getBoolean(PENDING_LOCATION_UPLOAD, false);
+    }
+
+    public static void setLocationUploadPending(boolean pendingLocationUpload) {
+        sPreferences.edit().putBoolean(PENDING_LOCATION_UPLOAD, pendingLocationUpload).apply();
+    }
+
+    public static boolean isAlarmSet() {
+        return sPreferences.getBoolean(ALARM_STATUS, false);
+    }
+
+    public static void setAlarmStatus(boolean status) {
+        sPreferences.edit().putBoolean(ALARM_STATUS, status).apply();
+    }
+
 
     public static float getStarsValue() {
         return sPreferences.getFloat(STARS_VALUE, (float) 0.0);
@@ -110,7 +130,7 @@ public class AppGlobals extends Application {
     }
 
     public static String getVehicleModel() {
-        return sPreferences.getString(USER_NAME, null);
+        return sPreferences.getString(VEHICLE_MODEL, null);
     }
 
     public static void putDriverBio(String bio) {

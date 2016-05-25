@@ -20,11 +20,14 @@ import android.support.design.widget.Snackbar;
 import android.view.Gravity;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.RatingBar;
+import android.widget.Spinner;
 import android.widget.TextView;
 
 import com.byteshaft.briver.R;
+import com.byteshaft.briver.fragments.HireFragment;
 import com.google.android.gms.maps.model.LatLng;
 
 import java.io.IOException;
@@ -254,7 +257,7 @@ public class Helpers {
 
 
 
-    public static void customDialogWithPositiveFunctionNegativeButtonForOnMapMarkerClickHiring (
+    public static String customDialogWithPositiveFunctionNegativeButtonForOnMapMarkerClickHiring (
             Context context, String fullName, String eMail, String contact, String address,
             String locationLastUpdated, String experience, String numberOfHires, String bio, String status, String numberOfRatings, String numberOfStars,
             final Runnable listenerYes) {
@@ -321,6 +324,10 @@ public class Helpers {
             tvBio.setVisibility(View.GONE);
         }
 
+        Spinner spinnerServiceHours = (Spinner) onMapMarkerClickHireDialog.findViewById(R.id.spinner_hire_dialog_service_hours);
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(context, android.R.layout.simple_spinner_dropdown_item, HireFragment.itemsForHoursSelectingDialog);
+        spinnerServiceHours.setAdapter(adapter);
+
         Button buttonNo = (Button) onMapMarkerClickHireDialog.findViewById(R.id.btn_driver_hire_dialog_cancel);
         buttonNo.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -339,6 +346,7 @@ public class Helpers {
         Helpers.dismissProgressDialog();
         onMapMarkerClickHireDialog.show();
 
+        return spinnerServiceHours.toString();
     }
 
     public static String secondsToMinutesSeconds(int seconds) {
@@ -490,5 +498,4 @@ public class Helpers {
         intent.putExtra("body", message);
         activity.startActivity(intent);
     }
-
 }
