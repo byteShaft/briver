@@ -77,7 +77,6 @@ public class ProfileFragment extends android.support.v4.app.Fragment implements 
         return baseViewProfileFragment;
     }
 
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -137,14 +136,13 @@ public class ProfileFragment extends android.support.v4.app.Fragment implements 
             } else {
                 etProfileDrivingExperience.setError(null);
             }
-        }
-
-        if (profileFullName.equals(AppGlobals.getPeronName()) &&
-                profileContactNumber.equals(AppGlobals.getPhoneNumber()) &&
-                profileDrivingExperience.equals(AppGlobals.getDrivingExperience())
-                && profileBio.equals(AppGlobals.getDriverBio())) {
-            Helpers.showSnackBar(getView(), "No changes to submit", Snackbar.LENGTH_LONG, "#ffffff");
-            valid = false;
+            if (profileFullName.equals(AppGlobals.getPeronName()) &&
+                    profileContactNumber.equals(AppGlobals.getPhoneNumber()) &&
+                    profileDrivingExperience.equals(AppGlobals.getDrivingExperience())
+                    && profileBio.equals(AppGlobals.getDriverBio())) {
+                Helpers.showSnackBar(getView(), "No changes to submit", Snackbar.LENGTH_LONG, "#ffffff");
+                valid = false;
+            }
         }
         return valid;
     }
@@ -238,7 +236,6 @@ public class ProfileFragment extends android.support.v4.app.Fragment implements 
             taskEditProfile.cancel(true);
         }
     }
-
 
     public static String getProfileEditStringForCustomer (
             String full_name, String phone_number) {

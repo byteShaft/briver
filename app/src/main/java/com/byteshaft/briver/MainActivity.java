@@ -1,6 +1,7 @@
 package com.byteshaft.briver;
 
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.design.internal.NavigationMenuView;
@@ -26,12 +27,21 @@ import com.byteshaft.briver.fragments.PreferencesFragment;
 import com.byteshaft.briver.fragments.ProfileFragment;
 import com.byteshaft.briver.fragments.TimelineFragment;
 import com.byteshaft.briver.utils.AppGlobals;
+import com.byteshaft.briver.utils.DriverLocationAlarmHelper;
+import com.byteshaft.briver.utils.DriverServiceAlarmReceiver;
+import com.byteshaft.briver.utils.EndPoints;
 import com.byteshaft.briver.utils.Helpers;
+import com.byteshaft.briver.utils.WebServiceHelpers;
+
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.net.HttpURLConnection;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
     public static boolean isMainActivityRunning;
+    boolean isDriverStatusTaskRunning;
     static FragmentManager fragmentManager;
     final Runnable logout = new Runnable() {
         public void run() {
@@ -47,6 +57,11 @@ public class MainActivity extends AppCompatActivity
     DrawerLayout drawer;
     Toolbar toolbar;
     private static MainActivity sInstance;
+
+    DriverStatusTask taskDriverStatus;
+
+    public static int responseCode;
+    HttpURLConnection connection;
 
     public static MainActivity getInstance() {
         return sInstance;
@@ -91,6 +106,10 @@ public class MainActivity extends AppCompatActivity
 
         if (AppGlobals.getUserType() == 1) {
             navigationView.getMenu().getItem(1).setVisible(false);
+            if (!AppGlobals.isAlarmSet()) {
+                DriverLocationAlarmHelper.setAlarm(AppGlobals.getDriverLocationReportingIntervalTime());
+                AppGlobals.setAlarmStatus(true);
+            }
         }
     }
 
@@ -100,9 +119,7 @@ public class MainActivity extends AppCompatActivity
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
         } else {
-            if (fragmentManager.getBackStackEntryCount() == 2) {
-                fragmentManager.popBackStack();
-            } else if (fragmentManager.getBackStackEntryCount() > 2) {
+            if (fragmentManager.getBackStackEntryCount() > 1) {
                 fragmentManager.popBackStack(1, FragmentManager.POP_BACK_STACK_INCLUSIVE);
                 navigationView.getMenu().getItem(0).setChecked(true);
                 toolbar.setTitle("Home");
@@ -192,12 +209,74 @@ public class MainActivity extends AppCompatActivity
     protected void onResume() {
         super.onResume();
         isMainActivityRunning = true;
+        if (AppGlobals.getUserType() == 1) {
+        if (DriverServiceAlarmReceiver.driverLocationReportingServiceIsRunning) {
+            taskDriverStatus = (DriverStatusTask) new DriverStatusTask().execute();
+        }
+        }
     }
 
     @Override
     protected void onPause() {
         super.onPause();
         isMainActivityRunning = false;
+        if (AppGlobals.getUserType() == 1) {
+        if (isDriverStatusTaskRunning) {
+            taskDriverStatus.cancel(true);
+            taskDriverStatus = (DriverStatusTask) new DriverStatusTask().execute();
+        }
+        taskDriverStatus = (DriverStatusTask) new DriverStatusTask().execute();
+        }
+    }
+
+    private class DriverStatusTask extends AsyncTask<Void, Integer, Void> {
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            isDriverStatusTaskRunning = true;
+        }
+
+        @Override
+        protected Void doInBackground(Void... params) {
+            String url;
+            try {
+                url = EndPoints.SHOW_DRIVERS + AppGlobals.getUserID();
+                connection = WebServiceHelpers.openConnectionForUrl(url, "PATCH", true);
+                DataOutputStream out = new DataOutputStream(connection.getOutputStream());
+                out.writeBytes(getDriverStatusPostingString());
+                out.flush();
+                out.close();
+                responseCode = connection.getResponseCode();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+            isDriverStatusTaskRunning = false;
+        }
+
+        @Override
+        protected void onCancelled() {
+            super.onCancelled();
+            isDriverStatusTaskRunning = false;
+        }
+    }
+
+    public static String getDriverStatusPostingString () {
+        String status;
+        if (isMainActivityRunning) {
+            status = "2";
+        } else {
+            status = "1";
+        }
+        return "{" +
+                String.format("\"status\": \"%s\"", status) +
+                "}";
     }
 
 }

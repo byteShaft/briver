@@ -79,7 +79,12 @@ public class LocationService extends ContextWrapper implements LocationListener,
     @Override
     public void onLocationChanged(Location location) {
         onLocationChangedCounter++;
-        if (RegisterFragment.isRegistrationFragmentOpen && onLocationChangedCounter == 3) {
+        driverCurrentLocation = new LatLng(location.getLatitude(), location.getLongitude());
+        if (DriverServiceAlarmReceiver.isLocationServiceCalledFromService && onLocationChangedCounter == 3 &&
+                !RegisterFragment.isRegistrationFragmentOpen && !PreferencesFragment.isPreferencesFragmentOpen) {
+            DriverServiceAlarmReceiver.postLocationFromDriverService();
+            Log.i("LocationServices", "PostingLocationFromDriverService");
+        } else if (RegisterFragment.isRegistrationFragmentOpen && onLocationChangedCounter == 3) {
             RegisterFragment.latLngDriverLocationForRegistration = driverCurrentLocation;
             Helpers.showSnackBar(RegisterFragment.baseViewRegisterFragment, "Location Acquired", Snackbar.LENGTH_SHORT, "#A4C639");
         } else if (PreferencesFragment.isPreferencesFragmentOpen && onLocationChangedCounter == 3) {
@@ -89,7 +94,6 @@ public class LocationService extends ContextWrapper implements LocationListener,
         if (onLocationChangedCounter > 2) {
             stopLocationService();
         }
-        driverCurrentLocation = new LatLng(location.getLatitude(), location.getLongitude());
         Log.i("LocationServices", "LocationChanged called");
     }
 

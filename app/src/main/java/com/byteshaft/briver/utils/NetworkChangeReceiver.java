@@ -16,6 +16,8 @@ import com.byteshaft.briver.WelcomeActivity;
  */
 public class NetworkChangeReceiver extends BroadcastReceiver {
 
+    LocationService mLocationService;
+
     public static boolean isNetworkConnected;
     final Runnable exitApp = new Runnable() {
         public void run() {
@@ -55,6 +57,11 @@ public class NetworkChangeReceiver extends BroadcastReceiver {
                 mobile != null && mobile.isConnectedOrConnecting();
         if (isNetworkConnected) {
             Log.d("Network Available ", "YES");
+            if (AppGlobals.isLocationUploadPending() && Helpers.isAnyLocationServiceAvailable()) {
+                mLocationService = new LocationService(context);
+                mLocationService.startLocationServices();
+                DriverServiceAlarmReceiver.isLocationServiceCalledFromService = true;
+            }
         } else {
             if (MainActivity.isMainActivityRunning || WelcomeActivity.isWelcomeActivityRunning) {
                 Helpers.AlertDialogWithPositiveNegativeFunctions(getActivityToShowDialogOnNetworkChange(),

@@ -28,6 +28,7 @@ import android.widget.TextView;
 
 import com.byteshaft.briver.R;
 import com.byteshaft.briver.utils.AppGlobals;
+import com.byteshaft.briver.utils.DriverLocationAlarmHelper;
 import com.byteshaft.briver.utils.EndPoints;
 import com.byteshaft.briver.utils.Helpers;
 import com.byteshaft.briver.utils.LocationService;
@@ -99,9 +100,6 @@ public class PreferencesFragment extends android.support.v4.app.Fragment impleme
             }
         }
     };
-    EditText etPreferencesRadius;
-    EditText etVehicleMake;
-    EditText etVehicleModel;
     int driverStatus;
     String preferencesSearchRadius;
     String preferencesVehicleMake;
@@ -179,6 +177,10 @@ public class PreferencesFragment extends android.support.v4.app.Fragment impleme
         if (AppGlobals.getUserType() == 0) {
             llCustomerPreferences.setVisibility(View.VISIBLE);
             llDriverPreferences.setVisibility(View.GONE);
+            etPreferencesCustomerDriverSearchRadiusInput.setText(Integer.toString(AppGlobals.getDriverSearchRadius()));
+            setVehicleTypeRadioButton(AppGlobals.getVehicleType());
+            etPreferencesCustomerVehicleMake.setText(AppGlobals.getVehicleMake());
+            etPreferencesCustomerVehicleModel.setText(AppGlobals.getVehicleModel());
         } else {
             intLocationIntervalTime = AppGlobals.getDriverLocationReportingIntervalTime();
             driverStatus = AppGlobals.getDriverServiceStatus();
@@ -278,7 +280,7 @@ public class PreferencesFragment extends android.support.v4.app.Fragment impleme
                             }
                         });
                     }
-                }, 1250);
+                }, 350);
             }
 
             @Override
@@ -341,9 +343,9 @@ public class PreferencesFragment extends android.support.v4.app.Fragment impleme
                 if (AppGlobals.getUserType() == 1) {
                     preferencesLocationReportingIntervalTime = etPreferencesDriverLocationIntervalTime.getText().toString();
                 } else {
-                    preferencesSearchRadius = etPreferencesRadius.getText().toString();
-                    preferencesVehicleMake = etVehicleMake.getText().toString();
-                    preferencesVehicleModel = etVehicleModel.getText().toString();
+                    preferencesSearchRadius = etPreferencesCustomerDriverSearchRadiusInput.getText().toString();
+                    preferencesVehicleMake = etPreferencesCustomerVehicleMake.getText().toString();
+                    preferencesVehicleModel = etPreferencesCustomerVehicleModel.getText().toString();
                 }
                 if (validateProfileChangeInfo()) {
                     if (driverPreferencesLocationReportingType == 0 && !locationSet) {
@@ -367,12 +369,6 @@ public class PreferencesFragment extends android.support.v4.app.Fragment impleme
                 valid = false;
             } else {
                 etPreferencesDriverLocationIntervalTime.setError(null);
-            }
-            if ((driverStatus == AppGlobals.getDriverServiceStatus() || driverStatus == 2) &&
-                    preferencesLocationReportingIntervalTime.equals(AppGlobals.getDriverLocationReportingIntervalTime()) &&
-                    driverPreferencesLocationReportingType == AppGlobals.getLocationReportingType()) {
-                Helpers.showSnackBar(getView(), "No changes to submit", Snackbar.LENGTH_LONG, "#ffffff");
-                valid = false;
             }
         } else {
             if (preferencesSearchRadius.trim().isEmpty()) {
@@ -402,13 +398,6 @@ public class PreferencesFragment extends android.support.v4.app.Fragment impleme
                 etPreferencesCustomerVehicleModel.setError(null);
             }
 
-            if (preferencesSearchRadius.equals(AppGlobals.getDriverSearchRadius()) &&
-                    preferencesVehicleMake.equals(AppGlobals.getVehicleMake()) &&
-                    preferencesVehicleModel.equals(AppGlobals.getVehicleModel()) &&
-                    userPreferencesVehicleType == AppGlobals.getVehicleType()) {
-                Helpers.showSnackBar(getView(), "No changes to submit", Snackbar.LENGTH_LONG, "#ffffff");
-                valid = false;
-            }
         }
         return valid;
     }
@@ -418,6 +407,7 @@ public class PreferencesFragment extends android.support.v4.app.Fragment impleme
             AppGlobals.putDriverServiceStatus(driverStatus);
             AppGlobals.putLocationReportingType(driverPreferencesLocationReportingType);
             AppGlobals.putDriverLocationReportingIntervalTime(intLocationIntervalTime);
+            DriverLocationAlarmHelper.setAlarm(AppGlobals.getDriverLocationReportingIntervalTime());
         } else if (AppGlobals.getUserType() == 0) {
             AppGlobals.putDriverSearchRadius(Integer.parseInt(preferencesSearchRadius));
             AppGlobals.putVehicleType(userPreferencesVehicleType);
@@ -514,13 +504,24 @@ public class PreferencesFragment extends android.support.v4.app.Fragment impleme
             } else {
                 onEditFailed("Preference change failed!");
             }
-
         }
 
         @Override
         protected void onCancelled() {
             super.onCancelled();
             isEditPreferenceTaskRunning = false;
+        }
+    }
+
+    private void setVehicleTypeRadioButton(int rb) {
+        if (rb == 0) {
+            rbVehicleTypeMini.setChecked(true);
+        } else if (rb == 1) {
+            rbVehicleTypeHatchback.setChecked(true);
+        } else if (rb == 2) {
+            rbVehicleTypeSedan.setChecked(true);
+        } else if (rb == 3) {
+            rbVehicleTypeLuxury.setChecked(true);
         }
     }
 }
