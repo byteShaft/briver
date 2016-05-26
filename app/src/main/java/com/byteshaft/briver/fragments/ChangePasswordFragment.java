@@ -15,11 +15,11 @@ import com.byteshaft.briver.R;
 import com.byteshaft.briver.utils.AppGlobals;
 import com.byteshaft.briver.utils.EndPoints;
 import com.byteshaft.briver.utils.Helpers;
+import com.byteshaft.briver.utils.WebServiceHelpers;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.HttpURLConnection;
-import java.net.URL;
 
 /**
  * Created by fi8er1 on 01/05/2016.
@@ -114,7 +114,6 @@ public class ChangePasswordFragment extends android.support.v4.app.Fragment impl
     }
 
 
-
     private class ChangePasswordTask extends AsyncTask<Void, Integer, Void> {
 
         @Override
@@ -126,15 +125,13 @@ public class ChangePasswordFragment extends android.support.v4.app.Fragment impl
         @Override
         protected Void doInBackground(Void... params) {
             try {
-                URL url = new URL(EndPoints.CHANGE_PASSWORD);
-                connection = (HttpURLConnection) url.openConnection();
-                connection.setDoOutput(true);
-                connection.setDoInput(true);
-                connection.setInstanceFollowRedirects(false);
-                connection.setRequestMethod("POST");
-                connection.setRequestProperty("Content-Type", "application/json");
-                connection.setRequestProperty("charset", "utf-8");
+                String url = EndPoints.CHANGE_PASSWORD;
+                WebServiceHelpers.openConnectionForUrl(url, "POST", false);
                 DataOutputStream out = new DataOutputStream(connection.getOutputStream());
+//                out.writeBytes(getPasswordChangeString(passwordRecoveryEmail, forgotPasswordConfirmationCode,
+//                        forgotPasswordNewPassword));
+                out.flush();
+                out.close();
                 responseCode = connection.getResponseCode();
             } catch (IOException e) {
                 e.printStackTrace();
@@ -146,12 +143,11 @@ public class ChangePasswordFragment extends android.support.v4.app.Fragment impl
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
             isChangePasswordTaskRunning = false;
+            Helpers.dismissProgressDialog();
             if (responseCode == 200) {
-                Helpers.dismissProgressDialog();
-                onPasswordChangeSuccess();
+                onPasswordChangeSuccess("Password successfully changed");
             } else {
                 onPasswordChangeFailed("Password Change Failed");
-                Helpers.dismissProgressDialog();
             }
         }
 
@@ -162,7 +158,6 @@ public class ChangePasswordFragment extends android.support.v4.app.Fragment impl
         }
     }
 
-
     public static String getPasswordChangeString(String email,
                                                  String confirmationCode, String password) {
         return "{" +
@@ -172,14 +167,14 @@ public class ChangePasswordFragment extends android.support.v4.app.Fragment impl
                 "}";
     }
 
-    public void onPasswordChangeSuccess() {
-        Helpers.showSnackBar(getView(), "Password successfully changed", Snackbar.LENGTH_LONG, "#ffffff");
+    public void onPasswordChangeSuccess(String message) {
+        Helpers.showSnackBar(getView(), message, Snackbar.LENGTH_LONG, "#A4C639");
         new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {
                 getActivity().onBackPressed();
             }
-        }, 2000);
+        }, 1500);
     }
 
     public void onPasswordChangeFailed(String message) {

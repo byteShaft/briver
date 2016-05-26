@@ -21,6 +21,7 @@ import android.widget.TextView;
 import com.byteshaft.briver.R;
 import com.byteshaft.briver.utils.EndPoints;
 import com.byteshaft.briver.utils.Helpers;
+import com.byteshaft.briver.utils.WebServiceHelpers;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -256,20 +257,11 @@ public class ForgotPasswordFragment extends Fragment implements View.OnClickList
         @Override
         protected Void doInBackground(Void... params) {
             try {
-                URL url = new URL(EndPoints.CHANGE_PASSWORD);
-                connection = (HttpURLConnection) url.openConnection();
-                connection.setDoOutput(true);
-                connection.setDoInput(true);
-                connection.setInstanceFollowRedirects(false);
-                connection.setRequestMethod("POST");
-                connection.setRequestProperty("Content-Type", "application/json");
-                connection.setRequestProperty("charset", "utf-8");
+                String url = EndPoints.CHANGE_PASSWORD;
+                WebServiceHelpers.openConnectionForUrl(url, "POST", false);
                 DataOutputStream out = new DataOutputStream(connection.getOutputStream());
-
-                String loginString = getPasswordChangeString(passwordRecoveryEmail, forgotPasswordConfirmationCode,
-                        forgotPasswordNewPassword);
-                Log.i("Login ", "String: " + loginString);
-                out.writeBytes(loginString);
+                out.writeBytes(getPasswordChangeString(passwordRecoveryEmail, forgotPasswordConfirmationCode,
+                        forgotPasswordNewPassword));
                 out.flush();
                 out.close();
                 responseCode = connection.getResponseCode();

@@ -52,6 +52,7 @@ public class MainActivity extends AppCompatActivity
         }
     };
     boolean isDriverStatusTaskRunning;
+    public static boolean isHiringTaskRunning;
     Fragment fragment;
     String fragmentName = "";
     NavigationView navigationView;
@@ -115,9 +116,15 @@ public class MainActivity extends AppCompatActivity
 
         if (AppGlobals.getUserType() == 1) {
             navigationView.getMenu().getItem(1).setVisible(false);
-            if (!AppGlobals.isAlarmSet()) {
+            if (!AppGlobals.isAlarmSet() && AppGlobals.getLocationReportingType() == 1) {
                 DriverLocationAlarmHelper.setAlarm(AppGlobals.getDriverLocationReportingIntervalTime());
                 AppGlobals.setAlarmStatus(true);
+            }
+            if (AppGlobals.getDriverServiceStatus() != 0 && Helpers.isNetworkAvailable(this)) {
+                if (isDriverStatusTaskRunning) {
+                    taskDriverStatus.cancel(true);
+                }
+                taskDriverStatus = (DriverStatusTask) new DriverStatusTask().execute();
             }
         }
     }
@@ -230,6 +237,11 @@ public class MainActivity extends AppCompatActivity
     protected void onPause() {
         super.onPause();
         isMainActivityRunning = false;
+
+        if (isHiringTaskRunning) {
+            HireFragment.taskHiringDriver.cancel(true);
+        }
+
         if (AppGlobals.getUserType() == 1 && AppGlobals.getDriverServiceStatus() != 0 && Helpers.isNetworkAvailable(this)) {
             if (isDriverStatusTaskRunning) {
                 taskDriverStatus.cancel(true);

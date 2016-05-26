@@ -208,18 +208,24 @@ public class NearbyDriversFragment extends android.support.v4.app.Fragment {
 
         switch (item.getItemId()) {
             case R.id.item_context_nearby_drivers_list_hire:
-                Log.i("ContextMenuItem", "Hire");
-                        driverTimeSpanForHiring = Integer.toString(HireFragment.totalHoursOfService);
-                        if (HireFragment.isQuickHire) {
-                            driverTimeOfHiring = Helpers.getCurrentTimeOfDevice();
-                        } else {
-                            driverTimeOfHiring = HireFragment.serviceStartTime;
-                        }
-                        stringArrayForDriverHiring = new String[]{driverIdForHiring, driverTimeSpanForHiring, driverTimeOfHiring};
-                        taskHiringDriver = (HiringTask) new HiringTask().execute(stringArrayForDriverHiring);
+                Helpers.AlertDialogWithPositiveFunctionNegativeButton(getActivity(), "Confirmation",
+                        "Do you really want to hire this driver?", "Yes", "Cancel", hire);
                 return true;
         }
         return true;
     }
 
+    final Runnable hire = new Runnable() {
+        public void run() {
+            Log.i("ContextMenuItem", "Hire");
+            driverTimeSpanForHiring = Integer.toString(HireFragment.totalHoursOfService);
+            if (HireFragment.isQuickHire) {
+                driverTimeOfHiring = Helpers.getCurrentTimeOfDevice();
+            } else {
+                driverTimeOfHiring = HireFragment.serviceStartTime;
+            }
+            stringArrayForDriverHiring = new String[]{driverIdForHiring, driverTimeSpanForHiring, driverTimeOfHiring};
+            taskHiringDriver = (HiringTask) new HiringTask().execute(stringArrayForDriverHiring);
+        }
+    };
 }
