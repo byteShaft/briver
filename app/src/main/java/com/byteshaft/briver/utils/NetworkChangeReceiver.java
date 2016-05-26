@@ -57,7 +57,7 @@ public class NetworkChangeReceiver extends BroadcastReceiver {
                 mobile != null && mobile.isConnectedOrConnecting();
         if (isNetworkConnected) {
             Log.d("Network Available ", "YES");
-            if (AppGlobals.isLocationUploadPending() && Helpers.isAnyLocationServiceAvailable()) {
+            if (AppGlobals.isLocationUploadPending() && Helpers.isAnyLocationServiceAvailable() && AppGlobals.getLocationReportingType() == 1) {
                 mLocationService = new LocationService(context);
                 mLocationService.startLocationServices();
                 DriverServiceAlarmReceiver.isLocationServiceCalledFromService = true;

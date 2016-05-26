@@ -7,6 +7,8 @@ public class EndPoints {
 
     public static final String BASE_URL = "http://139.59.228.194:8000/api/";
     public static final String BASE_FILTER_DRIVERS = BASE_URL + "filter_drivers?";
+    public static final String BASE_HIRE_REQUEST = BASE_URL + "hire";
+    public static final String BASE_HIRE_RESPONSE = BASE_URL + "hire_response";
     public static final String BASE_ACCOUNTS = BASE_URL + "accounts/";
     public static final String REGISTER_DRIVER = BASE_URL + "register_driver";
     public static final String REGISTER_CUSTOMER = BASE_URL + "register_customer";
@@ -19,5 +21,5 @@ public class EndPoints {
     public static final String SHOW_CUSTOMERS = BASE_URL + "customers/";
     public static final String SHOW_DRIVERS = BASE_URL + "drivers/";
 
-    public static final String DRIVERS_IN_RADIUS =  BASE_URL + "drivers_around";
+//    public static final String DRIVERS_IN_RADIUS =  BASE_URL + "drivers_around";
 }

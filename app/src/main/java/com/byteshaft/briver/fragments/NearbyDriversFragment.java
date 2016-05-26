@@ -18,6 +18,7 @@ import android.widget.RatingBar;
 import android.widget.TextView;
 
 import com.byteshaft.briver.R;
+import com.byteshaft.briver.Tasks.HiringTask;
 import com.byteshaft.briver.utils.AppGlobals;
 import com.byteshaft.briver.utils.Helpers;
 import com.google.android.gms.maps.model.LatLng;
@@ -36,6 +37,11 @@ public class NearbyDriversFragment extends android.support.v4.app.Fragment {
     ArrayList<Integer> driversId;
     String driverName;
     int indexContextMenu;
+    private static String[] stringArrayForDriverHiring;
+    HiringTask taskHiringDriver;
+    private String driverIdForHiring;
+    private String driverTimeSpanForHiring;
+    private String driverTimeOfHiring;
 
     ListView nearbyDriversList;
 
@@ -59,7 +65,6 @@ public class NearbyDriversFragment extends android.support.v4.app.Fragment {
     class CustomRoutesListAdapter extends ArrayAdapter<String> {
 
         ArrayList<Integer> arrayListIntIds;
-
         public CustomRoutesListAdapter(Context context, int resource, ArrayList<Integer> arrayList) {
             super(context, resource);
             arrayListIntIds = arrayList;
@@ -177,7 +182,6 @@ public class NearbyDriversFragment extends android.support.v4.app.Fragment {
         }
     }
 
-
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
@@ -190,6 +194,8 @@ public class NearbyDriversFragment extends android.support.v4.app.Fragment {
         AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) menuInfo;
         driverName = HireFragment.hashMapDriverData.get(HireFragment.driversIdList.get(info.position)).get(0);
         menu.setHeaderTitle(driverName);
+        driverIdForHiring = Integer.toString(HireFragment.driversIdList.get(info.position));
+        Log.i("DriverIDForHiring", driverIdForHiring);
         MenuInflater inflater = this.getActivity().getMenuInflater();
         inflater.inflate(R.menu.context_menu_nearby_drivers_list, menu);
     }
@@ -203,10 +209,17 @@ public class NearbyDriversFragment extends android.support.v4.app.Fragment {
         switch (item.getItemId()) {
             case R.id.item_context_nearby_drivers_list_hire:
                 Log.i("ContextMenuItem", "Hire");
+                        driverTimeSpanForHiring = Integer.toString(HireFragment.totalHoursOfService);
+                        if (HireFragment.isQuickHire) {
+                            driverTimeOfHiring = Helpers.getCurrentTimeOfDevice();
+                        } else {
+                            driverTimeOfHiring = HireFragment.serviceStartTime;
+                        }
+                        stringArrayForDriverHiring = new String[]{driverIdForHiring, driverTimeSpanForHiring, driverTimeOfHiring};
+                        taskHiringDriver = (HiringTask) new HiringTask().execute(stringArrayForDriverHiring);
                 return true;
         }
         return true;
     }
-
 
 }

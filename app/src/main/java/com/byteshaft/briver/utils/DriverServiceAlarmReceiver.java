@@ -41,7 +41,7 @@ public class DriverServiceAlarmReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         if (AppGlobals.getUserType() == 1) {
-            if (AppGlobals.isLoggedIn() && AppGlobals.isAlarmSet()) {
+            if (AppGlobals.isLoggedIn() && AppGlobals.isAlarmSet() && AppGlobals.getLocationReportingType() == 1) {
                 if (Helpers.isNetworkAvailable(context) && Helpers.isAnyLocationServiceAvailable()) {
                     mLocationService = new LocationService(context);
                     isLocationServiceCalledFromService = true;

@@ -46,6 +46,7 @@ public class Helpers {
     private static ProgressDialog progressDialogWithPositiveButton;
     private static CountDownTimer countdownTimer;
     private static boolean isCountDownTimerRunning;
+    public static Spinner spinnerServiceHours;
 
     public static void showProgressDialog(Context context, String message) {
         progressDialog = new ProgressDialog(context);
@@ -324,7 +325,7 @@ public class Helpers {
             tvBio.setVisibility(View.GONE);
         }
 
-        Spinner spinnerServiceHours = (Spinner) onMapMarkerClickHireDialog.findViewById(R.id.spinner_hire_dialog_service_hours);
+        spinnerServiceHours = (Spinner) onMapMarkerClickHireDialog.findViewById(R.id.spinner_hire_dialog_service_hours);
         ArrayAdapter<String> adapter = new ArrayAdapter<>(context, android.R.layout.simple_spinner_dropdown_item, HireFragment.itemsForHoursSelectingDialog);
         spinnerServiceHours.setAdapter(adapter);
 
@@ -497,5 +498,9 @@ public class Helpers {
         intent.putExtra("subject", subject);
         intent.putExtra("body", message);
         activity.startActivity(intent);
+    }
+
+    public static String getCurrentTimeOfDevice() {
+       return android.text.format.DateFormat.format("yyyy-MM-ddThh:mm:ss", new java.util.Date()).toString();
     }
 }
