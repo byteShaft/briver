@@ -22,6 +22,7 @@ import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.RatingBar;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -47,6 +48,7 @@ public class Helpers {
     private static CountDownTimer countdownTimer;
     private static boolean isCountDownTimerRunning;
     public static Spinner spinnerServiceHours;
+    private static InputMethodManager inputMethodManager;
 
     public static void showProgressDialog(Context context, String message) {
         progressDialog = new ProgressDialog(context);
@@ -89,15 +91,19 @@ public class Helpers {
     }
 
     public static void closeSoftKeyboard(Activity activity) {
-        InputMethodManager inputMethodManager = (InputMethodManager) activity.getSystemService(Activity.INPUT_METHOD_SERVICE);
+        inputMethodManager = (InputMethodManager) activity.getSystemService(Activity.INPUT_METHOD_SERVICE);
         inputMethodManager.hideSoftInputFromWindow(activity.getCurrentFocus().getWindowToken(), 0);
         activity.getCurrentFocus().clearFocus();
     }
 
     public static void openSoftKeyboard(Activity activity) {
-        InputMethodManager inputMethodManager = (InputMethodManager) activity.getSystemService(Activity.INPUT_METHOD_SERVICE);
+        inputMethodManager = (InputMethodManager) activity.getSystemService(Activity.INPUT_METHOD_SERVICE);
         inputMethodManager.showSoftInputFromInputMethod(activity.getCurrentFocus().getWindowToken(), 0);
-        activity.getCurrentFocus().clearFocus();
+    }
+
+    public static void openSoftKeyboardOnEditText(Activity activity, EditText et) {
+        inputMethodManager = (InputMethodManager) activity.getSystemService(Activity.INPUT_METHOD_SERVICE);
+        inputMethodManager.showSoftInput(et, InputMethodManager.SHOW_IMPLICIT);
     }
 
 
@@ -258,7 +264,7 @@ public class Helpers {
 
 
 
-    public static String customDialogWithPositiveFunctionNegativeButtonForOnMapMarkerClickHiring (
+    public static void customDialogWithPositiveFunctionNegativeButtonForOnMapMarkerClickHiring (
             Context context, String fullName, String eMail, String contact, String address,
             String locationLastUpdated, String experience, String numberOfHires, String bio, String status, String numberOfRatings, String numberOfStars,
             final Runnable listenerYes) {
@@ -342,12 +348,11 @@ public class Helpers {
             @Override
             public void onClick(View v) {
                 listenerYes.run();
+                onMapMarkerClickHireDialog.dismiss();
             }
         });
         Helpers.dismissProgressDialog();
         onMapMarkerClickHireDialog.show();
-
-        return spinnerServiceHours.toString();
     }
 
     public static String secondsToMinutesSeconds(int seconds) {
@@ -450,19 +455,19 @@ public class Helpers {
 
         final long diff = now - time;
         if (diff < MINUTE_MILLIS) {
-            return "just now";
+            return "Just now";
         } else if (diff < 2 * MINUTE_MILLIS) {
-            return "a minute ago";
+            return "A minute ago";
         } else if (diff < 50 * MINUTE_MILLIS) {
-            return diff / MINUTE_MILLIS + " minutes ago";
+            return diff / MINUTE_MILLIS + " Minutes ago";
         } else if (diff < 90 * MINUTE_MILLIS) {
-            return "an hour ago";
+            return "An hour ago";
         } else if (diff < 24 * HOUR_MILLIS) {
-            return diff / HOUR_MILLIS + " hours ago";
+            return diff / HOUR_MILLIS + " Hours ago";
         } else if (diff < 48 * HOUR_MILLIS) {
-            return "yesterday";
+            return "Yesterday";
         } else {
-            return diff / DAY_MILLIS + " days ago";
+            return diff / DAY_MILLIS + " Days ago";
         }
     }
 

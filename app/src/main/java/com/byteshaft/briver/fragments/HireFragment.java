@@ -28,11 +28,12 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
-import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.DatePicker;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -78,13 +79,20 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
     public static ArrayList<Integer> driversIdList;
     public static HashMap<Integer, ArrayList<String>> hashMapDriverData;
     private static GoogleMap mMap = null;
-    private HiringTask taskHiringDriver;
+    public static HiringTask taskHiringDriver;
     public static final String[] itemsForHoursSelectingDialog = {"2 Hours", "4 Hours", "6 Hours", "8 Hours", "12 Hours", "24 Hours", "48 Hours"};
     private static String[] stringArrayForDriverHiring;
     private String driverIdForHiring;
     private String driverTimeSpanForHiring;
     private String driverTimeOfHiring;
+    Timer textChangeTimer;
     final Runnable btnCustomHireDialogHire = new Runnable() {
+        public void run() {
+            Helpers.AlertDialogWithPositiveFunctionNegativeButton(getActivity(), "Confirmation",
+                    "Do you really want to hire this driver?", "Yes", "Cancel", hire);
+        }
+    };
+    final Runnable hire = new Runnable() {
         public void run() {
             driverTimeSpanForHiring = Helpers.spinnerServiceHours.getSelectedItem().toString().substring(0, 2).trim();
             driverTimeOfHiring = Helpers.getCurrentTimeOfDevice();
@@ -100,9 +108,7 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
     };
     final Runnable recheckLocationServiceStatus = new Runnable() {
         public void run() {
-            if (Helpers.isAnyLocationServiceAvailable()) {
-
-            } else {
+            if (!Helpers.isAnyLocationServiceAvailable()) {
                 Helpers.AlertDialogWithPositiveNegativeFunctions(getActivity(), "Location Service disabled",
                         "Enable device GPS to continue driver hiring", "Settings", "ReCheck",
                         openLocationServiceSettings, recheckLocationServiceStatus);
@@ -115,6 +121,7 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
     boolean gettingNearbyDriversToShowMarkers;
     boolean driversMarkersShownOnMap;
     boolean isGetNearbyDriversTaskRunning;
+    boolean isHireFragmentOpen;
     public static boolean isQuickHire;
 
     TimePickerDialog tpd;
@@ -132,16 +139,15 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
     private boolean isSearchEditTextVisible;
     private Animation animLayoutBottomUp;
     private Animation animLayoutBottomDown;
-    private Animation animLayoutTopUp;
-    private Animation animLayoutTopDown;
+    private Animation animLayoutMapSearchBarTopUp;
+    private Animation animLayoutMapSearchBarTopDown;
     private String hireMeetUpPoint;
     private GetNearbyDriversAvailableToHire getNearbyDriversTask;
     private LinearLayout llMapHireButtons;
     private TextView tvMapHireAddress;
     private ImageButton btnMapHireRemoveMarker;
-    private AutoCompleteTextView etMapSearch;
+    private EditText etMapSearch;
     private String inputMapSearch;
-    private String hireDialogServiceHours;
     private int mYear, mMonth, mDay, mHour, mMinute;
     private GoogleMap.OnMyLocationChangeListener myLocationChangeListener = new GoogleMap.OnMyLocationChangeListener() {
         @Override
@@ -198,17 +204,18 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         baseViewHireFragment = inflater.inflate(R.layout.fragment_hire, container, false);
 
+        getActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING);
+
         llMapHireButtons = (LinearLayout) baseViewHireFragment.findViewById(R.id.layout_map_hire);
         animLayoutBottomUp = AnimationUtils.loadAnimation(getActivity(), R.anim.anim_bottom_up);
         animLayoutBottomDown = AnimationUtils.loadAnimation(getActivity(), R.anim.anim_bottom_down);
-        animLayoutTopUp = AnimationUtils.loadAnimation(getActivity(), R.anim.anim_top_up);
-        animLayoutTopDown = AnimationUtils.loadAnimation(getActivity(), R.anim.anim_top_down);
+        animLayoutMapSearchBarTopUp = AnimationUtils.loadAnimation(getActivity(), R.anim.anim_top_up);
+        animLayoutMapSearchBarTopDown = AnimationUtils.loadAnimation(getActivity(), R.anim.anim_top_down);
         tvMapHireAddress = (TextView) baseViewHireFragment.findViewById(R.id.tv_map_hire_address);
         btnMapHireRemoveMarker = (ImageButton) baseViewHireFragment.findViewById(R.id.btn_map_hire_cancel);
-        etMapSearch = (AutoCompleteTextView) baseViewHireFragment.findViewById(R.id.et_map_search);
+        etMapSearch = (EditText) baseViewHireFragment.findViewById(R.id.et_map_search);
         btnQuickHire = (Button) baseViewHireFragment.findViewById(R.id.btn_map_hire_quick);
         btnScheduledHire = (Button) baseViewHireFragment.findViewById(R.id.btn_map_hire_scheduled);
-
         driversIdList = new ArrayList<>();
         hashMapDriverData = new HashMap<>();
 
@@ -312,7 +319,7 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
                                 super.onPostExecute(aVoid);
                                 Helpers.dismissProgressDialog();
                                 if (taskSuccess) {
-                                    hireDialogServiceHours = Helpers.customDialogWithPositiveFunctionNegativeButtonForOnMapMarkerClickHiring(getActivity(),
+                                    Helpers.customDialogWithPositiveFunctionNegativeButtonForOnMapMarkerClickHiring(getActivity(),
                                             hashMapDriverData.get(driversIdList.get(id)).get(0), hashMapDriverData.get(driversIdList.get(id)).get(1),
                                             hashMapDriverData.get(driversIdList.get(id)).get(2), addressString, hashMapDriverData.get(driversIdList.get(id)).get(4),
                                             hashMapDriverData.get(driversIdList.get(id)).get(5), hashMapDriverData.get(driversIdList.get(id)).get(6),
@@ -371,7 +378,7 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
 
         etMapSearch.addTextChangedListener(new TextWatcher() {
 
-            Timer timer = new Timer();
+            Timer textChangeTimer = new Timer();
 
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -380,11 +387,11 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                timer.cancel();
+                textChangeTimer.cancel();
                 inputMapSearch = etMapSearch.getText().toString();
-                if (inputMapSearch.length() > 2) {
-                    timer = new Timer();
-                    timer.schedule(new TimerTask() {
+                if (inputMapSearch.length() > 2 && isHireFragmentOpen) {
+                    textChangeTimer = new Timer();
+                    textChangeTimer.schedule(new TimerTask() {
                         @Override
                         public void run() {
                             Geocoder geocoder = new Geocoder(getActivity());
@@ -407,6 +414,45 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
 
             }
         });
+
+        animLayoutMapSearchBarTopUp.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+
+            }
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                etMapSearch.setText("");
+                Helpers.closeSoftKeyboard(getActivity());
+                isSearchEditTextVisible = false;
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {
+
+            }
+        });
+
+        animLayoutMapSearchBarTopDown.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+
+            }
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                etMapSearch.requestFocus();
+                Helpers.openSoftKeyboardOnEditText(getActivity(), etMapSearch);
+                isSearchEditTextVisible = true;
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {
+
+            }
+        });
+
         return baseViewHireFragment;
     }
 
@@ -635,15 +681,11 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
 
     private void setSearchBarVisibility(boolean visibility) {
         if (!visibility) {
-            etMapSearch.clearFocus();
+            etMapSearch.startAnimation(animLayoutMapSearchBarTopUp);
             etMapSearch.setVisibility(View.GONE);
-            etMapSearch.startAnimation(animLayoutTopUp);
-            etMapSearch.setText("");
-            isSearchEditTextVisible = false;
         } else {
             etMapSearch.setVisibility(View.VISIBLE);
-            etMapSearch.startAnimation(animLayoutTopDown);
-            isSearchEditTextVisible = true;
+            etMapSearch.startAnimation(animLayoutMapSearchBarTopDown);
         }
     }
 
@@ -705,9 +747,11 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
     @Override
     public void onPause() {
         super.onPause();
+        isHireFragmentOpen = false;
         if (isGetNearbyDriversTaskRunning) {
             getNearbyDriversTask.cancel(true);
         }
+        getActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
     }
 
     public void loadFragment(android.support.v4.app.Fragment fragment) {
@@ -808,4 +852,9 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
         }
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        isHireFragmentOpen = true;
+    }
 }

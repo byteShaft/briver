@@ -1,8 +1,11 @@
 package com.byteshaft.briver.Tasks;
 
 import android.os.AsyncTask;
+import android.support.design.widget.Snackbar;
 import android.util.Log;
 
+import com.byteshaft.briver.MainActivity;
+import com.byteshaft.briver.R;
 import com.byteshaft.briver.utils.AppGlobals;
 import com.byteshaft.briver.utils.EndPoints;
 import com.byteshaft.briver.utils.Helpers;
@@ -23,6 +26,7 @@ public class HiringTask extends AsyncTask<String, String , String> {
     @Override
     protected void onPreExecute() {
         super.onPreExecute();
+        MainActivity.isHiringTaskRunning = true;
         Helpers.showProgressDialog(AppGlobals.getRunningActivityInstance(), "Placing hiring request");
     }
 
@@ -45,16 +49,23 @@ public class HiringTask extends AsyncTask<String, String , String> {
     @Override
     protected void onPostExecute(String o) {
         super.onPostExecute(o);
+        MainActivity.isHiringTaskRunning = false;
         Helpers.dismissProgressDialog();
+        Log.i("HiringTaskResponseCode", "" + responseCode);
         if (responseCode == 200) {
+            Helpers.showSnackBar(AppGlobals.getRunningActivityInstance().findViewById(R.id.container_main),
+                    "Hiring request successfully sent", Snackbar.LENGTH_LONG, "#A4C639");
             Log.i("Hiring", "Success");
         } else {
+            Helpers.showSnackBar(AppGlobals.getRunningActivityInstance().findViewById(R.id.container_main),
+                    "Failed to send hiring request", Snackbar.LENGTH_LONG, "#f44336");
             Log.i("Hiring", "Success");
         }
     }
 
     @Override
     protected void onCancelled() {
+        MainActivity.isHiringTaskRunning = false;
         super.onCancelled();
         Helpers.dismissProgressDialog();
     }
