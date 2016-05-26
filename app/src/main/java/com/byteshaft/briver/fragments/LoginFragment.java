@@ -401,6 +401,9 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
                 connection = WebServiceHelpers.openConnectionForUrl(EndPoints.BASE_ACCOUNTS + "me", "GET", true);
                 JSONObject jsonObject = new JSONObject(WebServiceHelpers.readResponse(connection));
                 Log.i("IncomingData", " UserData: " + jsonObject);
+
+                Log.i("USERTOKEN", AppGlobals.getToken());
+
                 AppGlobals.putPersonName(jsonObject.getString("full_name"));
                 AppGlobals.putUsername(jsonObject.getString("email"));
                 AppGlobals.putNumberOfHires(jsonObject.getInt("number_of_hires"));

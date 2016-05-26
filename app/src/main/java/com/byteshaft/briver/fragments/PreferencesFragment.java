@@ -280,7 +280,7 @@ public class PreferencesFragment extends android.support.v4.app.Fragment impleme
                             }
                         });
                     }
-                }, 350);
+                }, 750);
             }
 
             @Override
@@ -406,8 +406,13 @@ public class PreferencesFragment extends android.support.v4.app.Fragment impleme
         if (AppGlobals.getUserType() == 1) {
             AppGlobals.putDriverServiceStatus(driverStatus);
             AppGlobals.putLocationReportingType(driverPreferencesLocationReportingType);
-            AppGlobals.putDriverLocationReportingIntervalTime(intLocationIntervalTime);
-            DriverLocationAlarmHelper.setAlarm(AppGlobals.getDriverLocationReportingIntervalTime());
+
+            if (driverPreferencesLocationReportingType == 1) {
+                AppGlobals.putDriverLocationReportingIntervalTime(intLocationIntervalTime);
+                DriverLocationAlarmHelper.setAlarm(intLocationIntervalTime);
+            } else {
+                DriverLocationAlarmHelper.cancelAlarm();
+            }
         } else if (AppGlobals.getUserType() == 0) {
             AppGlobals.putDriverSearchRadius(Integer.parseInt(preferencesSearchRadius));
             AppGlobals.putVehicleType(userPreferencesVehicleType);

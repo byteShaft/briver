@@ -40,6 +40,7 @@ import android.widget.TimePicker;
 import android.widget.Toast;
 
 import com.byteshaft.briver.R;
+import com.byteshaft.briver.Tasks.HiringTask;
 import com.byteshaft.briver.utils.AppGlobals;
 import com.byteshaft.briver.utils.EndPoints;
 import com.byteshaft.briver.utils.Helpers;
@@ -77,10 +78,18 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
     public static ArrayList<Integer> driversIdList;
     public static HashMap<Integer, ArrayList<String>> hashMapDriverData;
     private static GoogleMap mMap = null;
+    private HiringTask taskHiringDriver;
     public static final String[] itemsForHoursSelectingDialog = {"2 Hours", "4 Hours", "6 Hours", "8 Hours", "12 Hours", "24 Hours", "48 Hours"};
+    private static String[] stringArrayForDriverHiring;
+    private String driverIdForHiring;
+    private String driverTimeSpanForHiring;
+    private String driverTimeOfHiring;
     final Runnable btnCustomHireDialogHire = new Runnable() {
         public void run() {
-            Log.i("btnHire", "Pressed");
+            driverTimeSpanForHiring = Helpers.spinnerServiceHours.getSelectedItem().toString().substring(0, 2).trim();
+            driverTimeOfHiring = Helpers.getCurrentTimeOfDevice();
+            stringArrayForDriverHiring = new String[]{driverIdForHiring, driverTimeSpanForHiring, driverTimeOfHiring};
+            taskHiringDriver = (HiringTask) new HiringTask().execute(stringArrayForDriverHiring);
         }
     };
     final Runnable openLocationServiceSettings = new Runnable() {
@@ -102,17 +111,17 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
     };
     View baseViewHireFragment;
     HttpURLConnection connection;
-    String serviceStartTime;
+    public static String serviceStartTime;
     boolean gettingNearbyDriversToShowMarkers;
     boolean driversMarkersShownOnMap;
     boolean isGetNearbyDriversTaskRunning;
-    boolean isPutHiringRequestTaskRunning;
+    public static boolean isQuickHire;
 
     TimePickerDialog tpd;
     Marker hireMeetUpPointMarker;
     Button btnQuickHire;
     Button btnScheduledHire;
-    int totalHoursOfService;
+    public static int totalHoursOfService;
     private FragmentManager fm;
     private SupportMapFragment mapFragment;
     private LatLng currentLatLngAuto = null;
@@ -127,7 +136,6 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
     private Animation animLayoutTopDown;
     private String hireMeetUpPoint;
     private GetNearbyDriversAvailableToHire getNearbyDriversTask;
-    private PutHiringRequest putHiringRequestTask;
     private LinearLayout llMapHireButtons;
     private TextView tvMapHireAddress;
     private ImageButton btnMapHireRemoveMarker;
@@ -263,6 +271,7 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
                     @Override
                     public boolean onMarkerClick(final Marker marker) {
                         final String snippet = marker.getSnippet();
+                        driverIdForHiring = snippet;
                         if (snippet.equals("-1")) {
                             return true;
                         }
@@ -423,6 +432,7 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
             case R.id.btn_map_hire_quick:
                 AlertDialog levelDialogQuickHire;
 
+                isQuickHire = true;
                 final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
                 builder.setTitle("Choose Service Duration");
                 builder.setCancelable(false);
@@ -459,7 +469,7 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
                         }
                         Log.i("SelectedHoursOfService", "" + totalHoursOfService);
                         dialog.dismiss();
-                        serviceStartTime = android.text.format.DateFormat.format("yyyy-MM-ddThh:mm:ss", new java.util.Date()).toString();
+                        serviceStartTime = Helpers.getCurrentTimeOfDevice();
                         Log.i("ServiceStartTime", "" + serviceStartTime);
                         gettingNearbyDriversToShowMarkers = false;
                         if (isGetNearbyDriversTaskRunning) {
@@ -475,6 +485,7 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
             case R.id.btn_map_hire_scheduled:
                 AlertDialog levelDialogScheduledHire;
 
+                isQuickHire = false;
                 AlertDialog.Builder builderTwo = new AlertDialog.Builder(getActivity());
                 builderTwo.setTitle("Select service duration");
                 builderTwo.setCancelable(false);
@@ -697,10 +708,6 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
         if (isGetNearbyDriversTaskRunning) {
             getNearbyDriversTask.cancel(true);
         }
-
-        if (isPutHiringRequestTaskRunning) {
-            putHiringRequestTask.cancel(true);
-        }
     }
 
     public void loadFragment(android.support.v4.app.Fragment fragment) {
@@ -741,9 +748,7 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
                 JSONArray jsonArray = new JSONArray(WebServiceHelpers.readResponse(connection));
                 if (jsonArray.toString().equals("[]") && !gettingNearbyDriversToShowMarkers) {
                     dataEmpty = true;
-                    if (!gettingNearbyDriversToShowMarkers) {
-                        Helpers.dismissProgressDialog();
-                    }
+                    Helpers.dismissProgressDialog();
                     return null;
                 }
                 Log.i("IncomingData", " UserData: " + jsonArray);
@@ -801,49 +806,6 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
             super.onCancelled();
             isGetNearbyDriversTaskRunning = false;
         }
-    }
-
-
-    private class PutHiringRequest extends AsyncTask<Void, Integer, Void> {
-
-        @Override
-        protected void onPreExecute() {
-            isPutHiringRequestTaskRunning = true;
-            super.onPreExecute();
-        }
-
-        @Override
-        protected Void doInBackground(Void... params) {
-//            try {
-//
-//
-//            } catch (IOException | JSONException e) {
-//                e.printStackTrace();
-//            }
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(Void aVoid) {
-            super.onPostExecute(aVoid);
-            isPutHiringRequestTaskRunning = false;
-        }
-
-        @Override
-        protected void onCancelled() {
-            super.onCancelled();
-            isPutHiringRequestTaskRunning = false;
-        }
-    }
-
-
-    public static String getPutHiringRequestString(
-            String location, int radius, String dateTime, int timeSpan) {
-        return
-                String.format("base_location=%s&", location) +
-                        String.format("radius=%s&", radius) +
-                        String.format("start_time=%s&", dateTime) +
-                        String.format("time_span=%s", timeSpan);
     }
 
 }

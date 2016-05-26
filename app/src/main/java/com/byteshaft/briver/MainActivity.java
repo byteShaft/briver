@@ -28,7 +28,6 @@ import com.byteshaft.briver.fragments.ProfileFragment;
 import com.byteshaft.briver.fragments.TimelineFragment;
 import com.byteshaft.briver.utils.AppGlobals;
 import com.byteshaft.briver.utils.DriverLocationAlarmHelper;
-import com.byteshaft.briver.utils.DriverServiceAlarmReceiver;
 import com.byteshaft.briver.utils.EndPoints;
 import com.byteshaft.briver.utils.Helpers;
 import com.byteshaft.briver.utils.WebServiceHelpers;
@@ -41,8 +40,10 @@ public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
     public static boolean isMainActivityRunning;
-    boolean isDriverStatusTaskRunning;
+    public static TextView tvPersonName;
+    public static int responseCode;
     static FragmentManager fragmentManager;
+    private static MainActivity sInstance;
     final Runnable logout = new Runnable() {
         public void run() {
             AppGlobals.setLoggedIn(false);
@@ -50,21 +51,29 @@ public class MainActivity extends AppCompatActivity
             finish();
         }
     };
+    boolean isDriverStatusTaskRunning;
     Fragment fragment;
     String fragmentName = "";
     NavigationView navigationView;
-    public static TextView tvPersonName;
     DrawerLayout drawer;
     Toolbar toolbar;
-    private static MainActivity sInstance;
-
     DriverStatusTask taskDriverStatus;
-
-    public static int responseCode;
     HttpURLConnection connection;
 
     public static MainActivity getInstance() {
         return sInstance;
+    }
+
+    public static String getDriverStatusPostingString() {
+        String status;
+        if (isMainActivityRunning) {
+            status = "2";
+        } else {
+            status = "1";
+        }
+        return "{" +
+                String.format("\"status\": \"%s\"", status) +
+                "}";
     }
 
     @Override
@@ -209,10 +218,11 @@ public class MainActivity extends AppCompatActivity
     protected void onResume() {
         super.onResume();
         isMainActivityRunning = true;
-        if (AppGlobals.getUserType() == 1) {
-        if (DriverServiceAlarmReceiver.driverLocationReportingServiceIsRunning) {
+        if (AppGlobals.getUserType() == 1 && AppGlobals.getDriverServiceStatus() != 0 && Helpers.isNetworkAvailable(this)) {
+            if (isDriverStatusTaskRunning) {
+                taskDriverStatus.cancel(true);
+            }
             taskDriverStatus = (DriverStatusTask) new DriverStatusTask().execute();
-        }
         }
     }
 
@@ -220,12 +230,11 @@ public class MainActivity extends AppCompatActivity
     protected void onPause() {
         super.onPause();
         isMainActivityRunning = false;
-        if (AppGlobals.getUserType() == 1) {
-        if (isDriverStatusTaskRunning) {
-            taskDriverStatus.cancel(true);
+        if (AppGlobals.getUserType() == 1 && AppGlobals.getDriverServiceStatus() != 0 && Helpers.isNetworkAvailable(this)) {
+            if (isDriverStatusTaskRunning) {
+                taskDriverStatus.cancel(true);
+            }
             taskDriverStatus = (DriverStatusTask) new DriverStatusTask().execute();
-        }
-        taskDriverStatus = (DriverStatusTask) new DriverStatusTask().execute();
         }
     }
 
@@ -258,6 +267,11 @@ public class MainActivity extends AppCompatActivity
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
             isDriverStatusTaskRunning = false;
+            if (responseCode == 200) {
+                Log.i("StatusChanged", "Successful");
+            } else {
+                Log.i("StatusChanged", "Failed");
+            }
         }
 
         @Override
@@ -265,18 +279,6 @@ public class MainActivity extends AppCompatActivity
             super.onCancelled();
             isDriverStatusTaskRunning = false;
         }
-    }
-
-    public static String getDriverStatusPostingString () {
-        String status;
-        if (isMainActivityRunning) {
-            status = "2";
-        } else {
-            status = "1";
-        }
-        return "{" +
-                String.format("\"status\": \"%s\"", status) +
-                "}";
     }
 
 }

@@ -33,6 +33,13 @@ public class DriverLocationAlarmHelper {
         }
     }
 
+
+    public static void cancelAlarm() {
+        if (mPendingIntent != null) {
+        getAlarmManager(AppGlobals.getContext()).cancel(mPendingIntent);
+        }
+    }
+
     private static AlarmManager getAlarmManager(Context context) {
         return (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
     }
