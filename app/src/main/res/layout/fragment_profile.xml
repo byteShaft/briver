@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical" android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
 
     <ScrollView
         android:layout_width="match_parent"
@@ -20,6 +21,32 @@
             android:layout_marginRight="42dp"
             android:focusableInTouchMode="true"
             android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="10dp"
+                android:background="@drawable/background_edit_text"
+                android:orientation="vertical"
+                android:padding="10dp">
+
+                <RatingBar
+                    android:id="@+id/rBar_profile"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:isIndicator="true"
+                    android:numStars="5" />
+
+                <TextView
+                    android:id="@+id/tv_rBar_profile"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginBottom="5dp"
+                    android:textColor="#ffffff"
+                    android:textSize="16dp" />
+            </LinearLayout>
 
             <EditText
                 android:id="@+id/et_profile_full_name"
@@ -45,71 +72,72 @@
                 android:background="@drawable/background_edit_text"
                 android:drawableLeft="@mipmap/ic_edit_text_email"
                 android:drawablePadding="10dp"
+                android:enabled="false"
                 android:hint="E-Mail"
                 android:inputType="textEmailAddress"
-                android:enabled="false"
                 android:maxLength="32"
                 android:padding="10dp"
                 android:textColor="#ffffff"
                 android:textCursorDrawable="@null"
                 android:textSize="18dp" />
+
+            <EditText
+                android:id="@+id/et_profile_phone_number"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="10dp"
+                android:background="@drawable/background_edit_text"
+                android:drawableLeft="@mipmap/ic_edit_text_phone"
+                android:drawablePadding="10dp"
+                android:hint="Contact Number"
+                android:inputType="phone"
+                android:maxLength="20"
+                android:padding="10dp"
+                android:textColor="#ffffff"
+                android:textCursorDrawable="@null"
+                android:textSize="18dp" />
+
+            <LinearLayout
+                android:id="@+id/layout_profile_elements_driver"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="10dp"
+                android:animateLayoutChanges="true"
+                android:orientation="vertical"
+                android:visibility="gone">
+
                 <EditText
-                    android:id="@+id/et_profile_phone_number"
+                    android:id="@+id/et_profile_driving_experience"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="10dp"
                     android:background="@drawable/background_edit_text"
-                    android:drawableLeft="@mipmap/ic_edit_text_phone"
+                    android:drawableLeft="@mipmap/ic_edit_text_experience"
                     android:drawablePadding="10dp"
-                    android:hint="Contact Number"
-                    android:inputType="phone"
-                    android:maxLength="20"
+                    android:hint="Driving Experience (Yrs)"
+                    android:inputType="number"
+                    android:maxLength="2"
                     android:padding="10dp"
                     android:textColor="#ffffff"
                     android:textCursorDrawable="@null"
                     android:textSize="18dp" />
 
-                <LinearLayout
-                    android:id="@+id/layout_profile_elements_driver"
+                <EditText
+                    android:id="@+id/et_profile_bio"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="10dp"
-                    android:animateLayoutChanges="true"
-                    android:orientation="vertical"
-                    android:visibility="gone">
-
-                    <EditText
-                        android:id="@+id/et_profile_driving_experience"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="10dp"
-                        android:background="@drawable/background_edit_text"
-                        android:drawableLeft="@mipmap/ic_edit_text_experience"
-                        android:drawablePadding="10dp"
-                        android:hint="Driving Experience (Yrs)"
-                        android:inputType="number"
-                        android:maxLength="2"
-                        android:padding="10dp"
-                        android:textColor="#ffffff"
-                        android:textCursorDrawable="@null"
-                        android:textSize="18dp" />
-
-                    <EditText
-                        android:id="@+id/et_profile_bio"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:background="@drawable/background_edit_text"
-                        android:drawableLeft="@mipmap/ic_edit_text_biography"
-                        android:drawablePadding="10dp"
-                        android:hint="Basic Biography"
-                        android:inputType="textShortMessage"
-                        android:maxLength="160"
-                        android:maxLines="3"
-                        android:padding="10dp"
-                        android:textColor="#ffffff"
-                        android:textCursorDrawable="@null"
-                        android:textSize="18dp" />
-                </LinearLayout>
-                </LinearLayout>
+                    android:background="@drawable/background_edit_text"
+                    android:drawableLeft="@mipmap/ic_edit_text_biography"
+                    android:drawablePadding="10dp"
+                    android:hint="Basic Biography"
+                    android:inputType="textShortMessage"
+                    android:maxLength="160"
+                    android:maxLines="3"
+                    android:padding="10dp"
+                    android:textColor="#ffffff"
+                    android:textCursorDrawable="@null"
+                    android:textSize="18dp" />
+            </LinearLayout>
+        </LinearLayout>
     </ScrollView>
 </RelativeLayout>

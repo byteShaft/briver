@@ -17,6 +17,7 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.RatingBar;
 import android.widget.TextView;
 
 import com.byteshaft.briver.fragments.ChangePasswordFragment;
@@ -108,7 +109,17 @@ public class MainActivity extends AppCompatActivity
 
                 tvPersonName = (TextView) navigationView.findViewById(R.id.tv_nav_header_person_name);
                 TextView tvPersonEmail = (TextView) navigationView.findViewById(R.id.tv_nav_header_person_email);
+                RatingBar rBarNav = (RatingBar) navigationView.findViewById(R.id.rBar_nav_header);
+                TextView tvNumberOfRatings = (TextView) navigationView.findViewById(R.id.tv_nav_header_number_of_ratings);
 
+                float starsValue = AppGlobals.getStarsValue();
+
+                if (starsValue > 0.0) {
+                    rBarNav.setRating(starsValue);
+                } else {
+                    rBarNav.setRating((float) 0.0);
+                }
+                tvNumberOfRatings.setText("(" + AppGlobals.getRatingCount() + ")");
                 tvPersonName.setText(AppGlobals.getPeronName());
                 tvPersonEmail.setText(AppGlobals.getUsername());
             }

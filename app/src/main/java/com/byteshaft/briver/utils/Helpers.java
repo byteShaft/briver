@@ -49,6 +49,7 @@ public class Helpers {
     private static boolean isCountDownTimerRunning;
     public static Spinner spinnerServiceHours;
     private static InputMethodManager inputMethodManager;
+    private static boolean isSoftKeyboardOpen;
 
     public static void showProgressDialog(Context context, String message) {
         progressDialog = new ProgressDialog(context);
@@ -64,6 +65,14 @@ public class Helpers {
         if (progressDialog != null) {
             progressDialog.dismiss();
         }
+    }
+
+    public static boolean isIsSoftKeyboardOpen() {
+        return isSoftKeyboardOpen;
+    }
+
+    public static void setIsSoftKeyboardOpen(boolean state) {
+        isSoftKeyboardOpen = state;
     }
 
     public static void showProgressDialogWithPositiveButton(Context context, String message, String positiveButtonText, final Runnable listenerOk) {
@@ -105,7 +114,6 @@ public class Helpers {
         inputMethodManager = (InputMethodManager) activity.getSystemService(Activity.INPUT_METHOD_SERVICE);
         inputMethodManager.showSoftInput(et, InputMethodManager.SHOW_IMPLICIT);
     }
-
 
     public static String getAddress(Context context, LatLng latLng) {
         Geocoder geocoder;

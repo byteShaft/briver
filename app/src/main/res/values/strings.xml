@@ -12,4 +12,7 @@
         <string name="token_error_message">An error occurred while either fetching the InstanceID token,
         sending the fetched token to the server or subscribing to the PubSub topic. Please try
         running the sample again.</string>
+
+    <string name="TermsOfServiceInitialText">I have read and understood the </string>
+    <string name="TermsOfServiceLateralText"> TOS</string>
 </resources>
