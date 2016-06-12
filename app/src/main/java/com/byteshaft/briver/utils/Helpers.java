@@ -271,7 +271,6 @@ public class Helpers {
     }
 
 
-
     public static void customDialogWithPositiveFunctionNegativeButtonForOnMapMarkerClickHiring (
             Context context, String fullName, String eMail, String contact, String address,
             String locationLastUpdated, String experience, String numberOfHires, String bio, String status, String numberOfRatings, String numberOfStars,
