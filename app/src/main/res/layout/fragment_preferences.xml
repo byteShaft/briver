@@ -153,6 +153,79 @@
                         android:textColor="#ffffff"
                         android:textSize="12dp" />
                 </LinearLayout>
+
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="20dp"
+                    android:layout_marginRight="20dp"
+                    android:layout_marginTop="10dp"
+                    android:animateLayoutChanges="true"
+                    android:background="@drawable/background_edit_text"
+                    android:orientation="vertical"
+                    android:padding="10dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_horizontal"
+                        android:layout_marginBottom="10dp"
+                        android:text="Can Drive"
+                        android:textColor="#ffffff"
+                        android:textSize="16dp" />
+
+                    <RadioGroup
+                        android:id="@+id/rg_preferences_driver_select_transmission_type"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:gravity="center_horizontal"
+                        android:orientation="horizontal"
+                        android:weightSum="3">
+
+                        <RadioButton
+                            android:id="@+id/rb_preferences_driver_transmission_type_manual"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:background="@drawable/background_radio_button"
+                            android:button="@android:color/transparent"
+                            android:gravity="center_horizontal"
+                            android:padding="6dp"
+                            android:text="MANUAL"
+                            android:textColor="#ffffff"
+                            android:textSize="13dp" />
+
+                        <RadioButton
+                            android:id="@+id/rb_preferences_driver_transmission_type_auto"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginLeft="6dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/background_radio_button"
+                            android:button="@android:color/transparent"
+                            android:gravity="center_horizontal"
+                            android:padding="6dp"
+                            android:text="AUTO"
+                            android:textColor="#ffffff"
+                            android:textSize="13dp" />
+
+                        <RadioButton
+                            android:id="@+id/rb_preferences_driver_transmission_type_both"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginLeft="6dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/background_radio_button"
+                            android:button="@android:color/transparent"
+                            android:gravity="center_horizontal"
+                            android:padding="6dp"
+                            android:text="BOTH"
+                            android:textColor="#ffffff"
+                            android:textSize="13dp" />
+                    </RadioGroup>
+                </LinearLayout>
             </LinearLayout>
 
 
@@ -309,6 +382,7 @@
                         android:background="@drawable/background_edit_text"
                         android:drawableLeft="@mipmap/ic_edit_text_calender"
                         android:drawablePadding="10dp"
+                        android:layout_marginBottom="10dp"
                         android:hint="Vehicle Model (Yr)"
                         android:inputType="date"
                         android:maxLength="4"
@@ -316,6 +390,44 @@
                         android:textColor="#ffffff"
                         android:textCursorDrawable="@null"
                         android:textSize="18dp" />
+
+                    <RadioGroup
+                        android:id="@+id/rg_preferences_customer_select_transmission_type"
+                        android:layout_width="match_parent"
+                        android:layout_marginTop="10dp"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_horizontal"
+                        android:orientation="horizontal"
+                        android:weightSum="2">
+
+                        <RadioButton
+                            android:id="@+id/rb_preferences_customer_transmission_type_manual"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:background="@drawable/background_radio_button"
+                            android:button="@android:color/transparent"
+                            android:gravity="center_horizontal"
+                            android:padding="10dp"
+                            android:text="MANUAL"
+                            android:textColor="#ffffff"
+                            android:textSize="15dp" />
+
+                        <RadioButton
+                            android:id="@+id/rb_preferences_customer_transmission_type_auto"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginLeft="8dp"
+                            android:layout_weight="1"
+                            android:layout_marginBottom="10dp"
+                            android:background="@drawable/background_radio_button"
+                            android:button="@android:color/transparent"
+                            android:gravity="center_horizontal"
+                            android:padding="10dp"
+                            android:text="AUTO"
+                            android:textColor="#ffffff"
+                            android:textSize="15dp" />
+                    </RadioGroup>
                 </LinearLayout>
             </LinearLayout>
         </LinearLayout>

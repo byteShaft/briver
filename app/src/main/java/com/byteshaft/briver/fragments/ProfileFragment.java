@@ -14,6 +14,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.RatingBar;
+import android.widget.TextView;
 
 import com.byteshaft.briver.MainActivity;
 import com.byteshaft.briver.R;
@@ -52,6 +54,8 @@ public class ProfileFragment extends android.support.v4.app.Fragment implements 
     EditProfileTask taskEditProfile;
     boolean isEditProfileTaskRunning;
 
+    RatingBar ratingBarHome;
+    TextView tvRatingBarHome;
 
     @Nullable
     @Override
@@ -65,6 +69,18 @@ public class ProfileFragment extends android.support.v4.app.Fragment implements 
         etProfileBio = (EditText) baseViewProfileFragment.findViewById(R.id.et_profile_bio);
 
         llProfileDriverElements = (LinearLayout) baseViewProfileFragment.findViewById(R.id.layout_profile_elements_driver);
+
+        ratingBarHome = (RatingBar) baseViewProfileFragment.findViewById(R.id.rBar_profile);
+        tvRatingBarHome = (TextView) baseViewProfileFragment.findViewById(R.id.tv_rBar_profile);
+
+        float starsValue = AppGlobals.getStarsValue();
+
+        if (starsValue > 0.0) {
+            ratingBarHome.setRating(starsValue);
+        } else {
+            ratingBarHome.setRating((float) 0.0);
+        }
+        tvRatingBarHome.setText("(" + AppGlobals.getRatingCount() + ")");
 
         if (AppGlobals.getUserType() == 1) {
             llProfileDriverElements.setVisibility(View.VISIBLE);

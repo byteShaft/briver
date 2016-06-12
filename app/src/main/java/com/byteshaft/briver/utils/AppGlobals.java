@@ -41,6 +41,7 @@ public class AppGlobals extends Application {
     private static final String VEHICLE_MAKE = "vehicle_make";
     private static final String VEHICLE_MODEL = "vehicle_model";
     private static final String NUMBER_OF_HIRES = "total_hires";
+    private static final String TRANSMISSION_TYPE = "transmission_type";
     private static final String FIRST_RUN_HIRE_FRAGMENT = "first_run_hire_fragment";
     private static final String FIRST_RUN_NEARBY_DRIVERS_FRAGMENT = "first_run__fragment";
     private static Context sContext;
@@ -163,6 +164,14 @@ public class AppGlobals extends Application {
 
     public static int getUserID() {
         return sPreferences.getInt(USER_ID, -1);
+    }
+
+    public static void putTransmissionType(int transmissionType) {
+        sPreferences.edit().putInt(TRANSMISSION_TYPE, transmissionType).apply();
+    }
+
+    public static int getTransmissionType() {
+        return sPreferences.getInt(TRANSMISSION_TYPE, -1);
     }
 
     public static void putLocationReportingType(int locationReportingType) {

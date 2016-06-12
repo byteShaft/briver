@@ -20,8 +20,6 @@ public class HomeFragment extends android.support.v4.app.Fragment implements Vie
     View baseViewHomeFragment;
     TextView tvShowUserType;
     public static boolean isHomeFragmentOpen;
-    RatingBar ratingBarHome;
-    TextView tvRatingBarHome;
 
     @Nullable
     @Override
@@ -29,17 +27,6 @@ public class HomeFragment extends android.support.v4.app.Fragment implements Vie
         baseViewHomeFragment = inflater.inflate(R.layout.fragment_home, container, false);
         tvShowUserType = (TextView) baseViewHomeFragment.findViewById(R.id.tv_home_fragment_user_type);
 
-        ratingBarHome = (RatingBar) baseViewHomeFragment.findViewById(R.id.rBar_home);
-        tvRatingBarHome = (TextView) baseViewHomeFragment.findViewById(R.id.tv_rBar_home);
-
-        float starsValue = AppGlobals.getStarsValue();
-
-        if (starsValue > 0.0) {
-            ratingBarHome.setRating(starsValue);
-        } else {
-            ratingBarHome.setRating((float) 0.0);
-        }
-        tvRatingBarHome.setText("(" + AppGlobals.getRatingCount() + ")");
         if (AppGlobals.getUserType() == 0) {
             tvShowUserType.setText("CUSTOMER");
         } else {

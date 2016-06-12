@@ -29,7 +29,6 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.byteshaft.briver.MainActivity;
 import com.byteshaft.briver.R;
@@ -75,7 +74,6 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
     Animation animMainLogoFadeIn;
     Animation animMainLogoFadeOut;
 
-    boolean isSoftKeyboardOpen;
     boolean launchingMainActivity;
 
     HttpURLConnection connection;
@@ -116,7 +114,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
         animMainLogoFadeOut = AnimationUtils.loadAnimation(getActivity(), R.anim.anim_welcome_logo_fade_out);
 
         RelativeLayout mainLayout = (RelativeLayout) baseViewLoginFragment.findViewById(R.id.layout_fragment_login);
-        InputMethodManager im = (InputMethodManager) getActivity().getApplicationContext().getSystemService(Service.INPUT_METHOD_SERVICE);
+        InputMethodManager im = (InputMethodManager) getActivity().getSystemService(Service.INPUT_METHOD_SERVICE);
 
         fragmentManager = getFragmentManager();
 
@@ -137,7 +135,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
 
             @Override
             public void onSoftKeyboardHide() {
-                isSoftKeyboardOpen = false;
+                Helpers.setIsSoftKeyboardOpen(false);
                 if (!launchingMainActivity) {
                     getActivity().runOnUiThread(new Runnable() {
                         @Override
@@ -150,7 +148,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
 
             @Override
             public void onSoftKeyboardShow() {
-                isSoftKeyboardOpen = true;
+                Helpers.setIsSoftKeyboardOpen(true);
                 if (!launchingMainActivity) {
                     getActivity().runOnUiThread(new Runnable() {
                         @Override
@@ -213,20 +211,20 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
                 sLoginEmail = etLoginEmail.getText().toString();
                 sLoginPassword = etLoginPassword.getText().toString();
                 if (validateLoginInput()) {
-                    if (isSoftKeyboardOpen) {
+                    if (Helpers.isIsSoftKeyboardOpen()) {
                         softKeyboard.closeSoftKeyboard();
                     }
                     taskUserLogin = (UserLoginTask) new UserLoginTask().execute();
                 }
                 break;
             case R.id.btn_login_register:
-                if (isSoftKeyboardOpen) {
+                if (Helpers.isIsSoftKeyboardOpen()) {
                     softKeyboard.closeSoftKeyboard();
                 }
                 loadRegisterFragment(new RegisterFragment());
                 break;
             case R.id.tv_login_forgot_password:
-                if (isSoftKeyboardOpen) {
+                if (Helpers.isIsSoftKeyboardOpen()) {
                     softKeyboard.closeSoftKeyboard();
                 }
                 loadPasswordRecoverFragment(new ForgotPasswordFragment());
@@ -259,26 +257,33 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
     }
 
     public void onLoginSuccess() {
-        taskGetUserData = (GetUserDataTask) new GetUserDataTask().execute();
+        Log.i("Login", "Success");
+        startGcmService();
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                taskEnablePushNotification = (EnablePushNotifications) new EnablePushNotifications().execute();
+            }
+        }, 3000);
     }
 
     public void onLoginFailed(String message) {
+        Log.i("Login", "Failed");
         Helpers.showSnackBar(getView(), message, Snackbar.LENGTH_LONG, "#f44336");
         ivWelcomeLogoMain.startAnimation(animMainLogoTransitionUp);
     }
 
     public void onGetUserDataSuccess() {
+        Log.i("UserDataRetrieval", "Success");
         Intent intent = new Intent(getActivity(), MainActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
         getActivity().finish();
         startActivity(intent);
-        AppGlobals.setLoggedIn(true);
-
-
-        startGcmService();
     }
 
     public void onGetUserDataFailed() {
+
+        Log.i("UserDataRetrieval", "Failed");
         Helpers.showSnackBar(getView(), "Failed to retrieve UserData", Snackbar.LENGTH_LONG, "#f44336");
         if (AppGlobals.isLoggedIn()) {
             Helpers.AlertDialogWithPositiveNegativeNeutralFunctions(getActivity(), "Retrieving Failed",
@@ -338,7 +343,6 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
                 DataOutputStream out = new DataOutputStream(connection.getOutputStream());
 
                 String loginString = getLoginString(sLoginEmail, sLoginPassword);
-                Log.i("Login ", "String: " + loginString);
                 out.writeBytes(loginString);
                 out.flush();
                 out.close();
@@ -401,7 +405,6 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
                 connection = WebServiceHelpers.openConnectionForUrl(EndPoints.BASE_ACCOUNTS + "me", "GET", true);
                 JSONObject jsonObject = new JSONObject(WebServiceHelpers.readResponse(connection));
                 Log.i("IncomingData", " UserData: " + jsonObject);
-
                 Log.i("USERTOKEN", AppGlobals.getToken());
 
                 AppGlobals.putPersonName(jsonObject.getString("full_name"));
@@ -412,6 +415,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
                 AppGlobals.putRatingCount(jsonObject.getString("review_count"));
                 float starsValue = Float.parseFloat(jsonObject.getString("review_stars"));
                 AppGlobals.putStarsValue(starsValue);
+//                AppGlobals.putTransmissionType(jsonObject.getInt("transmission_type"));
                 if (jsonObject.getInt("user_type") == 0) {
                     AppGlobals.putDriverSearchRadius(jsonObject.getInt("driver_filter_radius"));
                     AppGlobals.putVehicleType(jsonObject.getInt("vehicle_type"));
@@ -500,6 +504,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
         mRegistrationBroadcastReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
+                Log.i("GCM", "onReceive");
                 SharedPreferences sharedPreferences =
                         PreferenceManager.getDefaultSharedPreferences(context);
                 boolean sentToken = sharedPreferences
@@ -520,14 +525,12 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
         }
     }
 
-
     public class EnablePushNotifications extends AsyncTask<Void, Integer, Void> {
 
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
             isEnablePushNotificationTaskRunning = true;
-            Helpers.showProgressDialog(getActivity(), "Enabling Push Notifications");
         }
 
         @Override
@@ -563,17 +566,14 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
             isEnablePushNotificationTaskRunning = false;
-            Helpers.dismissProgressDialog();
             if (responseCode == 200) {
-                Toast.makeText(getActivity(), "Push Notifications Enabled", Toast.LENGTH_LONG).show();
-//                Intent intent = new Intent(getActivity(), MainActivity.class);
-//                intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
-//                getActivity().finish();
-//                startActivity(intent);
+                AppGlobals.setLoggedIn(true);
+                taskGetUserData = (GetUserDataTask) new GetUserDataTask().execute();
+                Helpers.showSnackBar(getView(), "Push Notifications Enabled", Snackbar.LENGTH_LONG, "#ffffff");
+
             } else {
-                Toast.makeText(getActivity(), "Cannot enable push notifications", Toast.LENGTH_LONG).show();
-                AppGlobals.putToken(null);
                 AppGlobals.putGcmToken(null);
+                onLoginFailed("Login Failed. Cannot enable push notifications");
             }
         }
 

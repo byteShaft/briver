@@ -798,7 +798,10 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
                 Log.i("IncomingData", " UserData: " + jsonArray);
                 for (int i = 0; i < jsonArray.length(); i++) {
                     JSONObject jsonObject = jsonArray.getJSONObject(i);
-                    if (!driversIdList.contains(jsonObject.getInt("id")) && Integer.parseInt(jsonObject.getString("status")) != 0) {
+                    if (!driversIdList.contains(jsonObject.getInt("id"))
+                            && Integer.parseInt(jsonObject.getString("status")) != 0
+                            && AppGlobals.getTransmissionType() == jsonObject.getInt("transmission_type")
+                            || jsonObject.getInt("transmission_type") == 2) {
                         driversIdList.add(jsonObject.getInt("id"));
                         ArrayList<String> arrayListString = new ArrayList<>();
                         arrayListString.add(jsonObject.getString("full_name"));

@@ -1,6 +1,7 @@
 package com.byteshaft.briver.fragments;
 
 import android.app.Fragment;
+import android.app.Service;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.Color;
@@ -14,6 +15,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.RelativeLayout;
@@ -25,6 +27,7 @@ import com.byteshaft.briver.R;
 import com.byteshaft.briver.utils.AppGlobals;
 import com.byteshaft.briver.utils.EndPoints;
 import com.byteshaft.briver.utils.Helpers;
+import com.byteshaft.briver.utils.SoftKeyboard;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -61,6 +64,7 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
     String textEmailEntry;
     View baseViewCodeConfirmationFragment;
     HttpURLConnection connection;
+    SoftKeyboard mSoftKeyboard;
     boolean isTimerActive;
     final Runnable functionOnTimerFinish = new Runnable() {
         public void run() {
@@ -122,8 +126,22 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
         Helpers.setCountDownTimer(120000, 1000, functionSetTimerTextOnTick, functionOnTimerFinish);
         tvCodeConfirmationStatusDisplayTimer.startAnimation(animTimerFading);
         tvCodeConfirmationStatusDisplayTimer.setVisibility(View.VISIBLE);
-
         etCodeConfirmationEmail.setText(RegisterFragment.userRegisterEmail);
+
+
+        InputMethodManager im = (InputMethodManager) getActivity().getSystemService(Service.INPUT_METHOD_SERVICE);
+        mSoftKeyboard = new SoftKeyboard(layoutCodeConfirmation, im);
+        mSoftKeyboard.setSoftKeyboardCallback(new SoftKeyboard.SoftKeyboardChanged() {
+            @Override
+            public void onSoftKeyboardHide() {
+                Helpers.setIsSoftKeyboardOpen(false);
+            }
+
+            @Override
+            public void onSoftKeyboardShow() {
+                Helpers.setIsSoftKeyboardOpen(true);
+            }
+        });
         return baseViewCodeConfirmationFragment;
     }
 
@@ -135,8 +153,10 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
                 confirmationCode = etCodeConfirmationCode.getText().toString();
                 if (validateConfirmationCode()) {
                     taskUserConfirmation = (UserConfirmationTask) new UserConfirmationTask().execute();
+                    if (Helpers.isIsSoftKeyboardOpen()) {
+                        mSoftKeyboard.closeSoftKeyboard();
+                    }
                 }
-                Helpers.closeSoftKeyboard(getActivity());
                 break;
             case R.id.btn_confirmation_code_resend:
                 textEmailEntry = etCodeConfirmationEmail.getText().toString();
@@ -146,8 +166,10 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
                             Snackbar.LENGTH_SHORT, "#ffffff");
                 } else {
                     taskResendEmail = (UserResendEmail) new UserResendEmail().execute();
+                    if (Helpers.isIsSoftKeyboardOpen()) {
+                        mSoftKeyboard.closeSoftKeyboard();
+                    }
                 }
-                Helpers.closeSoftKeyboard(getActivity());
                 break;
         }
     }

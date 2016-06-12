@@ -9,7 +9,7 @@
         <item
             android:id="@+id/nav_hire"
             android:icon="@mipmap/ic_nav_hire"
-            android:title="Hire" />
+            android:title="Hire a Briver" />
         <item
             android:id="@+id/nav_hire_timeline"
             android:icon="@mipmap/ic_nav_timeline"
@@ -18,27 +18,37 @@
 
     <item android:title="Settings">
         <menu>
-            <item android:id="@+id/nav_profile"
+            <item
+                android:id="@+id/nav_profile"
                 android:icon="@mipmap/ic_nav_profile"
-                android:title="My Profile"/>
-            <item android:id="@+id/nav_change_password"
+                android:title="My Profile" />
+            <item
+                android:id="@+id/nav_change_password"
                 android:icon="@mipmap/ic_nav_change_password"
-                android:title="Change Password"/>
-            <item android:id="@+id/nav_logout"
-                android:icon="@mipmap/ic_nav_logout"
-                android:title="Logout"/>
-            <item android:id="@+id/nav_preference"
+                android:title="Change Password" />
+            <item
+                android:id="@+id/nav_preference"
                 android:icon="@mipmap/ic_nav_preference"
-                android:title="Preference"/>
+                android:title="Preference" />
         </menu>
     </item>
 
     <item android:title="Communicate">
         <menu>
-            <item android:id="@+id/nav_contact"
+            <item
+                android:id="@+id/nav_contact"
                 android:icon="@mipmap/ic_nav_contact_us"
-                android:title="Contact"/>
+                android:title="Contact" />
         </menu>
     </item>
+
+    <group
+        android:id="@+id/menu_bottom"
+        android:checkableBehavior="none">
+        <item
+            android:id="@+id/nav_logout"
+            android:icon="@mipmap/ic_nav_logout"
+            android:title="Logout" />
+    </group>
 
 </menu>
