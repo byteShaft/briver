@@ -1,5 +1,6 @@
 package com.byteshaft.briver.fragments;
 
+import android.app.Dialog;
 import android.app.Fragment;
 import android.content.Intent;
 import android.os.AsyncTask;
@@ -77,6 +78,7 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
     EditText etRegisterUserBasicBio;
     EditText etRegisterUserVehicleMake;
     EditText etRegisterUserVehicleModel;
+    EditText etRegisterAttachments;
     LinearLayout llRegisterElements;
     LinearLayout llRegisterElementsDriver;
     LinearLayout llRegisterElementsCustomer;
@@ -175,6 +177,7 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
         etRegisterUserBasicBio = (EditText) baseViewRegisterFragment.findViewById(R.id.et_register_bio);
         etRegisterUserVehicleMake = (EditText) baseViewRegisterFragment.findViewById(R.id.et_register_vehicle_make);
         etRegisterUserVehicleModel = (EditText) baseViewRegisterFragment.findViewById(R.id.et_register_vehicle_model);
+        etRegisterAttachments = (EditText) baseViewRegisterFragment.findViewById(R.id.et_register_attachments);
 
         cbTermsOfServiceCheck = (CheckBox) baseViewRegisterFragment.findViewById(R.id.cb_terms_of_service_check);
 
@@ -193,6 +196,7 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
         rbVehicleTypeHatchback.setOnCheckedChangeListener(this);
         rbVehicleTypeSedan.setOnCheckedChangeListener(this);
         rbVehicleTypeLuxury.setOnCheckedChangeListener(this);
+        etRegisterAttachments.setOnClickListener(this);
 
         btnCreateUser = (Button) baseViewRegisterFragment.findViewById(R.id.btn_register_create_account);
         btnCreateUser.setOnClickListener(this);
@@ -237,7 +241,8 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
             public void onCheckedChanged(RadioGroup group, int checkedId) {
                 if (checkedId == R.id.rb_register_customer_transmission_type_manual) {
                     transmissionType = 0;
-                } if (checkedId == R.id.rb_register_customer_transmission_type_auto) {
+                }
+                if (checkedId == R.id.rb_register_customer_transmission_type_auto) {
                     transmissionType = 1;
                 }
             }
@@ -308,6 +313,10 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
                         new RegisterUserTask().execute();
                     }
                 }
+                break;
+            case R.id.et_register_attachments:
+                showDocumentsAttachmentCustomDialog();
+                etRegisterAttachments.setError(null);
                 break;
         }
     }
@@ -387,12 +396,15 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
             }
         }
 
-        if (valid && registerUserType == 0 && userRegisterVehicleType == -1) {
-            Helpers.showSnackBar(getView(), "Select vehicle type", Snackbar.LENGTH_LONG, "#f44336");
+        if (valid && !etRegisterAttachments.getText().toString().equals("Documents 3/3")) {
+            Helpers.showSnackBar(getView(), "Attach documents to continue", Snackbar.LENGTH_LONG, "#f44336");
+            etRegisterAttachments.setError("Attach documents");
             valid = false;
+        } else {
+            etRegisterAttachments.setError(null);
         }
 
-        if (!cbTermsOfServiceCheck.isChecked()) {
+        if (valid && !cbTermsOfServiceCheck.isChecked()) {
             Helpers.showSnackBar(getView(), "Check terms of service to continue", Snackbar.LENGTH_LONG, "#f44336");
             valid = false;
         }
@@ -464,6 +476,35 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
 
     public void onRegistrationFailed(String message) {
         Helpers.showSnackBar(baseViewRegisterFragment, message, Snackbar.LENGTH_SHORT, "#f44336");
+    }
+
+    private void showDocumentsAttachmentCustomDialog() {
+        final Dialog customAttachmentsDialog = new Dialog(getActivity());
+        customAttachmentsDialog.setContentView(R.layout.layout_custom_attachment_dialog);
+
+        customAttachmentsDialog.setCancelable(false);
+        customAttachmentsDialog.setTitle("Attach Documents");
+
+        Button buttonNo = (Button) customAttachmentsDialog.findViewById(R.id.btn_driver_hire_dialog_cancel);
+        buttonNo.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                customAttachmentsDialog.dismiss();
+            }
+        });
+
+        Button buttonYes = (Button) customAttachmentsDialog.findViewById(R.id.btn_driver_hire_dialog_hire);
+        buttonYes.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+//                run task here
+                customAttachmentsDialog.dismiss();
+                etRegisterAttachments.setText("Documents 3/3");
+                etRegisterAttachments.setCompoundDrawablesWithIntrinsicBounds(R.mipmap.ic_edit_text_attachment, 0, R.mipmap.ic_edit_text_ok, 0);
+            }
+        });
+        Helpers.dismissProgressDialog();
+        customAttachmentsDialog.show();
     }
 
     private class RegisterUserTask extends AsyncTask<Void, Integer, Void> {

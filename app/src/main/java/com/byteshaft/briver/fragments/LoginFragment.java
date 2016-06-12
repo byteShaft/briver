@@ -1,6 +1,5 @@
 package com.byteshaft.briver.fragments;
 
-import android.Manifest;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.Service;
@@ -8,14 +7,12 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
-import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -169,14 +166,6 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
             @Override
             public void onAnimationEnd(Animation animation) {
                 llWelcomeLogin.setVisibility(View.VISIBLE);
-                if (ContextCompat.checkSelfPermission(getActivity(),
-                        Manifest.permission.ACCESS_FINE_LOCATION)
-                        != PackageManager.PERMISSION_GRANTED) {
-                    Helpers.AlertDialogWithPositiveNegativeFunctions(AppGlobals.getRunningActivityInstance(), "Permission Denied",
-                            "You need to grant permissions to use Location Services for Briver", "Settings",
-                            "Exit App", Helpers.openPermissionsSettingsForMarshmallow, Helpers.exitApp);
-                }
-                AppGlobals.checkPlayServicesAvailability();
             }
 
             @Override
@@ -201,6 +190,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
 
             }
         });
+
         return baseViewLoginFragment;
     }
 
