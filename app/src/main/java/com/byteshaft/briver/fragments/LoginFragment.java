@@ -405,7 +405,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
                 AppGlobals.putRatingCount(jsonObject.getString("review_count"));
                 float starsValue = Float.parseFloat(jsonObject.getString("review_stars"));
                 AppGlobals.putStarsValue(starsValue);
-//                AppGlobals.putTransmissionType(jsonObject.getInt("transmission_type"));
+                AppGlobals.putTransmissionType(jsonObject.getInt("transmission_type"));
                 if (jsonObject.getInt("user_type") == 0) {
                     AppGlobals.putDriverSearchRadius(jsonObject.getInt("driver_filter_radius"));
                     AppGlobals.putVehicleType(jsonObject.getInt("vehicle_type"));
@@ -588,4 +588,9 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
         }
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        RegisterFragment.locationAcquired = false;
+    }
 }

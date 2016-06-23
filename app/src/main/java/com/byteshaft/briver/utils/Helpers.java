@@ -7,7 +7,14 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
+import android.graphics.Rect;
+import android.graphics.RectF;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.LocationManager;
@@ -271,6 +278,37 @@ public class Helpers {
     }
 
 
+    public static void AlertDialogWithPositiveNegativeFunctionsNeutralButton(
+            Context context, String title, String message, String positiveButtonText,
+            String negativeButtonText, String neutralButtonText, final Runnable listenerYes,
+            final Runnable listenerNo) {
+        new AlertDialog.Builder(context)
+                .setTitle(title)
+                .setMessage(message)
+                .setCancelable(false)
+                .setPositiveButton(positiveButtonText, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        listenerYes.run();
+                    }
+                })
+                .setNegativeButton(negativeButtonText, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        if (listenerNo != null) {
+                            listenerNo.run();
+                        }
+                    }
+                })
+                .setNeutralButton(neutralButtonText, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                })
+                .show();
+    }
+
+
     public static void customDialogWithPositiveFunctionNegativeButtonForOnMapMarkerClickHiring (
             Context context, String fullName, String eMail, String contact, String address,
             String locationLastUpdated, String experience, String numberOfHires, String bio, String status, String numberOfRatings, String numberOfStars,
@@ -514,5 +552,44 @@ public class Helpers {
 
     public static String getCurrentTimeOfDevice() {
        return android.text.format.DateFormat.format("yyyy-MM-ddThh:mm:ss", new java.util.Date()).toString();
+    }
+
+    public static Bitmap getCroppedBitmap(Bitmap bitmap) {
+        Bitmap output = Bitmap.createBitmap(bitmap.getWidth(),
+                bitmap.getHeight(), Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(output);
+
+        final int color = 0xff424242;
+
+        final Paint paint = new Paint();
+        final Rect rect = new Rect(0, 0, bitmap.getWidth(), bitmap.getHeight());
+        final RectF rectF = new RectF(rect);
+
+        paint.setAntiAlias(true);
+        canvas.drawARGB(0, 0, 0, 0);
+        paint.setColor(color);
+        canvas.drawRoundRect(rectF, 15, 15, paint);
+        paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_IN));
+        canvas.drawBitmap(bitmap, rect, rect, paint);
+        return output;
+    }
+
+    public static Bitmap getResizedBitmap(Bitmap image, int maxSize) {
+        int width = image.getWidth();
+        int height = image.getHeight();
+
+        if (width > height) {
+            maxSize = (int) (maxSize * 1.7);
+        }
+
+        float bitmapRatio = (float)width / (float) height;
+        if (bitmapRatio > 0) {
+            width = maxSize;
+            height = (int) (width / bitmapRatio);
+        } else {
+            height = maxSize;
+            width = (int) (height * bitmapRatio);
+        }
+        return Bitmap.createScaledBitmap(image, width, height, true);
     }
 }

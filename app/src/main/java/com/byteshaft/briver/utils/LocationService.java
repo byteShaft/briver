@@ -87,6 +87,7 @@ public class LocationService extends ContextWrapper implements LocationListener,
         } else if (RegisterFragment.isRegistrationFragmentOpen && onLocationChangedCounter == 3) {
             RegisterFragment.latLngDriverLocationForRegistration = driverCurrentLocation;
             Helpers.showSnackBar(RegisterFragment.baseViewRegisterFragment, "Location Acquired", Snackbar.LENGTH_SHORT, "#A4C639");
+            RegisterFragment.locationAcquired = true;
         } else if (PreferencesFragment.isPreferencesFragmentOpen && onLocationChangedCounter == 3) {
             PreferencesFragment.latLngDriverLocationFixed = driverCurrentLocation;
             PreferencesFragment.setFixedLocationDisplay();
