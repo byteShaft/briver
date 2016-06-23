@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths >
+    <files-path name="captured_image1" path="your/path1/"/>
+    <files-path name="captured_image2" path="your/path2/"/>
+    <files-path name="captured_image3" path="your/path3/"/>
+</paths>

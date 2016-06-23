@@ -1,10 +1,14 @@
 package com.byteshaft.briver.fragments;
 
+import android.app.Activity;
 import android.app.Dialog;
 import android.app.Fragment;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.provider.Settings;
 import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
@@ -21,6 +25,7 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
@@ -32,13 +37,22 @@ import com.byteshaft.briver.utils.AppGlobals;
 import com.byteshaft.briver.utils.EndPoints;
 import com.byteshaft.briver.utils.Helpers;
 import com.byteshaft.briver.utils.LocationService;
+import com.byteshaft.briver.utils.MultipartDataUtility;
 import com.google.android.gms.maps.model.LatLng;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  * Created by fi8er1 on 28/04/2016.
@@ -52,9 +66,19 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
     static String userRegisterEmail;
     static int registerUserType = -1;
     static String driverLocationToString;
+    public static boolean locationAcquired;
+    final private int CAPTURE_IMAGE = 1;
+    final private int PICK_IMAGE = 2;
+
+
+    ImageButton ibPhotoOne;
+    ImageButton ibPhotoTwo;
+    ImageButton ibPhotoThree;
+    int ibPosition;
     final Runnable closeRegistration = new Runnable() {
         public void run() {
             getActivity().onBackPressed();
+            locationAcquired = false;
         }
     };
     final Runnable openLocationServiceSettings = new Runnable() {
@@ -66,6 +90,20 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
     final Runnable driverRegistrationContinueAnyway = new Runnable() {
         public void run() {
             new RegisterUserTask().execute();
+        }
+    };
+    final Runnable openCameraIntent = new Runnable() {
+        public void run() {
+            Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+            startActivityForResult(intent, CAPTURE_IMAGE);
+        }
+    };
+    final Runnable openGalleryIntent = new Runnable() {
+        public void run() {
+            Intent intent = new Intent();
+            intent.setType("image/*");
+            intent.setAction(Intent.ACTION_GET_CONTENT);//
+            startActivityForResult(Intent.createChooser(intent, "Select File"), PICK_IMAGE);
         }
     };
     EditText etRegisterUserFullName;
@@ -103,6 +141,7 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
     String userRegisterVehicleModel;
     int userRegisterVehicleType = -1;
     int transmissionType = -1;
+    private ArrayList<HashMap<Integer, String>> imagePathsArray;
     HttpURLConnection connection;
     LocationService mLocationService;
     final Runnable recheckLocationServiceStatus = new Runnable() {
@@ -124,39 +163,44 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
             String fullName, String email, String password, String phone, int transmissionType, int vehicleType,
             String vehicleMake, String vehicleModel) {
 
-        return "{" +
-                String.format("\"full_name\": \"%s\", ", fullName) +
-                String.format("\"email\": \"%s\", ", email) +
-                String.format("\"password\": \"%s\", ", password) +
-                String.format("\"phone_number\": \"%s\", ", phone) +
-                String.format("\"transmission_type\": \"%s\", ", transmissionType) +
-                String.format("\"vehicle_type\": \"%s\", ", vehicleType) +
-                String.format("\"vehicle_make\": \"%s\", ", vehicleMake) +
-                String.format("\"vehicle_model\": \"%s\"", vehicleModel) +
-                "}";
+        JSONObject json = new JSONObject();
+        try {
+            json.put("full_name", fullName);
+            json.put("email", email);
+            json.put("password", password);
+            json.put("phone_number", phone);
+            json.put("transmission_type", transmissionType);
+            json.put("vehicle_type", vehicleType);
+            json.put("vehicle_make", vehicleMake);
+            json.put("vehicle_model", vehicleModel);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return json.toString();
     }
 
     public static String getRegistrationStringForDriver(
             String fullName, String email, String password, String phone,
-            String experience, int transmissionType, String bio, String location) {
-        StringBuilder output = new StringBuilder();
-        output.append("{");
-        output.append(String.format("\"full_name\": \"%s\", ", fullName));
-        output.append(String.format("\"email\": \"%s\", ", email));
-        output.append(String.format("\"password\": \"%s\", ", password));
-        output.append(String.format("\"phone_number\": \"%s\", ", phone));
-        output.append(String.format("\"transmission_type\": \"%s\", ", transmissionType));
-        output.append(String.format("\"driving_experience\": \"%s\", ", experience));
-        if (bio != null) {
-            output.append(String.format("\"bio\": \"%s\", ", bio));
-        }
+            String experience, String transmissionType, String bio, String location) {
 
-        if (location != null) {
-            output.append(String.format("\"location\": \"%s\"", location));
+        JSONObject json = new JSONObject();
+        try {
+            json.put("full_name", fullName);
+            json.put("email", email);
+            json.put("password", password);
+            json.put("phone_number", phone);
+            json.put("transmission_type", transmissionType);
+            json.put("driving_experience", experience);
+            if (bio != null || !bio.equals("")) {
+                json.put("bio", bio);
+            }
+            if (location != null) {
+                json.put("location", location);
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
         }
-
-        output.append("}");
-        return output.toString();
+        return json.toString();
     }
 
     @Nullable
@@ -200,6 +244,8 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
 
         btnCreateUser = (Button) baseViewRegisterFragment.findViewById(R.id.btn_register_create_account);
         btnCreateUser.setOnClickListener(this);
+
+        imagePathsArray = new ArrayList<>();
 
         llRegisterElements = (LinearLayout) baseViewRegisterFragment.findViewById(R.id.layout_elements_register);
         llRegisterElementsCustomer = (LinearLayout) baseViewRegisterFragment.findViewById(R.id.layout_elements_register_customer);
@@ -262,7 +308,7 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
         });
 
         SpannableStringBuilder text = new SpannableStringBuilder();
-        text.append(getString(R.string.TermsOfServiceInitialText) + " ");
+        text.append(getString(R.string.TermsOfServiceInitialText)).append(" ");
 
         ClickableSpan clickableSpan = new ClickableSpan() {
             @Override
@@ -394,21 +440,20 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
             } else {
                 etRegisterUserDrivingExperience.setError(null);
             }
-        }
 
-        if (valid && !etRegisterAttachments.getText().toString().equals("Documents 3/3")) {
-            Helpers.showSnackBar(getView(), "Attach documents to continue", Snackbar.LENGTH_LONG, "#f44336");
-            etRegisterAttachments.setError("Attach documents");
-            valid = false;
-        } else {
-            etRegisterAttachments.setError(null);
+            if (!etRegisterAttachments.getText().toString().equals("Documents 3/3")) {
+                etRegisterAttachments.setError("Attach documents");
+                valid = false;
+            } else {
+                etRegisterAttachments.setError(null);
+            }
         }
 
         if (valid && !cbTermsOfServiceCheck.isChecked()) {
             Helpers.showSnackBar(getView(), "Check terms of service to continue", Snackbar.LENGTH_LONG, "#f44336");
             valid = false;
         }
-
+        
         return valid;
     }
 
@@ -428,7 +473,7 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
     public void onResume() {
         super.onResume();
         isRegistrationFragmentOpen = true;
-        if (rgRegisterSelectUserType.getCheckedRadioButtonId() == R.id.rb_register_driver) {
+        if (!locationAcquired && rgRegisterSelectUserType.getCheckedRadioButtonId() == R.id.rb_register_driver) {
             if (Helpers.isAnyLocationServiceAvailable()) {
                 mLocationService.startLocationServices();
                 Helpers.showSnackBar(baseViewRegisterFragment, "Acquiring location for registration", Snackbar.LENGTH_SHORT, "#ffffff");
@@ -468,7 +513,6 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
 
     public void onRegistrationSuccess() {
         Toast.makeText(getActivity(), "Registration successful", Toast.LENGTH_SHORT).show();
-
         Helpers.closeSoftKeyboard(getActivity());
         loadFragment(new CodeConfirmationFragment());
         CodeConfirmationFragment.isFragmentOpenedFromLogin = false;
@@ -503,6 +547,38 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
                 etRegisterAttachments.setCompoundDrawablesWithIntrinsicBounds(R.mipmap.ic_edit_text_attachment, 0, R.mipmap.ic_edit_text_ok, 0);
             }
         });
+
+        ibPhotoOne = (ImageButton) customAttachmentsDialog.findViewById(R.id.ib_photo_one);
+        ibPhotoTwo = (ImageButton) customAttachmentsDialog.findViewById(R.id.ib_photo_two);
+        ibPhotoThree = (ImageButton) customAttachmentsDialog.findViewById(R.id.ib_photo_three);
+
+        ibPhotoOne.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ibPosition = 0;
+                Helpers.AlertDialogWithPositiveNegativeFunctionsNeutralButton(getActivity(), "License Front",
+                        "Select an option to add photo", "Camera", "Gallery", "Cancel", openCameraIntent, openGalleryIntent);
+            }
+        });
+
+        ibPhotoTwo.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ibPosition = 1;
+                Helpers.AlertDialogWithPositiveNegativeFunctionsNeutralButton(getActivity(), "License Back",
+                        "Select an option to add photo", "Camera", "Gallery", "Cancel", openCameraIntent, openGalleryIntent);
+            }
+        });
+
+        ibPhotoThree.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ibPosition = 2;
+                Helpers.AlertDialogWithPositiveNegativeFunctionsNeutralButton(getActivity(), "Police Verification",
+                        "Select an option to add photo", "Camera", "Gallery", "Cancel", openCameraIntent, openGalleryIntent);
+            }
+        });
+
         Helpers.dismissProgressDialog();
         customAttachmentsDialog.show();
     }
@@ -538,24 +614,48 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
                             userRegisterVehicleMake, userRegisterVehicleModel);
                     Log.i("DataToWrite: ", "Customer: " + dataForRegistration);
                     out.writeBytes(dataForRegistration);
+                    out.flush();
+                    out.close();
+                    responseCode = connection.getResponseCode();
                 } else {
-                    String dataForRegisteringDriver = getRegistrationStringForDriver(userRegisterFullName,
-                            userRegisterEmail, userRegisterPassword, userRegisterContactNumber, userRegisterDrivingExperience, transmissionType,
-                            userRegisterBasicBio, driverLocationToString);
-                    Log.i("DataToWrite: ", "Driver: " + dataForRegisteringDriver);
-                    out.writeBytes(dataForRegisteringDriver);
+                        MultipartDataUtility http;
+                        try {
+                            http = new MultipartDataUtility(url);
+
+                            http.addFormField("full_name", userRegisterFullName);
+                            http.addFormField("email", userRegisterEmail);
+                            http.addFormField("password", userRegisterPassword);
+                            http.addFormField("phone_number", userRegisterContactNumber);
+                            http.addFormField("transmission_type", String.valueOf(transmissionType));
+                            http.addFormField("driving_experience", userRegisterDrivingExperience);
+                            if (userRegisterBasicBio != null || !userRegisterBasicBio.equals("")) {
+                                http.addFormField("bio", userRegisterBasicBio);
+                            }
+                            if (driverLocationToString != null) {
+                                http.addFormField("location", driverLocationToString);
+                            }
+                            int doc = 1;
+                            for (HashMap<Integer, String> item : imagePathsArray) {
+                                System.out.println(item);
+                                    File file = new File(item.get(doc - 1));
+                                    http.addFilePart(("doc" + doc), file);
+                                doc++;
+                                }
+                    final byte[] bytes = http.finish();
+                            int counter = 0;
+                            for (HashMap<Integer, String> item : imagePathsArray) {
+                                try {
+                                    OutputStream os = new FileOutputStream(item.get(counter));
+                                    os.write(bytes);
+                                    counter++;
+                                } catch (IOException e) {
+
+                                }
+                            }
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
                 }
-                out.flush();
-                out.close();
-                responseCode = connection.getResponseCode();
-
-                InputStream in = (InputStream) connection.getContent();
-                int ch;
-                StringBuilder sb;
-
-                sb = new StringBuilder();
-                while ((ch = in.read()) != -1)
-                    sb.append((char) ch);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -576,5 +676,96 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
         }
     }
 
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
 
+        if (resultCode == Activity.RESULT_OK) {
+            if (requestCode == PICK_IMAGE)
+                new ConvertImage().execute(data);
+            else if (requestCode == CAPTURE_IMAGE)
+                onCaptureImageResult(data);
+            }
+        }
+
+    private void onCaptureImageResult(Intent data) {
+        Bitmap thumbnail = (Bitmap) data.getExtras().get("data");
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        thumbnail.compress(Bitmap.CompressFormat.JPEG, 90, bytes);
+        HashMap<Integer, String> hashMap = new HashMap<>();
+        hashMap.put(ibPosition, writeImageToExternalStorage(bytes, String.valueOf(ibPosition)));
+        imagePathsArray.add(hashMap);
+        if (ibPosition == 0) {
+            ibPhotoOne.setBackgroundDrawable(null);
+            ibPhotoOne.setImageBitmap(Helpers.getResizedBitmap(Helpers.getCroppedBitmap(thumbnail), 120));
+        } else if (ibPosition == 1) {
+            ibPhotoTwo.setBackgroundDrawable(null);
+            ibPhotoTwo.setImageBitmap(Helpers.getResizedBitmap(Helpers.getCroppedBitmap(thumbnail), 120));
+        } else if (ibPosition == 2) {
+            ibPhotoThree.setBackgroundDrawable(null);
+            ibPhotoThree.setImageBitmap(Helpers.getResizedBitmap(Helpers.getCroppedBitmap(thumbnail), 120));
+        }
+    }
+
+    class ConvertImage extends AsyncTask<Intent, String, Bitmap> {
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            Helpers.showProgressDialog(getActivity(), "Loading Image");
+        }
+
+        @Override
+        protected Bitmap doInBackground(Intent... params) {
+            Bitmap bm=null;
+            if (params[0] != null) {
+                try {
+                    bm = MediaStore.Images.Media.getBitmap(getActivity().getContentResolver(), params[0].getData());
+                    ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+                    bm.compress(Bitmap.CompressFormat.JPEG, 90, bytes);
+                    HashMap<Integer, String> hashMap = new HashMap<>();
+                    hashMap.put(ibPosition, writeImageToExternalStorage(bytes, String.valueOf(ibPosition)));
+                    imagePathsArray.add(hashMap);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            return Helpers.getResizedBitmap(bm, 120);
+        }
+
+        @Override
+        protected void onPostExecute(Bitmap bitmap) {
+            super.onPostExecute(bitmap);
+            Helpers.dismissProgressDialog();
+            if (ibPosition == 0) {
+                ibPhotoOne.setBackgroundDrawable(null);
+                ibPhotoOne.setImageBitmap(Helpers.getResizedBitmap(Helpers.getCroppedBitmap(bitmap), 120));
+            } else if (ibPosition == 1) {
+                ibPhotoTwo.setBackgroundDrawable(null);
+                ibPhotoTwo.setImageBitmap(Helpers.getResizedBitmap(Helpers.getCroppedBitmap(bitmap), 120));
+            } else if (ibPosition == 2) {
+                ibPhotoThree.setBackgroundDrawable(null);
+                ibPhotoThree.setImageBitmap(Helpers.getResizedBitmap(Helpers.getCroppedBitmap(bitmap), 120));
+            }
+        }
+    }
+
+    private String writeImageToExternalStorage(ByteArrayOutputStream bytes, String name) {
+        File destination = new File(Environment.getExternalStorageDirectory() + File.separator
+                + "Android/data" + File.separator + AppGlobals.getContext().getPackageName());
+        if (!destination.exists()) {
+            destination.mkdirs();
+        }
+        File file = new File(destination, name + ".jpg");
+        FileOutputStream fo;
+        try {
+            file.createNewFile();
+            fo = new FileOutputStream(file);
+            fo.write(bytes.toByteArray());
+            fo.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return file.getAbsolutePath();
+    }
 }

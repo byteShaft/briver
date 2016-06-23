@@ -199,7 +199,7 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
     }
 
     public void onConfirmationFailed() {
-        Helpers.showSnackBar(getView(), "Confirmation failed, check internet and retry", Snackbar.LENGTH_SHORT, "#f44336");
+        Helpers.showSnackBar(getView(), "Confirmation failed, code error", Snackbar.LENGTH_SHORT, "#f44336");
     }
 
     public void onResendSuccess() {
@@ -286,6 +286,7 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
                 AppGlobals.putUserType(jsonObject.getInt("user_type"));
                 AppGlobals.putNumberOfHires(jsonObject.getInt("number_of_hires"));
                 AppGlobals.putPhoneNumber(jsonObject.getString("phone_number"));
+                AppGlobals.putTransmissionType(jsonObject.getInt("transmission_type"));
 
                 if (jsonObject.getInt("user_type") == 0) {
                     AppGlobals.putDriverSearchRadius(jsonObject.getInt("driver_filter_radius"));

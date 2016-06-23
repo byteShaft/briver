@@ -315,7 +315,6 @@
                         android:textSize="18dp" />
                 </LinearLayout>
 
-
                 <LinearLayout
                     android:id="@+id/layout_elements_register_customer"
                     android:layout_width="match_parent"

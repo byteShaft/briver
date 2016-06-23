@@ -108,7 +108,7 @@ public class PreferencesFragment extends android.support.v4.app.Fragment impleme
     String preferencesVehicleMake;
     String preferencesVehicleModel;
     String preferencesLocationReportingIntervalTime;
-    String transmissionType;
+    int transmissionType;
     HttpURLConnection connection;
     EditPreferenceTask taskEditPreference;
     boolean isEditPreferenceTaskRunning;
@@ -122,7 +122,7 @@ public class PreferencesFragment extends android.support.v4.app.Fragment impleme
     }
 
     public static String getProfileEditStringForCustomer(
-            String driver_filter_radius, String transmissionType, int vehicle_type, String vehicle_make, String vehicle_model) {
+            String driver_filter_radius, int transmissionType, int vehicle_type, String vehicle_make, String vehicle_model) {
         return "{" +
                 String.format("\"driver_filter_radius\": \"%s\", ", driver_filter_radius) +
                 String.format("\"transmission_type\": \"%s\", ", transmissionType) +
@@ -133,7 +133,7 @@ public class PreferencesFragment extends android.support.v4.app.Fragment impleme
     }
 
     public static String getProfileEditStringForDriver(
-            int status, String transmissionType, String location_reporting_type, String location_reporting_interval) {
+            int status, int transmissionType, String location_reporting_type, String location_reporting_interval) {
         return "{" +
                 String.format("\"status\": \"%s\", ", status) +
                 String.format("\"transmission_type\": \"%s\", ", transmissionType) +
@@ -143,7 +143,7 @@ public class PreferencesFragment extends android.support.v4.app.Fragment impleme
     }
 
     public static String getProfileEditStringForDriverWithLocation(
-            String location, int status, String transmissionType, String location_reporting_type, String location_reporting_interval) {
+            String location, int status, int transmissionType, String location_reporting_type, String location_reporting_interval) {
         return "{" +
                 String.format("\"location\": \"%s\", ", location) +
                 String.format("\"status\": \"%s\", ", status) +
@@ -182,6 +182,8 @@ public class PreferencesFragment extends android.support.v4.app.Fragment impleme
 
         llCustomerPreferences = (LinearLayout) baseViewPreferencesFragment.findViewById(R.id.layout_preferences_customer);
         llDriverPreferences = (LinearLayout) baseViewPreferencesFragment.findViewById(R.id.layout_preferences_driver);
+
+        transmissionType = AppGlobals.getTransmissionType();
 
         if (AppGlobals.getUserType() == 0) {
             llCustomerPreferences.setVisibility(View.VISIBLE);
@@ -263,9 +265,9 @@ public class PreferencesFragment extends android.support.v4.app.Fragment impleme
             @Override
             public void onCheckedChanged(RadioGroup group, int checkedId) {
                 if (checkedId == R.id.rb_preferences_customer_transmission_type_manual) {
-                    transmissionType = "0";
+                    transmissionType = 0;
                 } else if (checkedId == R.id.rb_preferences_customer_transmission_type_auto) {
-                    transmissionType = "1";
+                    transmissionType = 1;
                 }
             }
         });
@@ -274,11 +276,11 @@ public class PreferencesFragment extends android.support.v4.app.Fragment impleme
             @Override
             public void onCheckedChanged(RadioGroup group, int checkedId) {
                 if (checkedId == R.id.rb_preferences_driver_transmission_type_manual) {
-                    transmissionType = "0";
+                    transmissionType = 0;
                 } else if (checkedId == R.id.rb_preferences_driver_transmission_type_auto) {
-                    transmissionType = "1";
+                    transmissionType = 1;
                 } else if (checkedId == R.id.rb_preferences_driver_transmission_type_both) {
-                    transmissionType = "2";
+                    transmissionType = 2;
                 }
             }
         });
@@ -464,7 +466,7 @@ public class PreferencesFragment extends android.support.v4.app.Fragment impleme
             AppGlobals.putVehicleMake(preferencesVehicleMake);
             AppGlobals.putVehicleModel(preferencesVehicleModel);
         }
-        AppGlobals.putTransmissionType(Integer.parseInt(transmissionType));
+        AppGlobals.putTransmissionType(transmissionType);
         Helpers.showSnackBar(getView(), message, Snackbar.LENGTH_LONG, "#A4C639");
         Helpers.closeSoftKeyboard(getActivity());
         getActivity().onBackPressed();
@@ -550,6 +552,7 @@ public class PreferencesFragment extends android.support.v4.app.Fragment impleme
             super.onPostExecute(aVoid);
             isEditPreferenceTaskRunning = false;
             Helpers.dismissProgressDialog();
+            Log.i("responseCode", "" + responseCode);
             if (responseCode == 200) {
                 onEditSuccess("Preference change successful");
             } else {
