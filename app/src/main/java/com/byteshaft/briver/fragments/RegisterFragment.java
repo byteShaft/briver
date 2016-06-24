@@ -5,6 +5,8 @@ import android.app.Dialog;
 import android.app.Fragment;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
@@ -63,18 +65,10 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
     public static boolean isRegistrationFragmentOpen;
     public static int responseCode;
     public static View baseViewRegisterFragment;
+    public static boolean locationAcquired;
     static String userRegisterEmail;
     static int registerUserType = -1;
     static String driverLocationToString;
-    public static boolean locationAcquired;
-    final private int CAPTURE_IMAGE = 1;
-    final private int PICK_IMAGE = 2;
-
-
-    ImageButton ibPhotoOne;
-    ImageButton ibPhotoTwo;
-    ImageButton ibPhotoThree;
-    int ibPosition;
     final Runnable closeRegistration = new Runnable() {
         public void run() {
             getActivity().onBackPressed();
@@ -92,12 +86,17 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
             new RegisterUserTask().execute();
         }
     };
+    final private int CAPTURE_IMAGE = 1;
     final Runnable openCameraIntent = new Runnable() {
         public void run() {
-            Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+            Intent intent = new Intent("android.media.action.IMAGE_CAPTURE");
+            File file = new File(Environment.getExternalStorageDirectory() + File.separator +
+                    "image.jpg");
+            intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(file));
             startActivityForResult(intent, CAPTURE_IMAGE);
         }
     };
+    final private int PICK_IMAGE = 2;
     final Runnable openGalleryIntent = new Runnable() {
         public void run() {
             Intent intent = new Intent();
@@ -106,6 +105,11 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
             startActivityForResult(Intent.createChooser(intent, "Select File"), PICK_IMAGE);
         }
     };
+    HashMap<Integer, String> hashMap;
+    ImageButton ibPhotoOne;
+    ImageButton ibPhotoTwo;
+    ImageButton ibPhotoThree;
+    int ibPosition;
     EditText etRegisterUserFullName;
     EditText etRegisterUserEmail;
     EditText etRegisterUserEmailRepeat;
@@ -141,7 +145,6 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
     String userRegisterVehicleModel;
     int userRegisterVehicleType = -1;
     int transmissionType = -1;
-    private ArrayList<HashMap<Integer, String>> imagePathsArray;
     HttpURLConnection connection;
     LocationService mLocationService;
     final Runnable recheckLocationServiceStatus = new Runnable() {
@@ -158,6 +161,7 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
     Button btnCreateUser;
     RegisterUserTask taskRegisterUser;
     boolean isUserRegistrationTaskRunning;
+    private ArrayList<HashMap<Integer, String>> imagePathsArray;
 
     public static String getRegistrationStringForCustomer(
             String fullName, String email, String password, String phone, int transmissionType, int vehicleType,
@@ -173,30 +177,6 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
             json.put("vehicle_type", vehicleType);
             json.put("vehicle_make", vehicleMake);
             json.put("vehicle_model", vehicleModel);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        return json.toString();
-    }
-
-    public static String getRegistrationStringForDriver(
-            String fullName, String email, String password, String phone,
-            String experience, String transmissionType, String bio, String location) {
-
-        JSONObject json = new JSONObject();
-        try {
-            json.put("full_name", fullName);
-            json.put("email", email);
-            json.put("password", password);
-            json.put("phone_number", phone);
-            json.put("transmission_type", transmissionType);
-            json.put("driving_experience", experience);
-            if (bio != null || !bio.equals("")) {
-                json.put("bio", bio);
-            }
-            if (location != null) {
-                json.put("location", location);
-            }
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -244,7 +224,7 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
 
         btnCreateUser = (Button) baseViewRegisterFragment.findViewById(R.id.btn_register_create_account);
         btnCreateUser.setOnClickListener(this);
-
+        hashMap = new HashMap<>();
         imagePathsArray = new ArrayList<>();
 
         llRegisterElements = (LinearLayout) baseViewRegisterFragment.findViewById(R.id.layout_elements_register);
@@ -453,7 +433,7 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
             Helpers.showSnackBar(getView(), "Check terms of service to continue", Snackbar.LENGTH_LONG, "#f44336");
             valid = false;
         }
-        
+
         return valid;
     }
 
@@ -541,10 +521,13 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
         buttonYes.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-//                run task here
-                customAttachmentsDialog.dismiss();
-                etRegisterAttachments.setText("Documents 3/3");
-                etRegisterAttachments.setCompoundDrawablesWithIntrinsicBounds(R.mipmap.ic_edit_text_attachment, 0, R.mipmap.ic_edit_text_ok, 0);
+                if (hashMap.size() > 2) {
+                    customAttachmentsDialog.dismiss();
+                    etRegisterAttachments.setText("Documents 3/3");
+                    etRegisterAttachments.setCompoundDrawablesWithIntrinsicBounds(R.mipmap.ic_edit_text_attachment, 0, R.mipmap.ic_edit_text_ok, 0);
+                } else {
+                    Toast.makeText(getActivity(), "Add all photos to continue", Toast.LENGTH_SHORT).show();
+                }
             }
         });
 
@@ -579,8 +562,75 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
             }
         });
 
-        Helpers.dismissProgressDialog();
+        if (etRegisterAttachments.getText().toString().equals("Documents 3/3")) {
+            ibPhotoOne.setBackgroundDrawable(null);
+            ibPhotoOne.setImageBitmap(Helpers.getResizedBitmapToDisplay(Helpers.getCroppedBitmap(BitmapFactory.decodeFile(hashMap.get(0))), 120));
+            ibPhotoTwo.setBackgroundDrawable(null);
+            ibPhotoTwo.setImageBitmap(Helpers.getResizedBitmapToDisplay(Helpers.getCroppedBitmap(BitmapFactory.decodeFile(hashMap.get(1))), 120));
+            ibPhotoThree.setBackgroundDrawable(null);
+            ibPhotoThree.setImageBitmap(Helpers.getResizedBitmapToDisplay(Helpers.getCroppedBitmap(BitmapFactory.decodeFile(hashMap.get(2))), 120));
+        }
+
         customAttachmentsDialog.show();
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (resultCode == Activity.RESULT_OK) {
+            if (requestCode == PICK_IMAGE)
+                new ConvertImage().execute(data);
+            else if (requestCode == CAPTURE_IMAGE)
+                onCaptureImageResult();
+        }
+    }
+
+    private void onCaptureImageResult() {
+        File file = new File(Environment.getExternalStorageDirectory() + File.separator +
+                "image.jpg");
+        Bitmap bm = Helpers.decodeBitmapFromFile(file.getAbsolutePath());
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        if (bm.getHeight() > 3200 || bm.getWidth() > 3200) {
+            Bitmap.createScaledBitmap(bm, bm.getWidth() / 4, bm.getHeight() / 4, false).compress(Bitmap.CompressFormat.JPEG, 40, bytes);
+        } else if (bm.getHeight() > 2560 || bm.getWidth() > 2560) {
+            Bitmap.createScaledBitmap(bm, bm.getWidth() / 3, bm.getHeight() / 3, false).compress(Bitmap.CompressFormat.JPEG, 40, bytes);
+        } else if (bm.getHeight() > 1600 || bm.getWidth() > 1600) {
+            Bitmap.createScaledBitmap(bm, bm.getWidth() / 2, bm.getHeight() / 2, false).compress(Bitmap.CompressFormat.JPEG, 40, bytes);
+        } else {
+            bm.compress(Bitmap.CompressFormat.JPEG, 60, bytes);
+        }
+        hashMap.put(ibPosition, writeImageToExternalStorage(bytes, String.valueOf(ibPosition)));
+        imagePathsArray.add(hashMap);
+        if (ibPosition == 0) {
+            ibPhotoOne.setBackgroundDrawable(null);
+            ibPhotoOne.setImageBitmap(Helpers.getCroppedBitmap(Helpers.getResizedBitmapToDisplay(bm, 120)));
+        } else if (ibPosition == 1) {
+            ibPhotoTwo.setBackgroundDrawable(null);
+            ibPhotoTwo.setImageBitmap(Helpers.getCroppedBitmap(Helpers.getResizedBitmapToDisplay(bm, 120)));
+        } else if (ibPosition == 2) {
+            ibPhotoThree.setBackgroundDrawable(null);
+            ibPhotoThree.setImageBitmap(Helpers.getCroppedBitmap(Helpers.getResizedBitmapToDisplay(bm, 120)));
+        }
+    }
+
+    private String writeImageToExternalStorage(ByteArrayOutputStream bytes, String name) {
+        File destination = new File(Environment.getExternalStorageDirectory() + File.separator
+                + "Android/data" + File.separator + AppGlobals.getContext().getPackageName());
+        if (!destination.exists()) {
+            destination.mkdirs();
+        }
+        File file = new File(destination, name + ".jpg");
+        FileOutputStream fo;
+        try {
+            file.createNewFile();
+            fo = new FileOutputStream(file);
+            fo.write(bytes.toByteArray());
+            fo.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return file.getAbsolutePath();
     }
 
     private class RegisterUserTask extends AsyncTask<Void, Integer, Void> {
@@ -618,43 +668,43 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
                     out.close();
                     responseCode = connection.getResponseCode();
                 } else {
-                        MultipartDataUtility http;
-                        try {
-                            http = new MultipartDataUtility(url);
+                    MultipartDataUtility http;
+                    try {
+                        http = new MultipartDataUtility(url);
 
-                            http.addFormField("full_name", userRegisterFullName);
-                            http.addFormField("email", userRegisterEmail);
-                            http.addFormField("password", userRegisterPassword);
-                            http.addFormField("phone_number", userRegisterContactNumber);
-                            http.addFormField("transmission_type", String.valueOf(transmissionType));
-                            http.addFormField("driving_experience", userRegisterDrivingExperience);
-                            if (userRegisterBasicBio != null || !userRegisterBasicBio.equals("")) {
-                                http.addFormField("bio", userRegisterBasicBio);
-                            }
-                            if (driverLocationToString != null) {
-                                http.addFormField("location", driverLocationToString);
-                            }
-                            int doc = 1;
-                            for (HashMap<Integer, String> item : imagePathsArray) {
-                                System.out.println(item);
-                                    File file = new File(item.get(doc - 1));
-                                    http.addFilePart(("doc" + doc), file);
-                                doc++;
-                                }
-                    final byte[] bytes = http.finish();
-                            int counter = 0;
-                            for (HashMap<Integer, String> item : imagePathsArray) {
-                                try {
-                                    OutputStream os = new FileOutputStream(item.get(counter));
-                                    os.write(bytes);
-                                    counter++;
-                                } catch (IOException e) {
-
-                                }
-                            }
-                        } catch (IOException e) {
-                            e.printStackTrace();
+                        http.addFormField("full_name", userRegisterFullName);
+                        http.addFormField("email", userRegisterEmail);
+                        http.addFormField("password", userRegisterPassword);
+                        http.addFormField("phone_number", userRegisterContactNumber);
+                        http.addFormField("transmission_type", String.valueOf(transmissionType));
+                        http.addFormField("driving_experience", userRegisterDrivingExperience);
+                        if (userRegisterBasicBio != null || !userRegisterBasicBio.equals("")) {
+                            http.addFormField("bio", userRegisterBasicBio);
                         }
+                        if (driverLocationToString != null) {
+                            http.addFormField("location", driverLocationToString);
+                        }
+                        int doc = 1;
+                        for (HashMap<Integer, String> item : imagePathsArray) {
+                            System.out.println(item);
+                            File file = new File(item.get(doc - 1));
+                            http.addFilePart(("doc" + doc), file);
+                            doc++;
+                        }
+                        final byte[] bytes = http.finish();
+                        int counter = 0;
+                        for (HashMap<Integer, String> item : imagePathsArray) {
+                            try {
+                                OutputStream os = new FileOutputStream(item.get(counter));
+                                os.write(bytes);
+                                counter++;
+                            } catch (IOException e) {
+
+                            }
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -676,37 +726,6 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
         }
     }
 
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-
-        if (resultCode == Activity.RESULT_OK) {
-            if (requestCode == PICK_IMAGE)
-                new ConvertImage().execute(data);
-            else if (requestCode == CAPTURE_IMAGE)
-                onCaptureImageResult(data);
-            }
-        }
-
-    private void onCaptureImageResult(Intent data) {
-        Bitmap thumbnail = (Bitmap) data.getExtras().get("data");
-        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-        thumbnail.compress(Bitmap.CompressFormat.JPEG, 90, bytes);
-        HashMap<Integer, String> hashMap = new HashMap<>();
-        hashMap.put(ibPosition, writeImageToExternalStorage(bytes, String.valueOf(ibPosition)));
-        imagePathsArray.add(hashMap);
-        if (ibPosition == 0) {
-            ibPhotoOne.setBackgroundDrawable(null);
-            ibPhotoOne.setImageBitmap(Helpers.getResizedBitmap(Helpers.getCroppedBitmap(thumbnail), 120));
-        } else if (ibPosition == 1) {
-            ibPhotoTwo.setBackgroundDrawable(null);
-            ibPhotoTwo.setImageBitmap(Helpers.getResizedBitmap(Helpers.getCroppedBitmap(thumbnail), 120));
-        } else if (ibPosition == 2) {
-            ibPhotoThree.setBackgroundDrawable(null);
-            ibPhotoThree.setImageBitmap(Helpers.getResizedBitmap(Helpers.getCroppedBitmap(thumbnail), 120));
-        }
-    }
-
     class ConvertImage extends AsyncTask<Intent, String, Bitmap> {
 
         @Override
@@ -717,20 +736,27 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
 
         @Override
         protected Bitmap doInBackground(Intent... params) {
-            Bitmap bm=null;
+            Bitmap bm = null;
             if (params[0] != null) {
                 try {
                     bm = MediaStore.Images.Media.getBitmap(getActivity().getContentResolver(), params[0].getData());
                     ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-                    bm.compress(Bitmap.CompressFormat.JPEG, 90, bytes);
-                    HashMap<Integer, String> hashMap = new HashMap<>();
+                    if (bm.getHeight() > 3200 || bm.getWidth() > 3200) {
+                        Bitmap.createScaledBitmap(bm, bm.getWidth() / 4, bm.getHeight() / 4, false).compress(Bitmap.CompressFormat.JPEG, 40, bytes);
+                    } else if (bm.getHeight() > 2560 || bm.getWidth() > 2560) {
+                        Bitmap.createScaledBitmap(bm, bm.getWidth() / 3, bm.getHeight() / 3, false).compress(Bitmap.CompressFormat.JPEG, 40, bytes);
+                    } else if (bm.getHeight() > 1600 || bm.getWidth() > 1600) {
+                        Bitmap.createScaledBitmap(bm, bm.getWidth() / 2, bm.getHeight() / 2, false).compress(Bitmap.CompressFormat.JPEG, 40, bytes);
+                    } else {
+                        bm.compress(Bitmap.CompressFormat.JPEG, 60, bytes);
+                    }
                     hashMap.put(ibPosition, writeImageToExternalStorage(bytes, String.valueOf(ibPosition)));
                     imagePathsArray.add(hashMap);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
-            return Helpers.getResizedBitmap(bm, 120);
+            return bm;
         }
 
         @Override
@@ -739,33 +765,14 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
             Helpers.dismissProgressDialog();
             if (ibPosition == 0) {
                 ibPhotoOne.setBackgroundDrawable(null);
-                ibPhotoOne.setImageBitmap(Helpers.getResizedBitmap(Helpers.getCroppedBitmap(bitmap), 120));
+                ibPhotoOne.setImageBitmap(Helpers.getCroppedBitmap(Helpers.getResizedBitmapToDisplay(bitmap, 120)));
             } else if (ibPosition == 1) {
                 ibPhotoTwo.setBackgroundDrawable(null);
-                ibPhotoTwo.setImageBitmap(Helpers.getResizedBitmap(Helpers.getCroppedBitmap(bitmap), 120));
+                ibPhotoTwo.setImageBitmap(Helpers.getCroppedBitmap(Helpers.getResizedBitmapToDisplay(bitmap, 120)));
             } else if (ibPosition == 2) {
                 ibPhotoThree.setBackgroundDrawable(null);
-                ibPhotoThree.setImageBitmap(Helpers.getResizedBitmap(Helpers.getCroppedBitmap(bitmap), 120));
+                ibPhotoThree.setImageBitmap(Helpers.getCroppedBitmap(Helpers.getResizedBitmapToDisplay(bitmap, 120)));
             }
         }
-    }
-
-    private String writeImageToExternalStorage(ByteArrayOutputStream bytes, String name) {
-        File destination = new File(Environment.getExternalStorageDirectory() + File.separator
-                + "Android/data" + File.separator + AppGlobals.getContext().getPackageName());
-        if (!destination.exists()) {
-            destination.mkdirs();
-        }
-        File file = new File(destination, name + ".jpg");
-        FileOutputStream fo;
-        try {
-            file.createNewFile();
-            fo = new FileOutputStream(file);
-            fo.write(bytes.toByteArray());
-            fo.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return file.getAbsolutePath();
     }
 }
