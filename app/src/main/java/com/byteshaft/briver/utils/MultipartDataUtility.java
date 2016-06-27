@@ -1,5 +1,8 @@
 package com.byteshaft.briver.utils;
 
+import android.util.Log;
+
+import com.byteshaft.briver.fragments.ProfileFragment;
 import com.byteshaft.briver.fragments.RegisterFragment;
 
 import java.io.ByteArrayOutputStream;
@@ -21,8 +24,8 @@ public class MultipartDataUtility {
 
     private static final String CRLF = "\r\n";
     private static final String CHARSET = "UTF-8";
-    private static final int CONNECT_TIMEOUT = 15000;
-    private static final int READ_TIMEOUT = 10000;
+    private static final int CONNECT_TIMEOUT = 20000;
+    private static final int READ_TIMEOUT = 15000;
     private final HttpURLConnection connection;
     private final OutputStream outputStream;
     private final PrintWriter writer;
@@ -33,15 +36,18 @@ public class MultipartDataUtility {
     private boolean postProductProcess = false;
 
     // Method use for registration
-    public MultipartDataUtility(final URL url) throws IOException {
+    public MultipartDataUtility(final URL url, String methodType, boolean tokenRequired) throws IOException {
         registrationProcess = true;
-        start = System.currentTimeMillis() % 1000;
+        start  = System.currentTimeMillis() % 1000;
         this.url = url;
         boundary = "---------------------------" + System.currentTimeMillis() % 1000;
         connection = (HttpURLConnection) url.openConnection();
         connection.setConnectTimeout(CONNECT_TIMEOUT);
         connection.setReadTimeout(READ_TIMEOUT);
-        connection.setRequestMethod("POST");
+        connection.setRequestMethod(methodType);
+        if (tokenRequired) {
+            connection.setRequestProperty("Authorization", "Token " + AppGlobals.getToken());
+        }
         connection.setRequestProperty("Accept-Charset", CHARSET);
         connection.setRequestProperty("Content-Type",
                 "multipart/form-data; boundary=" + boundary);
@@ -84,13 +90,19 @@ public class MultipartDataUtility {
 
         writer.append(CRLF);
     }
-
     public byte[] finish() throws IOException {
         writer.append(CRLF).append("--").append(boundary).append("--")
                 .append(CRLF);
         writer.close();
-        final int status = connection.getResponseCode();
-        RegisterFragment.responseCode = status;
+        if (ProfileFragment.isProfileFragmentOpen) {
+            ProfileFragment.responseCode = connection.getResponseCode();
+            Log.i("ResponseCode", "" + connection.getResponseCode());
+            Log.i("Message", "" + connection.getResponseMessage());
+        } else {
+            RegisterFragment.responseCode = connection.getResponseCode();
+            Log.i("ResponseCode", "" + connection.getResponseCode());
+            Log.i("Message", "" + connection.getResponseMessage());
+        }
         InputStream is = connection.getInputStream();
         final ByteArrayOutputStream bytes = new ByteArrayOutputStream();
         final byte[] buffer = new byte[4096];

@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.ProgressDialog;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -11,7 +12,6 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
@@ -24,6 +24,7 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.CountDownTimer;
+import android.provider.MediaStore;
 import android.provider.Settings;
 import android.support.design.widget.Snackbar;
 import android.view.Gravity;
@@ -40,7 +41,9 @@ import com.byteshaft.briver.R;
 import com.byteshaft.briver.fragments.HireFragment;
 import com.google.android.gms.maps.model.LatLng;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.ParseException;
@@ -595,54 +598,33 @@ public class Helpers {
         return Bitmap.createScaledBitmap(image, width, height, true);
     }
 
-
-    public static Bitmap shrinkBitmap(Bitmap bm) {
-        int width = bm.getWidth();
-        int height = bm.getHeight();
-        float scaleWidth = ((float) 2) / width;
-        float scaleHeight = ((float) 2) / height;
-        // CREATE A MATRIX FOR THE MANIPULATION
-        Matrix matrix = new Matrix();
-        // RESIZE THE BIT MAP
-        matrix.postScale(scaleWidth, scaleHeight);
-
-        // "RECREATE" THE NEW BITMAP
-        Bitmap resizedBitmap = Bitmap.createBitmap(
-                bm, 0, 0, width, height, matrix, false);
-        bm.recycle();
-        return resizedBitmap;
-    }
-
     public static Bitmap decodeBitmapFromFile(String path) {
-
-        //First decode with inJustDecodeBounds=true to check dimensions
         final BitmapFactory.Options options = new BitmapFactory.Options();
         options.inJustDecodeBounds = true;
         BitmapFactory.decodeFile(path, options);
-
-        // Calculate inSampleSize, Raw height and width of image
-//        final int height = options.outHeight;
-//        final int width = options.outWidth;
         options.inPreferredConfig = Bitmap.Config.RGB_565;
         int inSampleSize = 1;
-//
-//        if (height > reqHeight)
-//        {
-//            inSampleSize = Math.round((float)height / (float)reqHeight);
-//        }
-//        int expectedWidth = width / inSampleSize;
-//
-//        if (expectedWidth > reqWidth)
-//        {
-//            //if(Math.round((float)width / (float)reqWidth) > inSampleSize) // If bigger SampSize..
-//            inSampleSize = Math.round((float)width / (float)reqWidth);
-//        }
-
         options.inSampleSize = inSampleSize;
-
-        // Decode bitmap with inSampleSize set
         options.inJustDecodeBounds = false;
-
         return BitmapFactory.decodeFile(path, options);
+    }
+
+    public static Bitmap getBitmapFromURL(String src) {
+        try {
+            URL url = new URL(src);
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setDoInput(true);
+            connection.connect();
+            InputStream input = connection.getInputStream();
+            Bitmap myBitmap = BitmapFactory.decodeStream(input);
+            return myBitmap;
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
+    public static void removeMedia(Context c, File f) {
+        ContentResolver resolver = c.getContentResolver();
+        resolver.delete(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, MediaStore.Images.Media.DATA + "=?", new String[] { f.getAbsolutePath() });
     }
 }

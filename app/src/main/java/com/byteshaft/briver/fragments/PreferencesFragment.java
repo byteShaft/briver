@@ -9,7 +9,6 @@ import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -59,8 +58,6 @@ public class PreferencesFragment extends android.support.v4.app.Fragment impleme
     LinearLayout llCustomerPreferences;
     Switch switchPreferencesDriverServiceStatus;
     RadioGroup rgPreferencesDriverLocation;
-    RadioGroup rgPreferencesDriverTransmissionType;
-    RadioGroup rgPreferencesCustomerTransmissionType;
     final Runnable openLocationServiceSettings = new Runnable() {
         public void run() {
             rgPreferencesDriverLocation.check(R.id.rb_preferences_driver_location_interval);
@@ -73,6 +70,8 @@ public class PreferencesFragment extends android.support.v4.app.Fragment impleme
             rgPreferencesDriverLocation.check(R.id.rb_preferences_driver_location_interval);
         }
     };
+    RadioGroup rgPreferencesDriverTransmissionType;
+    RadioGroup rgPreferencesCustomerTransmissionType;
     RadioButton rbPreferencesDriverLocationFixed;
     RadioButton rbPreferencesDriverLocationInterval;
     RadioButton rbVehicleTypeMini;
@@ -129,6 +128,15 @@ public class PreferencesFragment extends android.support.v4.app.Fragment impleme
                 String.format("\"vehicle_type\": \"%s\", ", vehicle_type) +
                 String.format("\"vehicle_make\": \"%s\", ", vehicle_make) +
                 String.format("\"vehicle_model\": \"%s\"", vehicle_model) +
+                "}";
+    }
+
+    public static String getProfileEditStringForDriverLocationNull(
+            int status, int transmissionType, String location_reporting_type) {
+        return "{" +
+                String.format("\"status\": \"%s\", ", status) +
+                String.format("\"transmission_type\": \"%s\", ", transmissionType) +
+                String.format("\"location_reporting_type\": \"%s\"", location_reporting_type) +
                 "}";
     }
 
@@ -219,7 +227,7 @@ public class PreferencesFragment extends android.support.v4.app.Fragment impleme
             } else if (AppGlobals.getTransmissionType() == 1) {
                 rgPreferencesDriverTransmissionType.check(R.id.rb_preferences_driver_transmission_type_auto);
             } else if (AppGlobals.getTransmissionType() == 2) {
-            rgPreferencesDriverTransmissionType.check(R.id.rb_preferences_driver_transmission_type_both);
+                rgPreferencesDriverTransmissionType.check(R.id.rb_preferences_driver_transmission_type_both);
             }
         }
 
@@ -251,7 +259,6 @@ public class PreferencesFragment extends android.support.v4.app.Fragment impleme
                                 "Enable device GPS to set driver's fixed location", "Settings", "Dismiss", "Re-Check",
                                 openLocationServiceSettings, dismiss, recheckLocationServiceStatus);
                     }
-
                 } else if (checkedId == R.id.rb_preferences_driver_location_interval) {
                     if (mLocationService.mGoogleApiClient != null && mLocationService.mGoogleApiClient.isConnected()) {
                         mLocationService.stopLocationService();
@@ -385,7 +392,6 @@ public class PreferencesFragment extends android.support.v4.app.Fragment impleme
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.action_done:
-
                 if (AppGlobals.getUserType() == 1) {
                     preferencesLocationReportingIntervalTime = etPreferencesDriverLocationIntervalTime.getText().toString();
                 } else {
@@ -394,15 +400,16 @@ public class PreferencesFragment extends android.support.v4.app.Fragment impleme
                     preferencesVehicleModel = etPreferencesCustomerVehicleModel.getText().toString();
                 }
                 if (validateProfileChangeInfo()) {
-                    if (driverPreferencesLocationReportingType == 0 && !locationSet) {
+                    if (driverPreferencesLocationReportingType == 1 || driverPreferencesLocationReportingType == 0 &&
+                            tvPreferencesDriverLocationDisplay.getText().toString().equalsIgnoreCase("Fixed location set") ||
+                            driverPreferencesLocationReportingType == 0 && tvPreferencesDriverLocationDisplay.getText().toString().equalsIgnoreCase("Current location set as fixed location")) {
+                        taskEditPreference = (EditPreferenceTask) new EditPreferenceTask().execute();
+                    } else {
                         Helpers.showSnackBar(getView(), "Location is being acquired, please wait",
                                 Snackbar.LENGTH_LONG, "#ffffff");
-                    } else {
-                        taskEditPreference = (EditPreferenceTask) new EditPreferenceTask().execute();
                     }
                 }
                 break;
-            default:
         }
         return super.onOptionsItemSelected(item);
     }
@@ -410,11 +417,13 @@ public class PreferencesFragment extends android.support.v4.app.Fragment impleme
     public boolean validateProfileChangeInfo() {
         boolean valid = true;
         if (AppGlobals.getUserType() == 1) {
-            if (preferencesLocationReportingIntervalTime.trim().isEmpty()) {
-                etPreferencesDriverLocationIntervalTime.setError("Empty");
-                valid = false;
-            } else {
-                etPreferencesDriverLocationIntervalTime.setError(null);
+            if (driverPreferencesLocationReportingType == 1) {
+                if (preferencesLocationReportingIntervalTime.trim().isEmpty()) {
+                    etPreferencesDriverLocationIntervalTime.setError("Empty");
+                    valid = false;
+                } else {
+                    etPreferencesDriverLocationIntervalTime.setError(null);
+                }
             }
         } else {
             if (preferencesSearchRadius.trim().isEmpty()) {
@@ -443,7 +452,6 @@ public class PreferencesFragment extends android.support.v4.app.Fragment impleme
             } else {
                 etPreferencesCustomerVehicleModel.setError(null);
             }
-
         }
         return valid;
     }
@@ -503,6 +511,18 @@ public class PreferencesFragment extends android.support.v4.app.Fragment impleme
         tvPreferencesDriverLocationDisplay.setTextColor(Color.parseColor("#ffffff"));
     }
 
+    private void setVehicleTypeRadioButton(int rb) {
+        if (rb == 0) {
+            rbVehicleTypeMini.setChecked(true);
+        } else if (rb == 1) {
+            rbVehicleTypeHatchback.setChecked(true);
+        } else if (rb == 2) {
+            rbVehicleTypeSedan.setChecked(true);
+        } else if (rb == 3) {
+            rbVehicleTypeLuxury.setChecked(true);
+        }
+    }
+
     private class EditPreferenceTask extends AsyncTask<Void, Integer, Void> {
 
         @Override
@@ -517,11 +537,11 @@ public class PreferencesFragment extends android.support.v4.app.Fragment impleme
             try {
                 String url;
                 if (AppGlobals.getUserType() == 0) {
-                    url = EndPoints.SHOW_CUSTOMERS + AppGlobals.getUserID();
+                    url = EndPoints.BASE_ACCOUNTS_ME;
                 } else {
-                    url = EndPoints.SHOW_DRIVERS + AppGlobals.getUserID();
+                    url = EndPoints.BASE_ACCOUNTS_ME;
                 }
-                connection = WebServiceHelpers.openConnectionForUrl(url, "PATCH", true);
+                connection = WebServiceHelpers.openConnectionForUrl(url, "PUT", true);
                 DataOutputStream out = new DataOutputStream(connection.getOutputStream());
                 String editProfileString = "";
                 if (AppGlobals.getUserType() == 0) {
@@ -532,11 +552,15 @@ public class PreferencesFragment extends android.support.v4.app.Fragment impleme
                             String.valueOf(driverPreferencesLocationReportingType),
                             preferencesLocationReportingIntervalTime);
                 } else if (driverPreferencesLocationReportingType == 0) {
-                    editProfileString = getProfileEditStringForDriverWithLocation(locationString, driverStatus, transmissionType,
-                            String.valueOf(driverPreferencesLocationReportingType),
-                            preferencesLocationReportingIntervalTime);
+                    if (!locationSet || latLngDriverLocationFixed == null) {
+                        editProfileString = getProfileEditStringForDriverLocationNull(driverStatus, transmissionType,
+                                String.valueOf(driverPreferencesLocationReportingType));
+                    } else {
+                        editProfileString = getProfileEditStringForDriverWithLocation(locationString, driverStatus, transmissionType,
+                                String.valueOf(driverPreferencesLocationReportingType),
+                                preferencesLocationReportingIntervalTime);
+                    }
                 }
-                Log.i("Login ", "String: " + editProfileString);
                 out.writeBytes(editProfileString);
                 out.flush();
                 out.close();
@@ -552,7 +576,6 @@ public class PreferencesFragment extends android.support.v4.app.Fragment impleme
             super.onPostExecute(aVoid);
             isEditPreferenceTaskRunning = false;
             Helpers.dismissProgressDialog();
-            Log.i("responseCode", "" + responseCode);
             if (responseCode == 200) {
                 onEditSuccess("Preference change successful");
             } else {
@@ -564,18 +587,6 @@ public class PreferencesFragment extends android.support.v4.app.Fragment impleme
         protected void onCancelled() {
             super.onCancelled();
             isEditPreferenceTaskRunning = false;
-        }
-    }
-
-    private void setVehicleTypeRadioButton(int rb) {
-        if (rb == 0) {
-            rbVehicleTypeMini.setChecked(true);
-        } else if (rb == 1) {
-            rbVehicleTypeHatchback.setChecked(true);
-        } else if (rb == 2) {
-            rbVehicleTypeSedan.setChecked(true);
-        } else if (rb == 3) {
-            rbVehicleTypeLuxury.setChecked(true);
         }
     }
 }

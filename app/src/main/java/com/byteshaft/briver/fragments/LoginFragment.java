@@ -72,6 +72,8 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
     Animation animMainLogoFadeOut;
 
     boolean launchingMainActivity;
+    boolean loginInterrupted;
+    boolean userDataTaskInterrupted;
 
     HttpURLConnection connection;
     public static int responseCode;
@@ -255,6 +257,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
                 taskEnablePushNotification = (EnablePushNotifications) new EnablePushNotifications().execute();
             }
         }, 3000);
+        AppGlobals.putUserPassword(sLoginPassword);
     }
 
     public void onLoginFailed(String message) {
@@ -351,6 +354,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
             isUserLoginTaskRunning = false;
+            loginInterrupted = false;
             if (responseCode == 200) {
                 onLoginSuccess();
             } else {
@@ -376,7 +380,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
     public static String getLoginString (
             String email, String password) {
         return "{" +
-                String.format("\"username\": \"%s\", ", email) +
+                String.format("\"email\": \"%s\", ", email) +
                 String.format("\"password\": \"%s\"", password) +
                 "}";
     }
@@ -392,10 +396,12 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
         @Override
         protected Void doInBackground(Void... params) {
             try {
-                connection = WebServiceHelpers.openConnectionForUrl(EndPoints.BASE_ACCOUNTS + "me", "GET", true);
+                connection = WebServiceHelpers.openConnectionForUrl(EndPoints.BASE_ACCOUNTS_ME, "GET", true);
                 JSONObject jsonObject = new JSONObject(WebServiceHelpers.readResponse(connection));
                 Log.i("IncomingData", " UserData: " + jsonObject);
                 Log.i("USERTOKEN", AppGlobals.getToken());
+                Log.i("ResponseCode", "" + connection.getResponseCode());
+                Log.i("ResponseMessage", connection.getResponseMessage());
 
                 AppGlobals.putPersonName(jsonObject.getString("full_name"));
                 AppGlobals.putUsername(jsonObject.getString("email"));
@@ -416,6 +422,9 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
                     AppGlobals.putDrivingExperience(jsonObject.getString("driving_experience"));
                     AppGlobals.putDriverLocationReportingIntervalTime(jsonObject.getInt("location_reporting_interval"));
                     AppGlobals.putLocationReportingType(jsonObject.getInt("location_reporting_type"));
+                    AppGlobals.putDocOne(EndPoints.SERVER_URL + jsonObject.getString("doc1"));
+                    AppGlobals.putDocTwo(EndPoints.SERVER_URL + jsonObject.getString("doc2"));
+                    AppGlobals.putDocThree(EndPoints.SERVER_URL + jsonObject.getString("doc3"));
                     AppGlobals.putDriverBio(jsonObject.getString("bio"));
                 }
                 responseCode = connection.getResponseCode();
@@ -530,7 +539,6 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
                 JSONObject jsonObject = jsonArray.getJSONObject(0);
                 String ID = jsonObject.getString("id");
                 URL url = new URL("http://46.101.75.194:8080/users/" + ID);
-
                 connection = (HttpURLConnection) url.openConnection();
                 connection.setDoOutput(true);
                 connection.setDoInput(true);
@@ -543,9 +551,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
                 out.writeBytes("token=" + AppGlobals.getGcmToken());
                 out.flush();
                 out.close();
-
                 responseCode = connection.getResponseCode();
-
             } catch (IOException | JSONException e) {
                 e.printStackTrace();
             }
@@ -560,7 +566,6 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
                 AppGlobals.setLoggedIn(true);
                 taskGetUserData = (GetUserDataTask) new GetUserDataTask().execute();
                 Helpers.showSnackBar(getView(), "Push Notifications Enabled", Snackbar.LENGTH_LONG, "#ffffff");
-
             } else {
                 AppGlobals.putGcmToken(null);
                 onLoginFailed("Login Failed. Cannot enable push notifications");
@@ -577,10 +582,12 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
     private void cancelAllTasks() {
         if (isUserLoginTaskRunning) {
             taskUserLogin.cancel(true);
+            loginInterrupted = true;
         }
 
         if (isGetUserDataTaskRunning) {
             taskGetUserData.cancel(true);
+            userDataTaskInterrupted = true;
         }
 
         if (isEnablePushNotificationTaskRunning) {
@@ -592,5 +599,11 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
     public void onResume() {
         super.onResume();
         RegisterFragment.locationAcquired = false;
+        if (loginInterrupted) {
+            taskUserLogin = (UserLoginTask) new UserLoginTask().execute();
+        }
+        else if (userDataTaskInterrupted) {
+            taskGetUserData = (GetUserDataTask) new GetUserDataTask().execute();
+        }
     }
 }

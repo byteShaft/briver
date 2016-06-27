@@ -7,12 +7,14 @@
 
     <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:animateLayoutChanges="true">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:animateLayoutChanges="true">
 
             <LinearLayout
                 android:id="@+id/layout_preferences_driver"
@@ -161,6 +163,7 @@
                     android:layout_marginLeft="20dp"
                     android:layout_marginRight="20dp"
                     android:layout_marginTop="10dp"
+                    android:layout_marginBottom="10dp"
                     android:animateLayoutChanges="true"
                     android:background="@drawable/background_edit_text"
                     android:orientation="vertical"
