@@ -662,7 +662,6 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
                     String dataForRegistration = getRegistrationStringForCustomer(userRegisterFullName,
                             userRegisterEmail, userRegisterPassword, userRegisterContactNumber, transmissionType, userRegisterVehicleType,
                             userRegisterVehicleMake, userRegisterVehicleModel);
-                    Log.i("DataToWrite: ", "Customer: " + dataForRegistration);
                     out.writeBytes(dataForRegistration);
                     out.flush();
                     out.close();
@@ -670,8 +669,7 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
                 } else {
                     MultipartDataUtility http;
                     try {
-                        http = new MultipartDataUtility(url);
-
+                        http = new MultipartDataUtility(url, "POST", false);
                         http.addFormField("full_name", userRegisterFullName);
                         http.addFormField("email", userRegisterEmail);
                         http.addFormField("password", userRegisterPassword);
@@ -698,9 +696,7 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
                                 OutputStream os = new FileOutputStream(item.get(counter));
                                 os.write(bytes);
                                 counter++;
-                            } catch (IOException e) {
-
-                            }
+                            } catch (IOException ignored) {}
                         }
                     } catch (IOException e) {
                         e.printStackTrace();
@@ -748,7 +744,7 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
                     } else if (bm.getHeight() > 1600 || bm.getWidth() > 1600) {
                         Bitmap.createScaledBitmap(bm, bm.getWidth() / 2, bm.getHeight() / 2, false).compress(Bitmap.CompressFormat.JPEG, 40, bytes);
                     } else {
-                        bm.compress(Bitmap.CompressFormat.JPEG, 60, bytes);
+                        bm.compress(Bitmap.CompressFormat.JPEG, 40, bytes);
                     }
                     hashMap.put(ibPosition, writeImageToExternalStorage(bytes, String.valueOf(ibPosition)));
                     imagePathsArray.add(hashMap);

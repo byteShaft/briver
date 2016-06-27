@@ -68,17 +68,10 @@ public class ChangePasswordFragment extends android.support.v4.app.Fragment impl
 
     public void changePassword() {
         if (validatePasswordChangeInfo()) {
-//            btnChangePassword.setEnabled(false);
+            taskChangePassword = (ChangePasswordTask) new ChangePasswordTask().execute();
         }
     }
 
-    public void onChangeSuccess() {
-        btnChangePassword.setEnabled(true);
-    }
-
-    public void onChangeFailed() {
-        btnChangePassword.setEnabled(true);
-    }
 
     public boolean validatePasswordChangeInfo() {
         boolean valid = true;
@@ -119,17 +112,17 @@ public class ChangePasswordFragment extends android.support.v4.app.Fragment impl
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
+            Helpers.showProgressDialog(getActivity(), "Changing Password");
             isChangePasswordTaskRunning = true;
         }
 
         @Override
         protected Void doInBackground(Void... params) {
             try {
-                String url = EndPoints.CHANGE_PASSWORD;
-                WebServiceHelpers.openConnectionForUrl(url, "POST", false);
+                String url = EndPoints.BASE_ACCOUNTS_ME;
+                connection = WebServiceHelpers.openConnectionForUrl(url, "PUT", true);
                 DataOutputStream out = new DataOutputStream(connection.getOutputStream());
-//                out.writeBytes(getPasswordChangeString(passwordRecoveryEmail, forgotPasswordConfirmationCode,
-//                        forgotPasswordNewPassword));
+                out.writeBytes(getPasswordChangeString(passwordNew));
                 out.flush();
                 out.close();
                 responseCode = connection.getResponseCode();
@@ -142,8 +135,8 @@ public class ChangePasswordFragment extends android.support.v4.app.Fragment impl
         @Override
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
-            isChangePasswordTaskRunning = false;
             Helpers.dismissProgressDialog();
+            isChangePasswordTaskRunning = false;
             if (responseCode == 200) {
                 onPasswordChangeSuccess("Password successfully changed");
             } else {
@@ -158,12 +151,9 @@ public class ChangePasswordFragment extends android.support.v4.app.Fragment impl
         }
     }
 
-    public static String getPasswordChangeString(String email,
-                                                 String confirmationCode, String password) {
+    public static String getPasswordChangeString(String password) {
         return "{" +
-                String.format("\"email\": \"%s\", ", email) +
-                String.format("\"password_reset_key\": \"%s\", ", confirmationCode) +
-                String.format("\"new_password\": \"%s\"", password) +
+                String.format("\"password\": \"%s\"", password) +
                 "}";
     }
 
@@ -175,6 +165,7 @@ public class ChangePasswordFragment extends android.support.v4.app.Fragment impl
                 getActivity().onBackPressed();
             }
         }, 1500);
+        AppGlobals.putUserPassword(passwordNew);
     }
 
     public void onPasswordChangeFailed(String message) {

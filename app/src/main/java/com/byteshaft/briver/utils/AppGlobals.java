@@ -17,6 +17,10 @@ import com.google.android.gms.common.GoogleApiAvailability;
 public class AppGlobals extends Application {
 
     public static final int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
+    private static final String LAST_KNOWN_LOCATION = "last_known_location";
+    private static final String DRIVER_DOC_ONE = "doc_one";
+    private static final String DRIVER_DOC_TWO = "doc_two";
+    private static final String DRIVER_DOC_THREE = "doc_three";
     private static final String DRIVER_SEARCH_RADIUS = "driver_radius";
     private static final String DRIVER_SERVICE_STATUS = "driver_service_status";
     private static final String ALARM_STATUS = "alarm_status";
@@ -108,6 +112,31 @@ public class AppGlobals extends Application {
     public static String getUsername() {
         return sPreferences.getString(USER_NAME, null);
     }
+
+    public static void putDocOne(String docOne) {
+        sPreferences.edit().putString(DRIVER_DOC_ONE, docOne).apply();
+    }
+
+    public static String getDocOne() {
+        return sPreferences.getString(DRIVER_DOC_ONE, null);
+    }
+
+    public static void putDocTwo(String docTwo) {
+        sPreferences.edit().putString(DRIVER_DOC_TWO, docTwo).apply();
+    }
+
+    public static String getDocTwo() {
+        return sPreferences.getString(DRIVER_DOC_TWO, null);
+    }
+
+    public static void putDocThree(String docThree) {
+        sPreferences.edit().putString(DRIVER_DOC_THREE, docThree).apply();
+    }
+
+    public static String getDocThree() {
+        return sPreferences.getString(DRIVER_DOC_THREE, null);
+    }
+
 
     public static void putPhoneNumber(String phone) {
         sPreferences.edit().putString(PHONE_NUMBER, phone).apply();

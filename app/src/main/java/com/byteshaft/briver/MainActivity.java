@@ -273,8 +273,8 @@ public class MainActivity extends AppCompatActivity
         protected Void doInBackground(Void... params) {
             String url;
             try {
-                url = EndPoints.SHOW_DRIVERS + AppGlobals.getUserID();
-                connection = WebServiceHelpers.openConnectionForUrl(url, "PATCH", true);
+                url = EndPoints.BASE_ACCOUNTS_ME;
+                connection = WebServiceHelpers.openConnectionForUrl(url, "PUT", true);
                 DataOutputStream out = new DataOutputStream(connection.getOutputStream());
                 out.writeBytes(getDriverStatusPostingString());
                 out.flush();
