@@ -25,6 +25,7 @@ public class AppGlobals extends Application {
     private static final String DRIVER_SERVICE_STATUS = "driver_service_status";
     private static final String ALARM_STATUS = "alarm_status";
     private static final String LOGGED_IN = "logged_in";
+    private static final String PUSH_NOTIFICATIONS_ENABLED = "push_notifications_enabled";
     private static final String USER_NAME = "user_name";
     private static final String PERSON_NAME = "person_name";
     private static final String PHONE_NUMBER = "phone_number";
@@ -59,10 +60,17 @@ public class AppGlobals extends Application {
         return sPreferences.getBoolean(LOGGED_IN, false);
     }
 
+    public static void setPushNotificationsEnabled(boolean enabled) {
+        sPreferences.edit().putBoolean(PUSH_NOTIFICATIONS_ENABLED, enabled).apply();
+    }
+
+    public static boolean isPushNotificationsEnabled() {
+        return sPreferences.getBoolean(PUSH_NOTIFICATIONS_ENABLED, false);
+    }
+
     public static void setLoggedIn(boolean loggedIn) {
         sPreferences.edit().putBoolean(LOGGED_IN, loggedIn).apply();
     }
-
 
     public static boolean isLocationUploadPending() {
         return sPreferences.getBoolean(PENDING_LOCATION_UPLOAD, false);

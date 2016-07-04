@@ -72,10 +72,10 @@ import java.util.TimerTask;
 /**
  * Created by fi8er1 on 01/05/2016.
  */
-
 public class HireFragment extends android.support.v4.app.Fragment implements View.OnClickListener {
 
     public static int responseCode;
+    HttpURLConnection connection;
     public static ArrayList<Integer> driversIdList;
     public static HashMap<Integer, ArrayList<String>> hashMapDriverData;
     private static GoogleMap mMap = null;
@@ -94,9 +94,11 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
     };
     final Runnable hire = new Runnable() {
         public void run() {
+            hireMeetUpPoint = currentLatLngAuto.latitude + "," + currentLatLngAuto.longitude;
             driverTimeSpanForHiring = Helpers.spinnerServiceHours.getSelectedItem().toString().substring(0, 2).trim();
             driverTimeOfHiring = Helpers.getCurrentTimeOfDevice();
-            stringArrayForDriverHiring = new String[]{driverIdForHiring, driverTimeSpanForHiring, driverTimeOfHiring};
+            stringArrayForDriverHiring = new String[]{driverIdForHiring, "", driverTimeSpanForHiring,
+                    hireMeetUpPoint};
             taskHiringDriver = (HiringTask) new HiringTask().execute(stringArrayForDriverHiring);
         }
     };
@@ -116,7 +118,6 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
         }
     };
     View baseViewHireFragment;
-    HttpURLConnection connection;
     public static String serviceStartTime;
     boolean gettingNearbyDriversToShowMarkers;
     boolean driversMarkersShownOnMap;
@@ -141,7 +142,7 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
     private Animation animLayoutBottomDown;
     private Animation animLayoutMapSearchBarTopUp;
     private Animation animLayoutMapSearchBarTopDown;
-    private String hireMeetUpPoint;
+    public static String hireMeetUpPoint;
     private GetNearbyDriversAvailableToHire getNearbyDriversTask;
     private LinearLayout llMapHireButtons;
     private TextView tvMapHireAddress;
@@ -232,7 +233,6 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
             public void onMapReady(GoogleMap googleMap) {
                 mMap = googleMap;
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(22.685677, 79.408410), 4.0f));
-
                 if (ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.ACCESS_FINE_LOCATION) !=
                         PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getActivity(),
                         Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -303,7 +303,7 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
                             protected Void doInBackground(Void... params) {
                                 try {
                                     id = Integer.parseInt(snippet);
-                                    String[] latLngToString = hashMapDriverData.get(driversIdList.get(id)).get(3).split(",");
+                                    String[] latLngToString = hashMapDriverData.get(id).get(3).split(",");
                                     double latitude = Double.parseDouble(latLngToString[0]);
                                     double longitude = Double.parseDouble(latLngToString[1]);
                                     addressString = Helpers.getAddress(getActivity(), new LatLng(latitude, longitude));
@@ -319,13 +319,14 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
                                 super.onPostExecute(aVoid);
                                 Helpers.dismissProgressDialog();
                                 if (taskSuccess) {
+                                    Helpers.isCustomUserDetailsDialogOpenedFromMap = true;
                                     Helpers.customDialogWithPositiveFunctionNegativeButtonForOnMapMarkerClickHiring(getActivity(),
-                                            hashMapDriverData.get(driversIdList.get(id)).get(0), hashMapDriverData.get(driversIdList.get(id)).get(1),
-                                            hashMapDriverData.get(driversIdList.get(id)).get(2), addressString, hashMapDriverData.get(driversIdList.get(id)).get(4),
-                                            hashMapDriverData.get(driversIdList.get(id)).get(5), hashMapDriverData.get(driversIdList.get(id)).get(6),
-                                            hashMapDriverData.get(driversIdList.get(id)).get(7), hashMapDriverData.get(driversIdList.get(id)).get(8),
-                                            hashMapDriverData.get(driversIdList.get(id)).get(9), hashMapDriverData.get(driversIdList.get(id)).get(10),
-                                            btnCustomHireDialogHire);
+                                            hashMapDriverData.get(id).get(0), hashMapDriverData.get(id).get(1),
+                                            hashMapDriverData.get(id).get(2), addressString, hashMapDriverData.get(id).get(4),
+                                            hashMapDriverData.get(id).get(5), hashMapDriverData.get(id).get(6),
+                                            hashMapDriverData.get(id).get(7), hashMapDriverData.get(id).get(8),
+                                            hashMapDriverData.get(id).get(9), hashMapDriverData.get(id).get(10),
+                                            btnCustomHireDialogHire, null, null, null);
                                 } else {
                                     Helpers.showSnackBar(getView(), "Driver info cannot be retrieved at the moment", Snackbar.LENGTH_LONG, "#f44336");
                                 }
@@ -515,8 +516,6 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
                         }
                         Log.i("SelectedHoursOfService", "" + totalHoursOfService);
                         dialog.dismiss();
-                        serviceStartTime = Helpers.getCurrentTimeOfDevice();
-                        Log.i("ServiceStartTime", "" + serviceStartTime);
                         gettingNearbyDriversToShowMarkers = false;
                         if (isGetNearbyDriversTaskRunning) {
                             getNearbyDriversTask.cancel(true);
@@ -715,7 +714,7 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
 
     private void drawNearbyDriversOnMapWithMarkers() {
         for (int i = 0; i < driversIdList.size(); i++) {
-            hashMapDriverData.get(driversIdList.get(i));
+//            hashMapDriverData.get(driversIdList.get(i));
             Log.i("Data", "Location: " + "ID: " + i + " " + hashMapDriverData.get(driversIdList.get(i)).get(3));
             String[] latLngString = hashMapDriverData.get(driversIdList.get(i)).get(3).split(",");
             double latitude = Double.parseDouble(latLngString[0]);
@@ -723,10 +722,10 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
             LatLng latLngDriverPosition = new LatLng(latitude, longitude);
             if (Integer.parseInt(hashMapDriverData.get(driversIdList.get(i)).get(8)) == 1) {
                 mMap.addMarker(new MarkerOptions().position(latLngDriverPosition)
-                        .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_marker_driver_normal)).snippet("" + i));
+                        .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_marker_driver_normal)).snippet("" + driversIdList.get(i)));
             } else {
                 mMap.addMarker(new MarkerOptions().position(latLngDriverPosition)
-                        .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_marker_driver_online)).snippet("" + i));
+                        .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_marker_driver_online)).snippet("" + driversIdList.get(i)));
             }
         }
     }
@@ -785,8 +784,13 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
                     url = EndPoints.BASE_FILTER_DRIVERS + getNearbyDriversString(
                             hireMeetUpPoint, 50, serviceStartTime, totalHoursOfService * 60);
                 } else {
-                    url = EndPoints.BASE_FILTER_DRIVERS + getNearbyDriversString(
-                            hireMeetUpPoint, AppGlobals.getDriverSearchRadius(), serviceStartTime, totalHoursOfService * 60);
+                    if (isQuickHire) {
+                        url = EndPoints.BASE_FILTER_DRIVERS + getNearbyDriversString(
+                                hireMeetUpPoint, AppGlobals.getDriverSearchRadius(), "", totalHoursOfService * 60);
+                    } else {
+                        url = EndPoints.BASE_FILTER_DRIVERS + getNearbyDriversString(
+                                hireMeetUpPoint, AppGlobals.getDriverSearchRadius(), serviceStartTime, totalHoursOfService * 60);
+                    }
                 }
                 connection = WebServiceHelpers.openConnectionForUrl(url, "GET", true);
                 JSONArray jsonArray = new JSONArray(WebServiceHelpers.readResponse(connection));
@@ -798,11 +802,11 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
                 Log.i("IncomingData", " UserData: " + jsonArray);
                 for (int i = 0; i < jsonArray.length(); i++) {
                     JSONObject jsonObject = jsonArray.getJSONObject(i);
-                    if (!driversIdList.contains(jsonObject.getInt("id"))
-                            && Integer.parseInt(jsonObject.getString("status")) != 0
+                    if (!driversIdList.contains(jsonObject.getInt("id"))) {
+                        driversIdList.add(jsonObject.getInt("id"));
+                            if (Integer.parseInt(jsonObject.getString("status")) != 0
                             && AppGlobals.getTransmissionType() == jsonObject.getInt("transmission_type")
                             || jsonObject.getInt("transmission_type") == 2) {
-                        driversIdList.add(jsonObject.getInt("id"));
                         ArrayList<String> arrayListString = new ArrayList<>();
                         arrayListString.add(jsonObject.getString("full_name"));
                         arrayListString.add(jsonObject.getString("email"));
@@ -816,6 +820,7 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
                         arrayListString.add(jsonObject.getString("review_count"));
                         arrayListString.add(jsonObject.getString("review_stars"));
                         hashMapDriverData.put(jsonObject.getInt("id"), arrayListString);
+                        }
                     }
                 }
                 responseCode = connection.getResponseCode();
