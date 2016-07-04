@@ -6,10 +6,14 @@ import android.util.Log;
 
 import com.byteshaft.briver.MainActivity;
 import com.byteshaft.briver.R;
+import com.byteshaft.briver.fragments.HireFragment;
 import com.byteshaft.briver.utils.AppGlobals;
 import com.byteshaft.briver.utils.EndPoints;
 import com.byteshaft.briver.utils.Helpers;
 import com.byteshaft.briver.utils.WebServiceHelpers;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -33,13 +37,15 @@ public class HiringTask extends AsyncTask<String, String , String> {
     @Override
     protected String doInBackground(String[] params) {
         try {
-            String url = EndPoints.BASE_HIRE_REQUEST;
+            String url = EndPoints.HIRE_REQUEST;
             connection = WebServiceHelpers.openConnectionForUrl(url, "POST", true);
             DataOutputStream out = new DataOutputStream(connection.getOutputStream());
-            out.writeBytes(getPutHiringRequestString(params[0], params[1], params[2]));
+            out.writeBytes(getPutHiringRequestString(params[0], params[1], params[2], params[3]));
+            Log.i("data", getPutHiringRequestString(params[0], params[1], params[2], params[3]));
             out.flush();
             out.close();
             responseCode = connection.getResponseCode();
+            Log.i("responseMessage", "" + connection.getResponseMessage());
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -55,11 +61,12 @@ public class HiringTask extends AsyncTask<String, String , String> {
         if (responseCode == 200) {
             Helpers.showSnackBar(AppGlobals.getRunningActivityInstance().findViewById(R.id.container_main),
                     "Hiring request successfully sent", Snackbar.LENGTH_LONG, "#A4C639");
-            Log.i("Hiring", "Success");
+            if (MainActivity.isMainActivityRunning) {
+                MainActivity.getInstance().onBackPressed();
+            }
         } else {
             Helpers.showSnackBar(AppGlobals.getRunningActivityInstance().findViewById(R.id.container_main),
                     "Failed to send hiring request", Snackbar.LENGTH_LONG, "#f44336");
-            Log.i("Hiring", "Success");
         }
     }
 
@@ -71,10 +78,18 @@ public class HiringTask extends AsyncTask<String, String , String> {
     }
 
     public static String getPutHiringRequestString(
-            String id, String start_time, String time_span) {
-        return
-                String.format("driver_id=%s&", id) +
-                        String.format("start_time=%s&", start_time) +
-                        String.format("time_span=%s", time_span);
+            String id, String start_time, String time_span, String location) {
+        JSONObject json = new JSONObject();
+        try {
+            json.put("driver", id);
+            if (!HireFragment.isQuickHire) {
+                json.put("start_time", start_time);
+            }
+            json.put("time_span", time_span);
+            json.put("location", location);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return json.toString();
     }
 }

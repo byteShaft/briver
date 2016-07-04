@@ -36,6 +36,9 @@ import com.byteshaft.briver.utils.Helpers;
 import com.byteshaft.briver.utils.MultipartDataUtility;
 import com.byteshaft.briver.utils.WebServiceHelpers;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -92,7 +95,7 @@ public class ProfileFragment extends android.support.v4.app.Fragment implements 
     String profileDrivingExperience;
     String profileBio;
 
-    HttpURLConnection connection;
+    public static HttpURLConnection connection;
     EditProfileTask taskEditProfile;
     boolean isEditProfileTaskRunning;
     HashMap<Integer, String> hashMap;
@@ -398,7 +401,7 @@ public class ProfileFragment extends android.support.v4.app.Fragment implements 
         } else {
             bm.compress(Bitmap.CompressFormat.JPEG, 60, bytes);
         }
-        hashMapTemp.put(ibPosition, writeImageToExternalStorage(bytes, String.valueOf(ibPosition + "temp")));
+        hashMapTemp.put(ibPosition, Helpers.writeImageToExternalStorage(bytes, String.valueOf(ibPosition + "temp")));
         if (ibPosition == 0) {
             ibPhotoOne.setBackgroundDrawable(null);
             ibPhotoOne.setImageBitmap(Helpers.getCroppedBitmap(Helpers.getResizedBitmapToDisplay(bm, 120)));
@@ -411,25 +414,6 @@ public class ProfileFragment extends android.support.v4.app.Fragment implements 
         }
         imageChanged = true;
         imagePendingUpload = true;
-    }
-
-    private String writeImageToExternalStorage(ByteArrayOutputStream bytes, String name) {
-        File destination = new File(Environment.getExternalStorageDirectory() + File.separator
-                + "Android/data" + File.separator + AppGlobals.getContext().getPackageName());
-        if (!destination.exists()) {
-            destination.mkdirs();
-        }
-        File file = new File(destination, name + ".jpg");
-        FileOutputStream fo;
-        try {
-            file.createNewFile();
-            fo = new FileOutputStream(file);
-            fo.write(bytes.toByteArray());
-            fo.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return file.getAbsolutePath();
     }
 
     private class EditProfileTask extends AsyncTask<Void, Integer, Void> {
@@ -487,7 +471,11 @@ public class ProfileFragment extends android.support.v4.app.Fragment implements 
                                 } catch (IOException ignored) {
                                 }
                             }
-                        } catch (IOException | URISyntaxException e) {
+                            JSONObject jsonObject = new JSONObject(WebServiceHelpers.readResponse(connection));
+                            AppGlobals.putDocOne(jsonObject.getString("doc1"));
+                            AppGlobals.putDocTwo(jsonObject.getString("doc2"));
+                            AppGlobals.putDocThree(jsonObject.getString("doc3"));
+                        } catch (IOException | URISyntaxException | JSONException e) {
                             e.printStackTrace();
                         }
                     } else {
@@ -550,7 +538,7 @@ public class ProfileFragment extends android.support.v4.app.Fragment implements 
                     } else {
                         bm.compress(Bitmap.CompressFormat.JPEG, 60, bytes);
                     }
-                    hashMapTemp.put(ibPosition, writeImageToExternalStorage(bytes, String.valueOf(ibPosition + "temp")));
+                    hashMapTemp.put(ibPosition, Helpers.writeImageToExternalStorage(bytes, String.valueOf(ibPosition + "temp")));
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -599,7 +587,7 @@ public class ProfileFragment extends android.support.v4.app.Fragment implements 
                 ByteArrayOutputStream bytes = new ByteArrayOutputStream();
                 assert bm != null;
                 bm.compress(Bitmap.CompressFormat.JPEG, 100, bytes);
-                hashMap.put(i, writeImageToExternalStorage(bytes, String.valueOf(i)));
+                hashMap.put(i, Helpers.writeImageToExternalStorage(bytes, String.valueOf(i)));
                 imagePathsArray.add(hashMap);
             }
             return null;

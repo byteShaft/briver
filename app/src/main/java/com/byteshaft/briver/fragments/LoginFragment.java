@@ -29,6 +29,7 @@ import android.widget.TextView;
 
 import com.byteshaft.briver.MainActivity;
 import com.byteshaft.briver.R;
+import com.byteshaft.briver.Tasks.EnablePushNotificationsTask;
 import com.byteshaft.briver.gcm.QuickstartPreferences;
 import com.byteshaft.briver.gcm.RegistrationIntentService;
 import com.byteshaft.briver.utils.AppGlobals;
@@ -37,7 +38,6 @@ import com.byteshaft.briver.utils.Helpers;
 import com.byteshaft.briver.utils.SoftKeyboard;
 import com.byteshaft.briver.utils.WebServiceHelpers;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -83,11 +83,10 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
 
     UserLoginTask taskUserLogin;
     GetUserDataTask taskGetUserData;
-    EnablePushNotifications taskEnablePushNotification;
+    EnablePushNotificationsTask taskEnablePushNotification;
 
     boolean isUserLoginTaskRunning;
     boolean isGetUserDataTaskRunning;
-    boolean isEnablePushNotificationTaskRunning;
 
     @Nullable
     @Override
@@ -251,13 +250,9 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
     public void onLoginSuccess() {
         Log.i("Login", "Success");
         startGcmService();
-        new Handler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                taskEnablePushNotification = (EnablePushNotifications) new EnablePushNotifications().execute();
-            }
-        }, 3000);
+        taskGetUserData = (GetUserDataTask) new GetUserDataTask().execute();
         AppGlobals.putUserPassword(sLoginPassword);
+        AppGlobals.setLoggedIn(true);
     }
 
     public void onLoginFailed(String message) {
@@ -268,6 +263,9 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
 
     public void onGetUserDataSuccess() {
         Log.i("UserDataRetrieval", "Success");
+//        if (!AppGlobals.isPushNotificationsEnabled()) {
+//            taskEnablePushNotification = (EnablePushNotificationsTask) new EnablePushNotificationsTask().execute();
+//        }
         Intent intent = new Intent(getActivity(), MainActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
         getActivity().finish();
@@ -275,7 +273,6 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
     }
 
     public void onGetUserDataFailed() {
-
         Log.i("UserDataRetrieval", "Failed");
         Helpers.showSnackBar(getView(), "Failed to retrieve UserData", Snackbar.LENGTH_LONG, "#f44336");
         if (AppGlobals.isLoggedIn()) {
@@ -405,6 +402,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
 
                 AppGlobals.putPersonName(jsonObject.getString("full_name"));
                 AppGlobals.putUsername(jsonObject.getString("email"));
+                AppGlobals.putPhoneNumber(jsonObject.getString("phone_number"));
                 AppGlobals.putNumberOfHires(jsonObject.getInt("number_of_hires"));
                 AppGlobals.putUserType(jsonObject.getInt("user_type"));
                 AppGlobals.putUserID(jsonObject.getInt("id"));
@@ -417,14 +415,13 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
                     AppGlobals.putVehicleType(jsonObject.getInt("vehicle_type"));
                     AppGlobals.putVehicleMake(jsonObject.getString("vehicle_make"));
                     AppGlobals.putVehicleModel(jsonObject.getString("vehicle_model"));
-                    AppGlobals.putPhoneNumber(jsonObject.getString("phone_number"));
                 } else if (jsonObject.getInt("user_type") == 1) {
                     AppGlobals.putDrivingExperience(jsonObject.getString("driving_experience"));
                     AppGlobals.putDriverLocationReportingIntervalTime(jsonObject.getInt("location_reporting_interval"));
                     AppGlobals.putLocationReportingType(jsonObject.getInt("location_reporting_type"));
-                    AppGlobals.putDocOne(EndPoints.SERVER_URL + jsonObject.getString("doc1"));
-                    AppGlobals.putDocTwo(EndPoints.SERVER_URL + jsonObject.getString("doc2"));
-                    AppGlobals.putDocThree(EndPoints.SERVER_URL + jsonObject.getString("doc3"));
+                    AppGlobals.putDocOne(jsonObject.getString("doc1"));
+                    AppGlobals.putDocTwo(jsonObject.getString("doc2"));
+                    AppGlobals.putDocThree(jsonObject.getString("doc3"));
                     AppGlobals.putDriverBio(jsonObject.getString("bio"));
                 }
                 responseCode = connection.getResponseCode();
@@ -476,7 +473,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
     };
 
     private static int getAccountStatus(String userEmail) {
-        String request = EndPoints.BASE_ACCOUNTS + "status?email=" + userEmail;
+        String request = EndPoints.BASE_URL_USER + "status?email=" + userEmail;
         int responseCodeStatus = -1;
         try {
             URL url = new URL(request);
@@ -524,61 +521,6 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
         }
     }
 
-    public class EnablePushNotifications extends AsyncTask<Void, Integer, Void> {
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            isEnablePushNotificationTaskRunning = true;
-        }
-
-        @Override
-        protected Void doInBackground(Void... params) {
-            try {
-                JSONArray jsonArray = new JSONArray(AppGlobals.getToken());
-                JSONObject jsonObject = jsonArray.getJSONObject(0);
-                String ID = jsonObject.getString("id");
-                URL url = new URL("http://46.101.75.194:8080/users/" + ID);
-                connection = (HttpURLConnection) url.openConnection();
-                connection.setDoOutput(true);
-                connection.setDoInput(true);
-                connection.setInstanceFollowRedirects(false);
-                connection.setRequestMethod("PUT");
-                connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-                connection.setRequestProperty("charset", "utf-8");
-                connection.setRequestProperty("X-Api-Key", AppGlobals.getToken());
-                DataOutputStream out = new DataOutputStream(connection.getOutputStream());
-                out.writeBytes("token=" + AppGlobals.getGcmToken());
-                out.flush();
-                out.close();
-                responseCode = connection.getResponseCode();
-            } catch (IOException | JSONException e) {
-                e.printStackTrace();
-            }
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(Void aVoid) {
-            super.onPostExecute(aVoid);
-            isEnablePushNotificationTaskRunning = false;
-            if (responseCode == 200) {
-                AppGlobals.setLoggedIn(true);
-                taskGetUserData = (GetUserDataTask) new GetUserDataTask().execute();
-                Helpers.showSnackBar(getView(), "Push Notifications Enabled", Snackbar.LENGTH_LONG, "#ffffff");
-            } else {
-                AppGlobals.putGcmToken(null);
-                onLoginFailed("Login Failed. Cannot enable push notifications");
-            }
-        }
-
-        @Override
-        protected void onCancelled(Void aVoid) {
-            super.onCancelled(aVoid);
-            isEnablePushNotificationTaskRunning = false;
-        }
-    }
-
     private void cancelAllTasks() {
         if (isUserLoginTaskRunning) {
             taskUserLogin.cancel(true);
@@ -588,10 +530,6 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
         if (isGetUserDataTaskRunning) {
             taskGetUserData.cancel(true);
             userDataTaskInterrupted = true;
-        }
-
-        if (isEnablePushNotificationTaskRunning) {
-            taskEnablePushNotification.cancel(true);
         }
     }
 

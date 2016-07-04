@@ -1,0 +1,12 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools" tools:context=".MainActivity">
+    <item
+        android:id="@+id/item_context_hires_list_call"
+        android:title="Call" />
+    <item
+        android:id="@+id/item_context_hires_list_finish"
+        android:title="Finish/Review" />
+    <item
+        android:id="@+id/item_context_hires_list_view_user_details"
+        android:title="User details" />
+</menu>

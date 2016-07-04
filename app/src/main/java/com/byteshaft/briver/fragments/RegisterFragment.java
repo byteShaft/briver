@@ -19,7 +19,6 @@ import android.text.SpannableStringBuilder;
 import android.text.TextPaint;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -712,6 +711,7 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
             Helpers.dismissProgressDialog();
+
             if (responseCode == 201) {
                 onRegistrationSuccess();
             } else if (responseCode == 400) {

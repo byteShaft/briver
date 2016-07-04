@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.ProgressDialog;
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -23,25 +22,35 @@ import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.CountDownTimer;
-import android.provider.MediaStore;
+import android.os.Environment;
+import android.os.Handler;
 import android.provider.Settings;
 import android.support.design.widget.Snackbar;
 import android.view.Gravity;
 import android.view.View;
+import android.view.Window;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.RatingBar;
+import android.widget.RelativeLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 
+import com.byteshaft.briver.MainActivity;
 import com.byteshaft.briver.R;
 import com.byteshaft.briver.fragments.HireFragment;
 import com.google.android.gms.maps.model.LatLng;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -54,14 +63,53 @@ import java.util.Locale;
 
 public class Helpers {
 
+    public static final Runnable exitApp = new Runnable() {
+        public void run() {
+            AppGlobals.getRunningActivityInstance().finish();
+            System.exit(0);
+        }
+    };
+    private static final int SECOND_MILLIS = 1000;
+    private static final int MINUTE_MILLIS = 60 * SECOND_MILLIS;
+    private static final int HOUR_MILLIS = 60 * MINUTE_MILLIS;
+    private static final int DAY_MILLIS = 24 * HOUR_MILLIS;
     public static int countDownTimerMillisUntilFinished;
+    public static boolean isCustomUserDetailsDialogOpenedFromMap;
+    public static Spinner spinnerServiceHours;
+    public static Runnable openPermissionsSettingsForMarshmallow = new Runnable() {
+        public void run() {
+            Helpers.openAppDetailsActivityForSettingPermissions(AppGlobals.getRunningActivityInstance());
+            AppGlobals.getRunningActivityInstance().onBackPressed();
+        }
+    };
+    public static Runnable openPlayServicesInstallation = new Runnable() {
+        public void run() {
+            Helpers.openAppDetailsActivityForSettingPermissions(AppGlobals.getRunningActivityInstance());
+            AppGlobals.getRunningActivityInstance().onBackPressed();
+        }
+    };
+    static String docOneMain;
+    static String docTwoMain;
+    static String docThreeMain;
+    static ImageView ibPhotoOne;
+    static ImageView ibPhotoTwo;
+    static ImageView ibPhotoThree;
+    static LinearLayout llDetails;
+    static LinearLayout llDocuments;
+    static Bitmap bmOne;
+    static Bitmap bmTwo;
+    static Bitmap bmThree;
+    static Button dialogButtonYes;
+    static Button dialogButtonNo;
+    static RetrieveDocumentsTask taskRetrieveDocuments;
     private static ProgressDialog progressDialog;
     private static ProgressDialog progressDialogWithPositiveButton;
     private static CountDownTimer countdownTimer;
     private static boolean isCountDownTimerRunning;
-    public static Spinner spinnerServiceHours;
+    private static boolean dialogDocumentsShown;
     private static InputMethodManager inputMethodManager;
     private static boolean isSoftKeyboardOpen;
+    private static boolean fullImageViewShown;
 
     public static void showProgressDialog(Context context, String message) {
         progressDialog = new ProgressDialog(context);
@@ -209,7 +257,6 @@ public class Helpers {
                 .show();
     }
 
-
     public static void AlertDialogWithPositiveFunctionNegativeButton(
             Context context, String title, String message, String positiveButtonText,
             String negativeButtonText, final Runnable listenerYes) {
@@ -282,7 +329,6 @@ public class Helpers {
                 .show();
     }
 
-
     public static void AlertDialogWithPositiveNegativeFunctionsNeutralButton(
             Context context, String title, String message, String positiveButtonText,
             String negativeButtonText, String neutralButtonText, final Runnable listenerYes,
@@ -313,16 +359,71 @@ public class Helpers {
                 .show();
     }
 
-
-    public static void customDialogWithPositiveFunctionNegativeButtonForOnMapMarkerClickHiring (
-            Context context, String fullName, String eMail, String contact, String address,
+    public static void customDialogWithPositiveFunctionNegativeButtonForOnMapMarkerClickHiring(
+            final Context context, String fullName, String eMail, String contact, String address,
             String locationLastUpdated, String experience, String numberOfHires, String bio, String status, String numberOfRatings, String numberOfStars,
-            final Runnable listenerYes) {
+            final Runnable listenerYes, final String docOne, final String docTwo, final String docThree) {
         final Dialog onMapMarkerClickHireDialog = new Dialog(context);
+        if (!isCustomUserDetailsDialogOpenedFromMap) {
+            onMapMarkerClickHireDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        }
         onMapMarkerClickHireDialog.setContentView(R.layout.layout_on_map_marker_click_hire_dialog);
 
+        final RelativeLayout rlDialogDocumentsMain = (RelativeLayout) onMapMarkerClickHireDialog.findViewById(R.id.rl_main_document);
+        final ImageView ivDialogDocumentsMain = (ImageView) onMapMarkerClickHireDialog.findViewById(R.id.iv_main_document);
+
+        ImageButton btnMainDocumentClose = (ImageButton) onMapMarkerClickHireDialog.findViewById(R.id.btn_document_view_close);
+        btnMainDocumentClose.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                rlDialogDocumentsMain.setVisibility(View.GONE);
+                llDocuments.setVisibility(View.VISIBLE);
+                fullImageViewShown = false;
+            }
+        });
+
+        ibPhotoOne = (ImageView) onMapMarkerClickHireDialog.findViewById(R.id.ib_user_details_photo_one);
+        ibPhotoOne.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                llDocuments.setVisibility(View.GONE);
+                ivDialogDocumentsMain.setImageBitmap(bmOne);
+                rlDialogDocumentsMain.setVisibility(View.VISIBLE);
+                fullImageViewShown = true;
+            }
+        });
+
+        ibPhotoTwo = (ImageView) onMapMarkerClickHireDialog.findViewById(R.id.ib_user_details_photo_two);
+        ibPhotoTwo.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                llDocuments.setVisibility(View.GONE);
+                ivDialogDocumentsMain.setImageBitmap(bmTwo);
+                rlDialogDocumentsMain.setVisibility(View.VISIBLE);
+                fullImageViewShown = true;
+            }
+        });
+
+        ibPhotoThree = (ImageView) onMapMarkerClickHireDialog.findViewById(R.id.ib_user_details_photo_three);
+        ibPhotoThree.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                llDocuments.setVisibility(View.GONE);
+                ivDialogDocumentsMain.setImageBitmap(bmThree);
+                rlDialogDocumentsMain.setVisibility(View.VISIBLE);
+                fullImageViewShown = true;
+            }
+        });
+
+        llDetails = (LinearLayout) onMapMarkerClickHireDialog.findViewById(R.id.ll_custom_user_details_dialog);
+        llDocuments = (LinearLayout) onMapMarkerClickHireDialog.findViewById(R.id.ll_custom_user_details_dialog_documents);
+
         onMapMarkerClickHireDialog.setCancelable(false);
-        onMapMarkerClickHireDialog.setTitle("QuickHire this driver?");
+        if (isCustomUserDetailsDialogOpenedFromMap) {
+            onMapMarkerClickHireDialog.setTitle("QuickHire this driver?");
+        } else {
+            onMapMarkerClickHireDialog.setTitle("User Details");
+        }
 
         RatingBar rBarMarkerDialog = (RatingBar) onMapMarkerClickHireDialog.findViewById(R.id.rBar_driver_hiring_dialog);
         Float starsRatingBar = Float.parseFloat(numberOfStars);
@@ -334,73 +435,128 @@ public class Helpers {
         }
 
         TextView tvNumberOfStars = (TextView) onMapMarkerClickHireDialog.findViewById(R.id.tv_rBar_hiring_dialog_number_of_ratings);
-        tvNumberOfStars.setText("(" + numberOfRatings +")");
+        tvNumberOfStars.setText("(" + numberOfRatings + ")");
 
         TextView tvFullName = (TextView) onMapMarkerClickHireDialog.findViewById(R.id.tv_driver_hire_dialog_full_name);
         tvFullName.setText("Name: " + fullName);
 
         TextView tvEmail = (TextView) onMapMarkerClickHireDialog.findViewById(R.id.tv_driver_hire_dialog_email);
-        tvEmail.setText("Email: " + Helpers.replaceFirstThreeCharacters(eMail));
+        if (isCustomUserDetailsDialogOpenedFromMap) {
+            tvEmail.setText("Email: " + Helpers.replaceFirstThreeCharacters(eMail));
+        } else {
+            tvEmail.setText("Email: " + eMail);
+        }
 
         TextView tvContact = (TextView) onMapMarkerClickHireDialog.findViewById(R.id.tv_driver_hire_dialog_contact);
-        tvContact.setText("Contact: " + Helpers.replaceLastThreeCharacters(contact));
+        if (isCustomUserDetailsDialogOpenedFromMap) {
+            tvContact.setText("Contact: " + Helpers.replaceLastThreeCharacters(contact));
+        } else {
+            tvContact.setText("Contact: " + contact);
+        }
 
         TextView tvStatus = (TextView) onMapMarkerClickHireDialog.findViewById(R.id.tv_driver_hire_dialog_status);
         int statusInt = Integer.parseInt(status);
-        if (statusInt == 1) {
+        if (statusInt == 1 && status != null) {
             tvStatus.setText("Status: Available");
-        } else if (statusInt == 2) {
+        } else if (statusInt == 2 && status != null) {
             tvStatus.setText("Status: Online");
+        } else {
+            tvStatus.setVisibility(View.GONE);
         }
 
         TextView tvNumberOfHires = (TextView) onMapMarkerClickHireDialog.findViewById(R.id.tv_driver_hire_dialog_number_of_hires);
         tvNumberOfHires.setText("Total Hires: " + numberOfHires);
 
         TextView tvAddress = (TextView) onMapMarkerClickHireDialog.findViewById(R.id.tv_driver_hire_dialog_address);
-        tvAddress.setText("Address: " + address);
+        if (address != null) {
+            tvAddress.setText("Address: " + address);
+        } else {
+            tvAddress.setVisibility(View.GONE);
+        }
 
         TextView tvLocationLastUpdated = (TextView) onMapMarkerClickHireDialog.findViewById(R.id.tv_driver_hire_dialog_location_last_updated);
-        tvLocationLastUpdated.setText("Location Last Updated: " + Helpers.getTimeAgo(Helpers.getTimeInMillis(locationLastUpdated)));
+        if (locationLastUpdated != null) {
+            tvLocationLastUpdated.setText("Location Last Updated: " + Helpers.getTimeAgo(Helpers.getTimeInMillis(locationLastUpdated)));
+        } else {
+            tvLocationLastUpdated.setVisibility(View.GONE);
+        }
 
         TextView tvExperience = (TextView) onMapMarkerClickHireDialog.findViewById(R.id.tv_driver_hire_dialog_driving_experience);
         int experienceInt = -1;
         try {
             experienceInt = Integer.parseInt(experience);
-        } catch (NumberFormatException ignored) {}
+        } catch (NumberFormatException ignored) {
+        }
 
-        if (experienceInt < 2) {
-            tvExperience.setText("Driving Experience: " + experience + " " + "Year");
+        if (experience != null) {
+            if (experienceInt < 2) {
+                tvExperience.setText("Driving Experience: " + experience + " " + "Year");
+            } else {
+                tvExperience.setText("Driving Experience: " + experience + " " + "Years");
+            }
         } else {
-            tvExperience.setText("Driving Experience: " + experience + " " + "Years");
+            tvExperience.setVisibility(View.GONE);
         }
 
         TextView tvBio = (TextView) onMapMarkerClickHireDialog.findViewById(R.id.tv_driver_hire_dialog_bio);
-        if (bio.trim().length() > 1) {
+        if (bio != null && bio.trim().length() > 1) {
             tvBio.setText("Bio: " + bio);
         } else {
             tvBio.setVisibility(View.GONE);
         }
 
         spinnerServiceHours = (Spinner) onMapMarkerClickHireDialog.findViewById(R.id.spinner_hire_dialog_service_hours);
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(context, android.R.layout.simple_spinner_dropdown_item, HireFragment.itemsForHoursSelectingDialog);
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(context, android.R.layout.simple_spinner_dropdown_item,
+                HireFragment.itemsForHoursSelectingDialog);
         spinnerServiceHours.setAdapter(adapter);
 
-        Button buttonNo = (Button) onMapMarkerClickHireDialog.findViewById(R.id.btn_driver_hire_dialog_cancel);
-        buttonNo.setOnClickListener(new View.OnClickListener() {
+        dialogButtonNo = (Button) onMapMarkerClickHireDialog.findViewById(R.id.btn_driver_hire_dialog_cancel);
+        dialogButtonNo.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                onMapMarkerClickHireDialog.dismiss();
+                if (dialogDocumentsShown) {
+                    llDocuments.setVisibility(View.INVISIBLE);
+                    new Handler().postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            llDocuments.setVisibility(View.GONE);
+                            llDetails.setVisibility(View.VISIBLE);
+                            dialogButtonNo.setText("Dismiss");
+                            dialogButtonYes.setVisibility(View.VISIBLE);
+                            dialogDocumentsShown = false;
+                        }
+                    }, 150);
+                } else {
+                    onMapMarkerClickHireDialog.dismiss();
+                }
+            }
+        });
+        dialogButtonYes = (Button) onMapMarkerClickHireDialog.findViewById(R.id.btn_driver_hire_dialog_hire);
+        dialogButtonYes.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (!isCustomUserDetailsDialogOpenedFromMap && AppGlobals.getUserType() == 0) {
+                    taskRetrieveDocuments = (RetrieveDocumentsTask) new RetrieveDocumentsTask().execute();
+                } else {
+                    listenerYes.run();
+                    onMapMarkerClickHireDialog.dismiss();
+                }
             }
         });
 
-        Button buttonYes = (Button) onMapMarkerClickHireDialog.findViewById(R.id.btn_driver_hire_dialog_hire);
-        buttonYes.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                listenerYes.run();
-                onMapMarkerClickHireDialog.dismiss();
-            }
-        });
+        if (!isCustomUserDetailsDialogOpenedFromMap && AppGlobals.getUserType() == 0) {
+            LinearLayout llSpinner = (LinearLayout) onMapMarkerClickHireDialog.findViewById(R.id.ll_custom_dialog_spinner);
+            llSpinner.setVisibility(View.GONE);
+            dialogButtonYes.setText("Show Documents");
+            dialogButtonNo.setText("Dismiss");
+            TextView tvCaution = (TextView) onMapMarkerClickHireDialog.findViewById(R.id.tv_dialog_caution);
+            tvCaution.setVisibility(View.GONE);
+            TextView tvCautionTwo = (TextView) onMapMarkerClickHireDialog.findViewById(R.id.tv_dialog_caution_two);
+            tvCautionTwo.setVisibility(View.GONE);
+            docOneMain = docOne;
+            docTwoMain = docTwo;
+            docThreeMain = docThree;
+        }
         Helpers.dismissProgressDialog();
         onMapMarkerClickHireDialog.show();
     }
@@ -454,7 +610,6 @@ public class Helpers {
         context.startActivity(i);
     }
 
-
     public static void openInstallationActivityForPlayServices(final Activity context) {
         if (context == null) {
             return;
@@ -465,33 +620,6 @@ public class Helpers {
         i.setData(Uri.parse("https://play.google.com/store/apps/details?id=com.google.android.gms&hl=en"));
         context.startActivity(i);
     }
-
-
-    public static final Runnable exitApp = new Runnable() {
-        public void run() {
-            AppGlobals.getRunningActivityInstance().finish();
-            System.exit(0);
-        }
-    };
-
-    public static Runnable openPermissionsSettingsForMarshmallow = new Runnable() {
-        public void run() {
-            Helpers.openAppDetailsActivityForSettingPermissions(AppGlobals.getRunningActivityInstance());
-            AppGlobals.getRunningActivityInstance().onBackPressed();
-        }
-    };
-
-    public static Runnable openPlayServicesInstallation = new Runnable() {
-        public void run() {
-            Helpers.openAppDetailsActivityForSettingPermissions(AppGlobals.getRunningActivityInstance());
-            AppGlobals.getRunningActivityInstance().onBackPressed();
-        }
-    };
-
-    private static final int SECOND_MILLIS = 1000;
-    private static final int MINUTE_MILLIS = 60 * SECOND_MILLIS;
-    private static final int HOUR_MILLIS = 60 * MINUTE_MILLIS;
-    private static final int DAY_MILLIS = 24 * HOUR_MILLIS;
 
     public static String getTimeAgo(long time) {
         if (time < 1000000000000L) {
@@ -533,6 +661,19 @@ public class Helpers {
         return timeInMilliseconds;
     }
 
+    public static String formatTimeToDisplay(String time) {
+        SimpleDateFormat sdfIn = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+        Date date = null;
+        try {
+            date = sdfIn.parse(time);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+
+        SimpleDateFormat sdfOut = new SimpleDateFormat("EEE, d MMM yyyy, h:mm a");
+        return sdfOut.format(date);
+    }
+
     public static String replaceLastThreeCharacters(String s) {
         int length = s.length();
         return s.substring(0, length - 3) + "***";
@@ -556,7 +697,7 @@ public class Helpers {
     }
 
     public static String getCurrentTimeOfDevice() {
-       return android.text.format.DateFormat.format("yyyy-MM-ddThh:mm:ss", new java.util.Date()).toString();
+        return android.text.format.DateFormat.format("yyyy-MM-ddThh:mm:ss", new java.util.Date()).toString();
     }
 
     public static Bitmap getCroppedBitmap(Bitmap bitmap) {
@@ -587,7 +728,7 @@ public class Helpers {
             maxSize = (int) (maxSize * 1.7);
         }
 
-        float bitmapRatio = (float)width / (float) height;
+        float bitmapRatio = (float) width / (float) height;
         if (bitmapRatio > 0) {
             width = maxSize;
             height = (int) (width / bitmapRatio);
@@ -611,20 +752,75 @@ public class Helpers {
 
     public static Bitmap getBitmapFromURL(String src) {
         try {
-            URL url = new URL(src);
+            URL url = new URL(EndPoints.SERVER_URL + src);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setDoInput(true);
             connection.connect();
             InputStream input = connection.getInputStream();
-            Bitmap myBitmap = BitmapFactory.decodeStream(input);
-            return myBitmap;
+            return BitmapFactory.decodeStream(input);
         } catch (IOException e) {
             return null;
         }
     }
 
-    public static void removeMedia(Context c, File f) {
-        ContentResolver resolver = c.getContentResolver();
-        resolver.delete(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, MediaStore.Images.Media.DATA + "=?", new String[] { f.getAbsolutePath() });
+    public static String writeImageToExternalStorage(ByteArrayOutputStream bytes, String name) {
+        File destination = new File(Environment.getExternalStorageDirectory() + File.separator
+                + "Android/data" + File.separator + AppGlobals.getContext().getPackageName());
+        if (!destination.exists()) {
+            destination.mkdirs();
+        }
+        File file = new File(destination, name + ".jpg");
+        FileOutputStream fo;
+        try {
+            file.createNewFile();
+            fo = new FileOutputStream(file);
+            fo.write(bytes.toByteArray());
+            fo.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return file.getAbsolutePath();
     }
+
+    public static class RetrieveDocumentsTask extends AsyncTask<Void, Void, Void> {
+
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            showProgressDialog(MainActivity.getInstance(), "Retrieving Documents");
+        }
+
+        @Override
+        protected Void doInBackground(Void... params) {
+            bmOne = getBitmapFromURL(docOneMain);
+            bmTwo = getBitmapFromURL(docTwoMain);
+            bmThree = getBitmapFromURL(docThreeMain);
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+            dismissProgressDialog();
+            ibPhotoOne.setImageBitmap(getCroppedBitmap(getResizedBitmapToDisplay(bmOne, 120)));
+            ibPhotoTwo.setImageBitmap(getCroppedBitmap(getResizedBitmapToDisplay(bmTwo, 120)));
+            ibPhotoThree.setImageBitmap(getCroppedBitmap(getResizedBitmapToDisplay(bmThree, 120)));
+
+            llDetails.setVisibility(View.INVISIBLE);
+
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    llDetails.setVisibility(View.GONE);
+                    llDocuments.setVisibility(View.VISIBLE);
+                    dialogButtonNo.setText("Back");
+                    dialogButtonYes.setVisibility(View.INVISIBLE);
+                }
+            }, 250);
+
+            dialogDocumentsShown = true;
+        }
+    }
+
 }

@@ -95,6 +95,7 @@ public class MultipartDataUtility {
                 .append(CRLF);
         writer.close();
         if (ProfileFragment.isProfileFragmentOpen) {
+            ProfileFragment.connection = connection;
             ProfileFragment.responseCode = connection.getResponseCode();
             Log.i("ResponseCode", "" + connection.getResponseCode());
             Log.i("Message", "" + connection.getResponseMessage());

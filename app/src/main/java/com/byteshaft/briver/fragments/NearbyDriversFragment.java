@@ -32,7 +32,6 @@ import java.util.HashMap;
 public class NearbyDriversFragment extends android.support.v4.app.Fragment {
 
     View baseViewNearbyDriversFragment;
-
     HashMap<Integer, String> hashMapDriverAddresses;
     ArrayList<Integer> driversId;
     String driverName;
@@ -42,24 +41,23 @@ public class NearbyDriversFragment extends android.support.v4.app.Fragment {
     private String driverIdForHiring;
     private String driverTimeSpanForHiring;
     private String driverTimeOfHiring;
-
     ListView nearbyDriversList;
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         baseViewNearbyDriversFragment = inflater.inflate(R.layout.fragment_nearby_drivers_list, container, false);
-
         nearbyDriversList = (ListView) baseViewNearbyDriversFragment.findViewById(R.id.lv_list_nearby_drivers);
-
-        Log.i("backStackNUmber", "" + getActivity().getSupportFragmentManager().getBackStackEntryCount());
-
         driversId = new ArrayList<>();
         hashMapDriverAddresses = new HashMap<>();
+        return baseViewNearbyDriversFragment;
+    }
 
+    @Override
+    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
         new GetDriversAddresses().execute();
 
-        return baseViewNearbyDriversFragment;
     }
 
     class CustomRoutesListAdapter extends ArrayAdapter<String> {
@@ -88,7 +86,6 @@ public class NearbyDriversFragment extends android.support.v4.app.Fragment {
                 viewHolder.tvNearbyDriversListStatus = (TextView) convertView.findViewById(R.id.tv_nearby_drivers_status);
                 viewHolder.tvNearbyDriversReviewCount = (TextView) convertView.findViewById(R.id.tv_total_rating_nearby_driver_list);
                 viewHolder.rBarNearbyDrivers = (RatingBar) convertView.findViewById(R.id.rBar_nearby_drivers_list);
-
                 convertView.setTag(viewHolder);
             } else {
                 viewHolder = (ViewHolder) convertView.getTag();
@@ -97,10 +94,14 @@ public class NearbyDriversFragment extends android.support.v4.app.Fragment {
             viewHolder.tvNearbyDriversListEmail.setText("Email: " + Helpers.replaceFirstThreeCharacters(HireFragment.hashMapDriverData.get(arrayListIntIds.get(position)).get(1)));
             viewHolder.tvNearbyDriversListContact.setText("Contact: " + Helpers.replaceLastThreeCharacters(HireFragment.hashMapDriverData.get(arrayListIntIds.get(position)).get(2)));
             viewHolder.tvNearbyDriversListTotalHires.setText("Total Hires: " + HireFragment.hashMapDriverData.get(arrayListIntIds.get(position)).get(6));
-            viewHolder.tvNearbyDriversListAddress.setText("Address: " + hashMapDriverAddresses.get(driversId.get(position)));
-            viewHolder.tvNearbyDriversListDrivingExperience.setText("Driving Experience: " + HireFragment.hashMapDriverData.get(arrayListIntIds.get(position)).get(5));
+            viewHolder.tvNearbyDriversListAddress.setText("Address: " + hashMapDriverAddresses.get(arrayListIntIds.get(position)));
+            String drivingExperienceYears = HireFragment.hashMapDriverData.get(arrayListIntIds.get(position)).get(5);
+            if (drivingExperienceYears.equalsIgnoreCase("1")) {
+                viewHolder.tvNearbyDriversListDrivingExperience.setText("Driving Experience: " + drivingExperienceYears + " Year");
+            } else {
+                viewHolder.tvNearbyDriversListDrivingExperience.setText("Driving Experience: " + drivingExperienceYears + " Years");
+            }
             viewHolder.tvNearbyDriversListLocationLastUpdated.setText("Location Last Updated: " + Helpers.getTimeAgo(Helpers.getTimeInMillis(HireFragment.hashMapDriverData.get(arrayListIntIds.get(position)).get(4))));
-
             String bio = HireFragment.hashMapDriverData.get(arrayListIntIds.get(position)).get(7);
             if (bio.length() > 2) {
                 viewHolder.tvNearbyDriversListBio.setText("Bio: " + bio);
@@ -127,6 +128,7 @@ public class NearbyDriversFragment extends android.support.v4.app.Fragment {
 
         @Override
         public int getCount() {
+            Log.e("TAG", String.valueOf(arrayListIntIds.size()));
             return arrayListIntIds.size();
         }
     }
@@ -146,7 +148,6 @@ public class NearbyDriversFragment extends android.support.v4.app.Fragment {
     }
 
     private class GetDriversAddresses extends AsyncTask<Void, Integer, Void> {
-
 
         @Override
         protected void onPreExecute() {
@@ -205,7 +206,6 @@ public class NearbyDriversFragment extends android.support.v4.app.Fragment {
         AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
         indexContextMenu = info.position;
         System.out.println(HireFragment.driversIdList.get(indexContextMenu));
-
         switch (item.getItemId()) {
             case R.id.item_context_nearby_drivers_list_hire:
                 Helpers.AlertDialogWithPositiveFunctionNegativeButton(getActivity(), "Confirmation",
@@ -219,12 +219,11 @@ public class NearbyDriversFragment extends android.support.v4.app.Fragment {
         public void run() {
             Log.i("ContextMenuItem", "Hire");
             driverTimeSpanForHiring = Integer.toString(HireFragment.totalHoursOfService);
-            if (HireFragment.isQuickHire) {
-                driverTimeOfHiring = Helpers.getCurrentTimeOfDevice();
-            } else {
+            if (!HireFragment.isQuickHire){
                 driverTimeOfHiring = HireFragment.serviceStartTime;
             }
-            stringArrayForDriverHiring = new String[]{driverIdForHiring, driverTimeSpanForHiring, driverTimeOfHiring};
+            stringArrayForDriverHiring = new String[]{driverIdForHiring, driverTimeOfHiring,
+                    driverTimeSpanForHiring, HireFragment.hireMeetUpPoint};
             taskHiringDriver = (HiringTask) new HiringTask().execute(stringArrayForDriverHiring);
         }
     };

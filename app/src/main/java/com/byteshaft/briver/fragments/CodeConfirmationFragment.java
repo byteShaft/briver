@@ -153,9 +153,6 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
                 confirmationCode = etCodeConfirmationCode.getText().toString();
                 if (validateConfirmationCode()) {
                     taskUserConfirmation = (UserConfirmationTask) new UserConfirmationTask().execute();
-                    if (Helpers.isIsSoftKeyboardOpen()) {
-                        mSoftKeyboard.closeSoftKeyboard();
-                    }
                 }
                 break;
             case R.id.btn_confirmation_code_resend:
@@ -166,9 +163,6 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
                             Snackbar.LENGTH_SHORT, "#ffffff");
                 } else {
                     taskResendEmail = (UserResendEmail) new UserResendEmail().execute();
-                    if (Helpers.isIsSoftKeyboardOpen()) {
-                        mSoftKeyboard.closeSoftKeyboard();
-                    }
                 }
                 break;
         }
@@ -187,7 +181,9 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
 
     public void onConfirmationSuccess() {
         Toast.makeText(getActivity(), "Confirmation successful", Toast.LENGTH_SHORT).show();
-        Helpers.closeSoftKeyboard(getActivity());
+        if (Helpers.isIsSoftKeyboardOpen()) {
+            Helpers.closeSoftKeyboard(getActivity());
+        }
         if (RegisterFragment.registerUserType == 0) {
             AppGlobals.putUserType(0);
         } else {
@@ -203,7 +199,6 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
     }
 
     public void onResendSuccess() {
-        Helpers.closeSoftKeyboard(getActivity());
         Helpers.showSnackBar(getView(), "E-Mail successfully sent", Snackbar.LENGTH_LONG, "#A4C639");
         tvCodeConfirmationStatusDisplay.setText("Code Sent - Check Mail");
         tvCodeConfirmationStatusDisplay.setTextColor(Color.parseColor("#A4C639"));
@@ -287,7 +282,6 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
                 AppGlobals.putNumberOfHires(jsonObject.getInt("number_of_hires"));
                 AppGlobals.putPhoneNumber(jsonObject.getString("phone_number"));
                 AppGlobals.putTransmissionType(jsonObject.getInt("transmission_type"));
-
                 if (jsonObject.getInt("user_type") == 0) {
                     AppGlobals.putDriverSearchRadius(jsonObject.getInt("driver_filter_radius"));
                     AppGlobals.putVehicleType(jsonObject.getInt("vehicle_type"));
@@ -297,7 +291,6 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
                     AppGlobals.putDrivingExperience(jsonObject.getString("driving_experience"));
                     AppGlobals.putDriverBio(jsonObject.getString("bio"));
                 }
-
             } catch (IOException e) {
                 e.printStackTrace();
                 onConfirmationFailed();
@@ -345,7 +338,7 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
         @Override
         protected Void doInBackground(Void... params) {
             try {
-                URL url = new URL(EndPoints.BASE_ACCOUNTS + "request_activation_key");
+                URL url = new URL(EndPoints.BASE_URL_USER + "request-activation-key");
                 connection = (HttpURLConnection) url.openConnection();
                 connection.setDoOutput(true);
                 connection.setDoInput(true);
