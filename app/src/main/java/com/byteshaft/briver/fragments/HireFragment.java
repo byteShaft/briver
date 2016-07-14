@@ -303,9 +303,9 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
                             protected Void doInBackground(Void... params) {
                                 try {
                                     id = Integer.parseInt(snippet);
-                                    String[] latLngToString = hashMapDriverData.get(id).get(3).split(",");
-                                    double latitude = Double.parseDouble(latLngToString[0]);
-                                    double longitude = Double.parseDouble(latLngToString[1]);
+                                    String[] stringToLatLng = hashMapDriverData.get(id).get(3).split(",");
+                                    double latitude = Double.parseDouble(stringToLatLng[0]);
+                                    double longitude = Double.parseDouble(stringToLatLng[1]);
                                     addressString = Helpers.getAddress(getActivity(), new LatLng(latitude, longitude));
                                     taskSuccess = true;
                                 } catch (NumberFormatException e) {

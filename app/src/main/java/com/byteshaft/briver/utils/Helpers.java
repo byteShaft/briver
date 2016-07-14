@@ -73,6 +73,7 @@ public class Helpers {
     private static final int MINUTE_MILLIS = 60 * SECOND_MILLIS;
     private static final int HOUR_MILLIS = 60 * MINUTE_MILLIS;
     private static final int DAY_MILLIS = 24 * HOUR_MILLIS;
+    public static LatLng latLngForNavigation;
     public static int countDownTimerMillisUntilFinished;
     public static boolean isCustomUserDetailsDialogOpenedFromMap;
     public static Spinner spinnerServiceHours;
@@ -371,6 +372,8 @@ public class Helpers {
 
         final RelativeLayout rlDialogDocumentsMain = (RelativeLayout) onMapMarkerClickHireDialog.findViewById(R.id.rl_main_document);
         final ImageView ivDialogDocumentsMain = (ImageView) onMapMarkerClickHireDialog.findViewById(R.id.iv_main_document);
+        LinearLayout llSpinner = (LinearLayout) onMapMarkerClickHireDialog.findViewById(R.id.ll_custom_dialog_spinner);
+        spinnerServiceHours = (Spinner) onMapMarkerClickHireDialog.findViewById(R.id.spinner_hire_dialog_service_hours);
 
         ImageButton btnMainDocumentClose = (ImageButton) onMapMarkerClickHireDialog.findViewById(R.id.btn_document_view_close);
         btnMainDocumentClose.setOnClickListener(new View.OnClickListener() {
@@ -452,14 +455,23 @@ public class Helpers {
             tvContact.setText("Contact: " + Helpers.replaceLastThreeCharacters(contact));
         } else {
             tvContact.setText("Contact: " + contact);
+            llSpinner.setVisibility(View.GONE);
+            TextView tvCaution = (TextView) onMapMarkerClickHireDialog.findViewById(R.id.tv_dialog_caution);
+            tvCaution.setVisibility(View.GONE);
+            TextView tvCautionTwo = (TextView) onMapMarkerClickHireDialog.findViewById(R.id.tv_dialog_caution_two);
+            tvCautionTwo.setVisibility(View.GONE);
         }
 
         TextView tvStatus = (TextView) onMapMarkerClickHireDialog.findViewById(R.id.tv_driver_hire_dialog_status);
-        int statusInt = Integer.parseInt(status);
-        if (statusInt == 1 && status != null) {
-            tvStatus.setText("Status: Available");
-        } else if (statusInt == 2 && status != null) {
-            tvStatus.setText("Status: Online");
+        if (status != null) {
+            int statusInt = Integer.parseInt(status);
+            if (statusInt == 1) {
+                tvStatus.setText("Status: Available");
+            } else if (statusInt == 2) {
+                tvStatus.setText("Status: Online");
+            } else {
+                tvStatus.setVisibility(View.GONE);
+            }
         } else {
             tvStatus.setVisibility(View.GONE);
         }
@@ -475,10 +487,18 @@ public class Helpers {
         }
 
         TextView tvLocationLastUpdated = (TextView) onMapMarkerClickHireDialog.findViewById(R.id.tv_driver_hire_dialog_location_last_updated);
-        if (locationLastUpdated != null) {
-            tvLocationLastUpdated.setText("Location Last Updated: " + Helpers.getTimeAgo(Helpers.getTimeInMillis(locationLastUpdated)));
+        if (AppGlobals.getUserType() == 1) {
+            if (docOne.equalsIgnoreCase("0")) {
+                tvLocationLastUpdated.setText("Transmission Type: Manual");
+            } else {
+                tvLocationLastUpdated.setText("Transmission Type: Automatic");
+            }
         } else {
-            tvLocationLastUpdated.setVisibility(View.GONE);
+            if (locationLastUpdated != null) {
+                tvLocationLastUpdated.setText("Location Last Updated: " + Helpers.getTimeAgo(Helpers.getTimeInMillis(locationLastUpdated)));
+            } else {
+                tvLocationLastUpdated.setVisibility(View.GONE);
+            }
         }
 
         TextView tvExperience = (TextView) onMapMarkerClickHireDialog.findViewById(R.id.tv_driver_hire_dialog_driving_experience);
@@ -488,24 +508,40 @@ public class Helpers {
         } catch (NumberFormatException ignored) {
         }
 
-        if (experience != null) {
-            if (experienceInt < 2) {
-                tvExperience.setText("Driving Experience: " + experience + " " + "Year");
-            } else {
-                tvExperience.setText("Driving Experience: " + experience + " " + "Years");
+        if (AppGlobals.getUserType() == 1) {
+            if (docTwo.equalsIgnoreCase("0")) {
+                tvExperience.setText("Vehicle Type: Mini");
+            } else if (docTwo.equalsIgnoreCase("1")) {
+                tvExperience.setText("Vehicle Type: Hatchback");
+            } else if (docTwo.equalsIgnoreCase("2")) {
+                tvExperience.setText("Vehicle Type: Sedan");
+            } else if (docTwo.equalsIgnoreCase("3")) {
+                tvExperience.setText("Vehicle Type: Luxury");
             }
         } else {
-            tvExperience.setVisibility(View.GONE);
+            if (experience != null) {
+                if (experienceInt < 2) {
+                    tvExperience.setText("Driving Experience: " + experience + " " + "Year");
+                } else {
+                    tvExperience.setText("Driving Experience: " + experience + " " + "Years");
+                }
+            } else {
+                tvExperience.setVisibility(View.GONE);
+            }
         }
 
         TextView tvBio = (TextView) onMapMarkerClickHireDialog.findViewById(R.id.tv_driver_hire_dialog_bio);
-        if (bio != null && bio.trim().length() > 1) {
-            tvBio.setText("Bio: " + bio);
+
+        if (AppGlobals.getUserType() == 1) {
+            tvBio.setText("Vehicle: " + docThree);
         } else {
-            tvBio.setVisibility(View.GONE);
+            if (bio != null && bio.trim().length() > 1) {
+                tvBio.setText("Bio: " + bio);
+            } else {
+                tvBio.setVisibility(View.GONE);
+            }
         }
 
-        spinnerServiceHours = (Spinner) onMapMarkerClickHireDialog.findViewById(R.id.spinner_hire_dialog_service_hours);
         ArrayAdapter<String> adapter = new ArrayAdapter<>(context, android.R.layout.simple_spinner_dropdown_item,
                 HireFragment.itemsForHoursSelectingDialog);
         spinnerServiceHours.setAdapter(adapter);
@@ -545,17 +581,14 @@ public class Helpers {
         });
 
         if (!isCustomUserDetailsDialogOpenedFromMap && AppGlobals.getUserType() == 0) {
-            LinearLayout llSpinner = (LinearLayout) onMapMarkerClickHireDialog.findViewById(R.id.ll_custom_dialog_spinner);
-            llSpinner.setVisibility(View.GONE);
             dialogButtonYes.setText("Show Documents");
             dialogButtonNo.setText("Dismiss");
-            TextView tvCaution = (TextView) onMapMarkerClickHireDialog.findViewById(R.id.tv_dialog_caution);
-            tvCaution.setVisibility(View.GONE);
-            TextView tvCautionTwo = (TextView) onMapMarkerClickHireDialog.findViewById(R.id.tv_dialog_caution_two);
-            tvCautionTwo.setVisibility(View.GONE);
             docOneMain = docOne;
             docTwoMain = docTwo;
             docThreeMain = docThree;
+        } else if (!isCustomUserDetailsDialogOpenedFromMap && AppGlobals.getUserType() == 1) {
+            dialogButtonYes.setVisibility(View.INVISIBLE);
+            dialogButtonNo.setText("Dismiss");
         }
         Helpers.dismissProgressDialog();
         onMapMarkerClickHireDialog.show();
