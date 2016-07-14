@@ -14,5 +14,8 @@
         android:title="Finish/Review" />
     <item
         android:id="@+id/item_context_hires_list_view_user_details"
-        android:title="User details" />
+        android:title="User Details" />
+    <item
+        android:id="@+id/item_context_hires_list_navigate"
+        android:title="Show on Map/Navigate" />
 </menu>

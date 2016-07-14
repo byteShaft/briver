@@ -25,6 +25,7 @@ dependencies {
     compile 'com.android.support:appcompat-v7:23.3.0'
     compile 'com.android.support:design:23.3.0'
     compile 'com.google.android.gms:play-services:8.4.0'
+    compile 'com.github.jd-alexander:library:1.0.6'
     compile 'org.apache.directory.studio:org.apache.commons.io:2.4'
 }
 

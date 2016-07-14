@@ -9,6 +9,7 @@ import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.ViewPager;
 import android.util.Log;
 import android.view.ContextMenu;
@@ -23,6 +24,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import com.byteshaft.briver.R;
+import com.byteshaft.briver.Tasks.UpdateHireStatusTask;
 import com.byteshaft.briver.utils.AppGlobals;
 import com.byteshaft.briver.utils.EndPoints;
 import com.byteshaft.briver.utils.Helpers;
@@ -44,39 +46,29 @@ import java.util.HashMap;
 
 public class TimelineFragment extends android.support.v4.app.Fragment implements View.OnClickListener {
 
-    View baseViewTimelineFragment;
     public static ViewPager mViewPager;
-    private SectionsPagerAdapter mSectionsPagerAdapter;
-    boolean isTimelineDataTaskRunning;
-    boolean isViewUserDetailsTaskRunning;
-    GetTimelineData taskTimelineData;
-    ViewUserDetailsTask taskViewUserData;
     public static int tabCount;
-    int tabSelected;
-
     public static int responseCode;
-    HttpURLConnection connection;
-
     public static ListView lvConfirmedHires;
     public static ListView lvPendingHires;
     public static ListView lvHistoryHires;
-
-    TextView tvHiresConfirmedEmpty;
-    TextView tvHiresPendingEmpty;
-    TextView tvHiresHistoryEmpty;
-
     public static ArrayList<Integer> hiresIdsList;
     public static ArrayList<Integer> hiresIdsListConfirmed;
     public static ArrayList<Integer> hiresIdsListPending;
     public static ArrayList<Integer> hiresIdsListHistory;
-
     public static ArrayList<String> arrayListViewUserDetails;
-
-    public HashMap<Integer, ArrayList<String>> hashMapTimeCustomListAdapter;
-    public static HashMap<Integer, ArrayList<String>> hashMapTimelineDataConfirmed;
-    public static HashMap<Integer, ArrayList<String>> hashMapTimelineDataPending;
-    public static HashMap<Integer, ArrayList<String>> hashMapTimelineDataHistory;
-
+    public static HashMap<Integer, ArrayList<String>> hashMapTimelineData;
+    View baseViewTimelineFragment;
+    boolean isTimelineDataTaskRunning;
+    boolean isViewUserDetailsTaskRunning;
+    GetTimelineData taskTimelineData;
+    ViewUserDetailsTask taskViewUserData;
+    int tabSelected;
+    HttpURLConnection connection;
+    TextView tvHiresConfirmedEmpty;
+    TextView tvHiresPendingEmpty;
+    TextView tvHiresHistoryEmpty;
+    private SectionsPagerAdapter mSectionsPagerAdapter;
 
     @Nullable
     @Override
@@ -97,39 +89,37 @@ public class TimelineFragment extends android.support.v4.app.Fragment implements
             @Override
             public void onPageSelected(int position) {
                 Log.i("PageSelected", "" + position);
-                hashMapTimeCustomListAdapter = new HashMap<>();
                 if (position == 0) {
                     tabSelected = 0;
-                    hashMapTimeCustomListAdapter = new HashMap<>(hashMapTimelineDataConfirmed);
-                    if (hashMapTimelineDataConfirmed.size() == 0) {
+                    if (hiresIdsListConfirmed.size() == 0) {
                         tvHiresConfirmedEmpty.setVisibility(View.VISIBLE);
                     } else {
                         tvHiresConfirmedEmpty.setVisibility(View.GONE);
-                        CustomHiresListAdapter customHiresListAdapter1 = new CustomHiresListAdapter(getActivity(), R.layout.hires_list_row, hiresIdsList);
+                        CustomHiresListAdapter customHiresListAdapter1 = new CustomHiresListAdapter(getActivity(), R.layout.hires_list_row, hiresIdsListConfirmed);
                         lvConfirmedHires.setAdapter(customHiresListAdapter1);
+                        registerForContextMenu(lvConfirmedHires);
                     }
                 } else if (position == 1) {
                     tabSelected = 1;
-                    hashMapTimeCustomListAdapter = new HashMap<>(hashMapTimelineDataPending);
                     tvHiresPendingEmpty.setVisibility(View.VISIBLE);
-                    if (hashMapTimelineDataPending.size() == 0) {
+                    if (hiresIdsListPending.size() == 0) {
                         tvHiresPendingEmpty.setVisibility(View.VISIBLE);
                     } else {
                         tvHiresPendingEmpty.setVisibility(View.GONE);
-                        CustomHiresListAdapter customHiresListAdapter2 = new CustomHiresListAdapter(getActivity(), R.layout.hires_list_row, hiresIdsList);
+                        CustomHiresListAdapter customHiresListAdapter2 = new CustomHiresListAdapter(getActivity(), R.layout.hires_list_row, hiresIdsListPending);
                         lvPendingHires.setAdapter(customHiresListAdapter2);
                         registerForContextMenu(lvPendingHires);
                     }
                 } else if (position == 2) {
                     tabSelected = 2;
-                    hashMapTimeCustomListAdapter = new HashMap<>(hashMapTimelineDataHistory);
                     tvHiresHistoryEmpty.setVisibility(View.VISIBLE);
-                    if (hashMapTimelineDataHistory.size() == 0) {
+                    if (hiresIdsListHistory.size() == 0) {
                         tvHiresHistoryEmpty.setVisibility(View.VISIBLE);
                     } else {
                         tvHiresHistoryEmpty.setVisibility(View.GONE);
-                        CustomHiresListAdapter customHiresListAdapter3 = new CustomHiresListAdapter(getActivity(), R.layout.hires_list_row, hiresIdsList);
+                        CustomHiresListAdapter customHiresListAdapter3 = new CustomHiresListAdapter(getActivity(), R.layout.hires_list_row, hiresIdsListHistory);
                         lvHistoryHires.setAdapter(customHiresListAdapter3);
+                        lvHistoryHires.setEnabled(false);
                     }
                 }
             }
@@ -148,10 +138,7 @@ public class TimelineFragment extends android.support.v4.app.Fragment implements
         hiresIdsListPending = new ArrayList<>();
         hiresIdsListHistory = new ArrayList<>();
         arrayListViewUserDetails = new ArrayList<>();
-
-        hashMapTimelineDataConfirmed = new HashMap<>();
-        hashMapTimelineDataPending = new HashMap<>();
-        hashMapTimelineDataHistory = new HashMap<>();
+        hashMapTimelineData = new HashMap<>();
 
         taskTimelineData = (GetTimelineData) new GetTimelineData().execute();
 
@@ -163,6 +150,106 @@ public class TimelineFragment extends android.support.v4.app.Fragment implements
 
     }
 
+    @Override
+    public void onPause() {
+        super.onPause();
+        if (isTimelineDataTaskRunning) {
+            taskTimelineData.cancel(true);
+        }
+
+        if (isViewUserDetailsTaskRunning) {
+            taskViewUserData.cancel(true);
+        }
+    }
+
+    @Override
+    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+        super.onCreateContextMenu(menu, v, menuInfo);
+        AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) menuInfo;
+        Log.i("info.Position", "" + info.position);
+        String userName = null;
+        MenuItem finish = menu.findItem(R.id.item_context_hires_list_finish);
+        MenuInflater inflater = this.getActivity().getMenuInflater();
+        if (AppGlobals.getUserType() == 0 && tabSelected != 2) {
+            inflater.inflate(R.menu.context_menu_hires_list_customer, menu);
+        } else {
+            inflater.inflate(R.menu.context_menu_hires_list_driver, menu);
+        }
+        if (tabSelected == 0) {
+            userName = hashMapTimelineData.get(returnProperID(info.position)).get(2);
+            menu.removeItem(R.id.item_context_hires_list_accept);
+            menu.removeItem(R.id.item_context_hires_list_decline);
+            menu.removeItem(R.id.item_context_hires_list_navigate);
+        } else if (tabSelected == 1) {
+            userName = hashMapTimelineData.get(returnProperID(info.position)).get(2);
+            menu.removeItem(R.id.item_context_hires_list_finish);
+        }
+        menu.setHeaderTitle(userName);
+    }
+
+    @Override
+    public boolean onContextItemSelected(MenuItem item) {
+        AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
+        switch (item.getItemId()) {
+            case R.id.item_context_hires_list_accept:
+                String[] dataAccept = new String[]{"" + returnProperID(info.position), "2"};
+                new UpdateHireStatusTask().execute(dataAccept);
+                return true;
+            case R.id.item_context_hires_list_decline:
+                String[] dataDecline = new String[]{"" + returnProperID(info.position), "3"};
+                new UpdateHireStatusTask().execute(dataDecline);
+                return true;
+            case R.id.item_context_hires_list_navigate:
+                String[] stringToLatLng = hashMapTimelineData.get(returnProperID(info.position)).get(7).split(",");
+                double latitude = Double.parseDouble(stringToLatLng[0]);
+                double longitude = Double.parseDouble(stringToLatLng[1]);
+                Helpers.latLngForNavigation = new LatLng(latitude, longitude);
+                FragmentTransaction transaction = getFragmentManager().beginTransaction();
+                transaction.replace(R.id.container_main, new NavigateFragment());
+                transaction.addToBackStack("NavigateFragment");
+                transaction.commit();
+                return true;
+            case R.id.item_context_hires_list_call:
+                Helpers.initiateCallIntent(getActivity(), hashMapTimelineData.get(returnProperID(info.position)).get(3));
+                return true;
+            case R.id.item_context_hires_list_finish:
+                String[] dataFinish = new String[]{"" + returnProperID(info.position), "5"};
+                new UpdateHireStatusTask().execute(dataFinish);
+                return true;
+            case R.id.item_context_hires_list_view_user_details:
+                if (AppGlobals.getUserType() == 0) {
+                    taskViewUserData = (ViewUserDetailsTask) new ViewUserDetailsTask().execute(
+                            Integer.valueOf(hashMapTimelineData.get(returnProperID(info.position)).get(1)));
+                } else {
+                    taskViewUserData = (ViewUserDetailsTask) new ViewUserDetailsTask().execute(
+                            Integer.valueOf(hashMapTimelineData.get(returnProperID(info.position)).get(1)));
+                }
+                return true;
+        }
+        return true;
+    }
+
+    private int returnProperID(int id) {
+        int properID = -1;
+        if (tabSelected == 0) {
+            properID = hiresIdsListConfirmed.get(id);
+        } else if (tabSelected == 1) {
+            properID = hiresIdsListPending.get(id);
+        } else if (tabSelected == 2) {
+            properID = hiresIdsListHistory.get(id);
+        }
+        return properID;
+    }
+
+    static class ViewHolder {
+        TextView tvHiresPrice;
+        TextView tvHiresStatus;
+        TextView tvHiresDriverName;
+        TextView tvHiresStartTime;
+        TextView tvHiresEndTime;
+        TextView tvHiresTimeSpan;
+    }
+
     public class SectionsPagerAdapter extends FragmentPagerAdapter {
 
         public SectionsPagerAdapter(FragmentManager fm) {
@@ -172,7 +259,7 @@ public class TimelineFragment extends android.support.v4.app.Fragment implements
         @Override
         public Fragment getItem(int position) {
             PlaceholderFragment placeholderFragment = new PlaceholderFragment();
-            return placeholderFragment.newInstance(position+1);
+            return placeholderFragment.newInstance(position + 1);
         }
 
         @Override
@@ -196,6 +283,7 @@ public class TimelineFragment extends android.support.v4.app.Fragment implements
 
     public class PlaceholderFragment extends Fragment implements AdapterView.OnItemSelectedListener {
         private static final String ARG_SECTION_NUMBER = "section_number";
+
         /**
          * The fragment argument representing the section number for this
          * fragment.
@@ -264,7 +352,7 @@ public class TimelineFragment extends android.support.v4.app.Fragment implements
         @Override
         protected Void doInBackground(Void... params) {
             String url;
-                url = EndPoints.HIRING_REQUESTS;
+            url = EndPoints.HIRING_REQUESTS;
             try {
                 connection = WebServiceHelpers.openConnectionForUrl(url, "GET", true);
                 JSONArray jsonArray = new JSONArray(WebServiceHelpers.readResponse(connection));
@@ -276,57 +364,29 @@ public class TimelineFragment extends android.support.v4.app.Fragment implements
                         if (jsonObject.getInt("status") == 2 ||
                                 Integer.parseInt(jsonObject.getString("status")) == 4) {
                             hiresIdsListConfirmed.add(jsonObject.getInt("id"));
-                        ArrayList<String> arrayListString = new ArrayList<>();
-                        arrayListString.add(jsonObject.getString("status"));
-                            if (AppGlobals.getUserType() == 0) {
-                                arrayListString.add(jsonObject.getString("driver"));
-                                arrayListString.add(jsonObject.getString("driver_phone_number"));
-                            } else {
-                                arrayListString.add(jsonObject.getString("customer"));
-                                arrayListString.add(jsonObject.getString("customer_name"));
-                                arrayListString.add(jsonObject.getString("customer_phone_number"));
-                            }
-                        arrayListString.add(jsonObject.getString("start_time"));
-                        arrayListString.add(jsonObject.getString("end_time"));
-                        arrayListString.add(jsonObject.getString("time_span"));
-                        hashMapTimelineDataConfirmed.put(jsonObject.getInt("id"), arrayListString);
                         } else if (jsonObject.getInt("status") == 1) {
                             hiresIdsListPending.add(jsonObject.getInt("id"));
-                            ArrayList<String> arrayListString = new ArrayList<>();
-                            arrayListString.add(jsonObject.getString("status"));
-                            if (AppGlobals.getUserType() == 0) {
-                                arrayListString.add(jsonObject.getString("driver"));
-                                arrayListString.add(jsonObject.getString("driver_name"));
-                                arrayListString.add(jsonObject.getString("driver_phone_number"));
-                            } else {
-                                arrayListString.add(jsonObject.getString("customer"));
-                                arrayListString.add(jsonObject.getString("customer_name"));
-                                arrayListString.add(jsonObject.getString("customer_phone_number"));
-                            }
-                            arrayListString.add(jsonObject.getString("start_time"));
-                            arrayListString.add(jsonObject.getString("end_time"));
-                            arrayListString.add(jsonObject.getString("time_span"));
-                            hashMapTimelineDataPending.put(jsonObject.getInt("id"), arrayListString);
                         } else if (jsonObject.getInt("status") == 3 ||
                                 Integer.parseInt(jsonObject.getString("status")) == 5 ||
                                 Integer.parseInt(jsonObject.getString("status")) == 6) {
                             hiresIdsListHistory.add(jsonObject.getInt("id"));
-                            ArrayList<String> arrayListString = new ArrayList<>();
-                            arrayListString.add(jsonObject.getString("status"));
-                            if (AppGlobals.getUserType() == 0) {
-                                arrayListString.add(jsonObject.getString("driver"));
-                                arrayListString.add(jsonObject.getString("driver_name"));
-                                arrayListString.add(jsonObject.getString("driver_phone_number"));
-                            } else {
-                                arrayListString.add(jsonObject.getString("customer"));
-                                arrayListString.add(jsonObject.getString("customer_name"));
-                                arrayListString.add(jsonObject.getString("customer_phone_number"));
-                            }
-                            arrayListString.add(jsonObject.getString("start_time"));
-                            arrayListString.add(jsonObject.getString("end_time"));
-                            arrayListString.add(jsonObject.getString("time_span"));
-                            hashMapTimelineDataHistory.put(jsonObject.getInt("id"), arrayListString);
                         }
+                        ArrayList<String> arrayListString = new ArrayList<>();
+                        arrayListString.add(jsonObject.getString("status"));
+                        if (AppGlobals.getUserType() == 0) {
+                            arrayListString.add(jsonObject.getString("driver"));
+                            arrayListString.add(jsonObject.getString("driver_name"));
+                            arrayListString.add(jsonObject.getString("driver_phone_number"));
+                        } else {
+                            arrayListString.add(jsonObject.getString("customer"));
+                            arrayListString.add(jsonObject.getString("customer_name"));
+                            arrayListString.add(jsonObject.getString("customer_phone_number"));
+                        }
+                        arrayListString.add(jsonObject.getString("start_time"));
+                        arrayListString.add(jsonObject.getString("end_time"));
+                        arrayListString.add(jsonObject.getString("time_span"));
+                        arrayListString.add(jsonObject.getString("location"));
+                        hashMapTimelineData.put(jsonObject.getInt("id"), arrayListString);
                     }
                 }
             } catch (JSONException | IOException e) {
@@ -340,7 +400,7 @@ public class TimelineFragment extends android.support.v4.app.Fragment implements
             super.onPostExecute(aVoid);
             isTimelineDataTaskRunning = false;
             Helpers.dismissProgressDialog();
-            if (hashMapTimelineDataConfirmed.size() == 0) {
+            if (hiresIdsListConfirmed.size() == 0) {
                 tvHiresConfirmedEmpty.setVisibility(View.VISIBLE);
             }
         }
@@ -352,23 +412,12 @@ public class TimelineFragment extends android.support.v4.app.Fragment implements
         }
     }
 
-    @Override
-    public void onPause() {
-        super.onPause();
-        if(isTimelineDataTaskRunning) {
-            taskTimelineData.cancel(true);
-        }
-
-        if (isViewUserDetailsTaskRunning) {
-            taskViewUserData.cancel(true);
-        }
-    }
-
-     class CustomHiresListAdapter extends ArrayAdapter<String> {
+    class CustomHiresListAdapter extends ArrayAdapter<String> {
 
         TimelineFragment tmFrag;
 
         ArrayList<Integer> arrayListIntIds;
+
         public CustomHiresListAdapter(Context context, int resource, ArrayList<Integer> arrayList) {
             super(context, resource);
 
@@ -379,14 +428,6 @@ public class TimelineFragment extends android.support.v4.app.Fragment implements
         @Override
         public View getView(final int position, View convertView, ViewGroup parent) {
             final ViewHolder viewHolder;
-
-            Log.i("TabCount", "" + tabCount);
-            Log.i("arrayListIds", "" + arrayListIntIds);
-            Log.i("HasMapConfirmed", "" + hashMapTimelineDataConfirmed);
-            Log.i("HasMapPending", "" + hashMapTimelineDataPending);
-            Log.i("HasMapHistory", "" + hashMapTimelineDataHistory);
-            Log.i("HasMapCUSTOM", "" + hashMapTimeCustomListAdapter);
-
             if (convertView == null) {
                 viewHolder = new ViewHolder();
                 LayoutInflater layoutInflater = (LayoutInflater) getActivity().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
@@ -401,23 +442,37 @@ public class TimelineFragment extends android.support.v4.app.Fragment implements
             } else {
                 viewHolder = (ViewHolder) convertView.getTag();
             }
-            if (hashMapTimeCustomListAdapter.size() != 0) {
-                viewHolder.tvHiresPrice.setText("₹234");
-                if (AppGlobals.getUserType() == 0) {
-                    viewHolder.tvHiresPrice.setTextColor(Color.parseColor("#F44336"));
-                } else {
-                    viewHolder.tvHiresPrice.setTextColor(Color.parseColor("#A4C639"));
-                }
-                viewHolder.tvHiresStatus.setText("Status: " + hashMapTimeCustomListAdapter.get(arrayListIntIds.get(position)).get(0));
-                if (AppGlobals.getUserType() == 0) {
-                    viewHolder.tvHiresDriverName.setText("Driver Name: " + hashMapTimeCustomListAdapter.get(arrayListIntIds.get(position)).get(2));
-                } else {
-                    viewHolder.tvHiresDriverName.setText("Customer Name: " + hashMapTimeCustomListAdapter.get(arrayListIntIds.get(position)).get(2));
-                }
-                viewHolder.tvHiresStartTime.setText("Start Time: " + Helpers.formatTimeToDisplay(hashMapTimeCustomListAdapter.get(arrayListIntIds.get(position)).get(4)));
-                viewHolder.tvHiresEndTime.setText("End Time: " + Helpers.formatTimeToDisplay(hashMapTimeCustomListAdapter.get(arrayListIntIds.get(position)).get(5)));
-                viewHolder.tvHiresTimeSpan.setText("Time Span: " + hashMapTimeCustomListAdapter.get(arrayListIntIds.get(position)).get(6) + " Hours");
+            viewHolder.tvHiresPrice.setText("₹234");
+            if (AppGlobals.getUserType() == 0) {
+                viewHolder.tvHiresPrice.setTextColor(Color.parseColor("#F44336"));
+            } else {
+                viewHolder.tvHiresPrice.setTextColor(Color.parseColor("#A4C639"));
             }
+
+            int hireStatus = Integer.parseInt(hashMapTimelineData.get(arrayListIntIds.get(position)).get(0));
+            if (hireStatus == 1) {
+                viewHolder.tvHiresStatus.setText("Status: Pending");
+            } else if (hireStatus == 2) {
+                viewHolder.tvHiresStatus.setText("Status: Accepted");
+            } else if (hireStatus == 3) {
+                viewHolder.tvHiresStatus.setText("Status: Declined");
+            } else if (hireStatus == 4) {
+                viewHolder.tvHiresStatus.setText("Status: InProgress");
+            } else if (hireStatus == 5) {
+                viewHolder.tvHiresStatus.setText("Status: Done");
+            } else if (hireStatus == 6) {
+                viewHolder.tvHiresStatus.setText("Status: Conflict");
+            }
+
+            if (AppGlobals.getUserType() == 0) {
+                viewHolder.tvHiresDriverName.setText("Driver Name: " + hashMapTimelineData.get(arrayListIntIds.get(position)).get(2));
+            } else {
+                viewHolder.tvHiresDriverName.setText("Customer Name: " + hashMapTimelineData.get(arrayListIntIds.get(position)).get(2));
+            }
+            viewHolder.tvHiresStartTime.setText("Start Time: " + Helpers.formatTimeToDisplay(hashMapTimelineData.get(arrayListIntIds.get(position)).get(4)));
+            viewHolder.tvHiresEndTime.setText("End Time: " + Helpers.formatTimeToDisplay(hashMapTimelineData.get(arrayListIntIds.get(position)).get(5)));
+            viewHolder.tvHiresTimeSpan.setText("Time Span: " + hashMapTimelineData.get(arrayListIntIds.get(position)).get(6) + " Hours");
+
             return convertView;
         }
 
@@ -425,84 +480,6 @@ public class TimelineFragment extends android.support.v4.app.Fragment implements
         public int getCount() {
             return arrayListIntIds.size();
         }
-    }
-
-    static class ViewHolder {
-        TextView tvHiresPrice;
-        TextView tvHiresStatus;
-        TextView tvHiresDriverName;
-        TextView tvHiresStartTime;
-        TextView tvHiresEndTime;
-        TextView tvHiresTimeSpan;
-    }
-
-    @Override
-    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
-        super.onCreateContextMenu(menu, v, menuInfo);
-        AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) menuInfo;
-        String userName = null;
-        MenuItem finish = menu.findItem(R.id.item_context_hires_list_finish);
-        MenuInflater inflater = this.getActivity().getMenuInflater();
-        if (AppGlobals.getUserType() == 0 && tabSelected != 2) {
-            inflater.inflate(R.menu.context_menu_hires_list_customer, menu);
-        } else {
-            inflater.inflate(R.menu.context_menu_hires_list_driver, menu);
-        }
-        if (tabSelected == 0) {
-            userName = hashMapTimeCustomListAdapter.get(hiresIdsListConfirmed.get(info.position)).get(2);
-            menu.removeItem(R.id.item_context_hires_list_accept);
-            menu.removeItem(R.id.item_context_hires_list_decline);
-        } else if (tabSelected == 1){
-            userName = hashMapTimeCustomListAdapter.get(hiresIdsListPending.get(info.position)).get(2);
-            menu.removeItem(R.id.item_context_hires_list_finish);
-        }
-        menu.setHeaderTitle(userName);
-    }
-
-    @Override
-    public boolean onContextItemSelected(MenuItem item) {
-        AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
-        switch (item.getItemId()) {
-            case R.id.item_context_hires_list_accept:
-                Log.i("ContextMenu", "Accept");
-                return true;
-            case R.id.item_context_hires_list_decline:
-                Log.i("ContextMenu", "Decline");
-                return true;
-            case R.id.item_context_hires_list_call:
-                Log.i("ContextMenu", "Call");
-                Helpers.initiateCallIntent(getActivity(), hashMapTimeCustomListAdapter.get(returnProperID(info.position)).get(3));
-                return true;
-            case R.id.item_context_hires_list_finish:
-                Log.i("ContextMenu", "Finish");
-                return true;
-            case R.id.item_context_hires_list_view_user_details:
-                Log.i("ContextMenu", "View User Details");
-                if (AppGlobals.getUserType() == 0) {
-                    taskViewUserData = (ViewUserDetailsTask) new ViewUserDetailsTask().execute(
-                            Integer.valueOf(hashMapTimeCustomListAdapter.get(returnProperID(info.position)).get(1)));
-                } else {
-                    taskViewUserData = (ViewUserDetailsTask) new ViewUserDetailsTask().execute(
-                            Integer.valueOf(hashMapTimeCustomListAdapter.get(returnProperID(info.position)).get(1)));
-                }
-                return true;
-        }
-        return true;
-    }
-
-    private int returnProperID(int id) {
-        int properID = -1;
-        if (tabSelected == 0) {
-            properID = hiresIdsListConfirmed.get(id);
-            System.out.println("Confirmed " + hiresIdsListConfirmed.get(id));
-        } else if (tabSelected == 1) {
-            properID = hiresIdsListPending.get(id);
-            System.out.println("Pending " + hiresIdsListPending.get(id));
-        } else if (tabSelected == 2) {
-            properID = hiresIdsListHistory.get(id);
-            System.out.println("History " + hiresIdsListHistory.get(id));
-        }
-        return properID;
     }
 
     private class ViewUserDetailsTask extends AsyncTask<Integer, Void, Void> {
@@ -545,8 +522,8 @@ public class TimelineFragment extends android.support.v4.app.Fragment implements
                     arrayListViewUserDetails.add(jsonObject.getString("transmission_type"));
                     arrayListViewUserDetails.add(jsonObject.getString("vehicle_type"));
                     arrayListViewUserDetails.add(jsonObject.getString("vehicle_make"));
+                    arrayListViewUserDetails.add(jsonObject.getString("vehicle_model"));
                 }
-                arrayListViewUserDetails.add(jsonObject.getString("full_name"));
             } catch (IOException | JSONException e) {
                 e.printStackTrace();
             }
@@ -563,14 +540,15 @@ public class TimelineFragment extends android.support.v4.app.Fragment implements
                 Helpers.customDialogWithPositiveFunctionNegativeButtonForOnMapMarkerClickHiring(getActivity(),
                         arrayListViewUserDetails.get(0), arrayListViewUserDetails.get(1), arrayListViewUserDetails.get(2),
                         arrayListViewUserDetails.get(7), arrayListViewUserDetails.get(8), arrayListViewUserDetails.get(9),
-                        arrayListViewUserDetails.get(3), arrayListViewUserDetails.get(10),  arrayListViewUserDetails.get(11),
-                        arrayListViewUserDetails.get(4), arrayListViewUserDetails.get(5), null,  arrayListViewUserDetails.get(12),
-                        arrayListViewUserDetails.get(13),  arrayListViewUserDetails.get(14));
+                        arrayListViewUserDetails.get(3), arrayListViewUserDetails.get(10), arrayListViewUserDetails.get(11),
+                        arrayListViewUserDetails.get(4), arrayListViewUserDetails.get(5), null, arrayListViewUserDetails.get(12),
+                        arrayListViewUserDetails.get(13), arrayListViewUserDetails.get(14));
             } else {
-            Helpers.customDialogWithPositiveFunctionNegativeButtonForOnMapMarkerClickHiring(getActivity(),
-                    arrayListViewUserDetails.get(0), arrayListViewUserDetails.get(1), arrayListViewUserDetails.get(2),
-                    null, null, null, arrayListViewUserDetails.get(3), null, null, arrayListViewUserDetails.get(4),
-                    arrayListViewUserDetails.get(5), null, null, null, null);
+                Helpers.customDialogWithPositiveFunctionNegativeButtonForOnMapMarkerClickHiring(getActivity(),
+                        arrayListViewUserDetails.get(0), arrayListViewUserDetails.get(1), arrayListViewUserDetails.get(2),
+                        null, null, null, arrayListViewUserDetails.get(3), null, null, arrayListViewUserDetails.get(4),
+                        arrayListViewUserDetails.get(5), null, arrayListViewUserDetails.get(6), arrayListViewUserDetails.get(7),
+                        arrayListViewUserDetails.get(8) + " " + arrayListViewUserDetails.get(9));
             }
         }
 
