@@ -1,11 +1,10 @@
 package com.byteshaft.briver.Tasks;
 
 import android.os.AsyncTask;
-import android.support.design.widget.Snackbar;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.byteshaft.briver.MainActivity;
-import com.byteshaft.briver.R;
 import com.byteshaft.briver.utils.AppGlobals;
 import com.byteshaft.briver.utils.EndPoints;
 import com.byteshaft.briver.utils.Helpers;
@@ -19,10 +18,11 @@ import java.net.HttpURLConnection;
  * Created by fi8er1 on 05/07/2016.
  */
 
-public class ReviewHireTask extends AsyncTask<Float, Void , Void> {
+public class ReviewHireTask extends AsyncTask<String, String , String> {
 
     HttpURLConnection connection;
     public static int responseCode;
+    boolean isGetReviewTask;
 
     protected void onPreExecute() {
         super.onPreExecute();
@@ -30,9 +30,15 @@ public class ReviewHireTask extends AsyncTask<Float, Void , Void> {
     }
 
     @Override
-    protected Void doInBackground(Float... params) {
+    protected String doInBackground(String... params) {
         try {
-            connection = WebServiceHelpers.openConnectionForUrl(EndPoints.BASE_URL_HIRE + params[0] + "/review", "POST", true);
+            if (params[1].equalsIgnoreCase("0")) {
+                isGetReviewTask = true;
+                connection = WebServiceHelpers.openConnectionForUrl(EndPoints.BASE_URL_HIRE + params[0] + "/review", "GET", true);
+            } else {
+                isGetReviewTask = false;
+                connection = WebServiceHelpers.openConnectionForUrl(EndPoints.BASE_URL_HIRE + params[0] + "/review", "POST", true);
+            }
             DataOutputStream out = new DataOutputStream(connection.getOutputStream());
             out.flush();
             out.close();
@@ -44,19 +50,20 @@ public class ReviewHireTask extends AsyncTask<Float, Void , Void> {
     }
 
     @Override
-    protected void onPostExecute(Void aVoid) {
-        super.onPostExecute(aVoid);
+    protected void onPostExecute(String o) {
+        super.onPostExecute(o);
         Helpers.dismissProgressDialog();
         Log.i("ReviewTask", "" + responseCode);
         if (responseCode == 200) {
-            Helpers.showSnackBar(AppGlobals.getRunningActivityInstance().findViewById(R.id.container_main),
-                    "Job completed. Status: Finished", Snackbar.LENGTH_LONG, "#A4C639");
-            if (MainActivity.isMainActivityRunning) {
-                MainActivity.getInstance().onBackPressed();
+            if (isGetReviewTask) {
+
+            } else {
+                if (MainActivity.isMainActivityRunning) {
+                    MainActivity.getInstance().onBackPressed();
+                }
             }
         } else {
-            Helpers.showSnackBar(AppGlobals.getRunningActivityInstance().findViewById(R.id.container_main),
-                    "Failed to finishing request", Snackbar.LENGTH_LONG, "#f44336");
+            Toast.makeText(AppGlobals.getContext(), "ReviewTask failed", Toast.LENGTH_SHORT).show();
         }
     }
 

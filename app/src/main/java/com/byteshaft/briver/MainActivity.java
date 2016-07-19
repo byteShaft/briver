@@ -48,6 +48,7 @@ public class MainActivity extends AppCompatActivity
     final Runnable logout = new Runnable() {
         public void run() {
             AppGlobals.setLoggedIn(false);
+            AppGlobals.setPushNotificationsEnabled(false);
             startActivity(new Intent(MainActivity.this, WelcomeActivity.class));
             finish();
         }

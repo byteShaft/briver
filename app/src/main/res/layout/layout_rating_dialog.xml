@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:animateLayoutChanges="true">
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingLeft="16dp"
+        android:paddingRight="16dp"
+        android:orientation="vertical">
+
+        <RatingBar
+            android:id="@+id/rBar_rating_dialog"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="15dp"
+            android:layout_gravity="center_horizontal"
+            android:numStars="5"
+            android:isIndicator="true"/>
+        </LinearLayout>
+
+    <RelativeLayout
+        android:id="@+id/buttonsLayout"
+        android:layout_width="fill_parent"
+        android:layout_height="50dp"
+        android:layout_marginTop="15dp">
+
+        <Button
+            android:id="@+id/btn_rating_dialog_cancel"
+            style="?android:attr/buttonBarButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="fill_parent"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"
+            android:layout_centerHorizontal="true"
+            android:layout_centerVertical="true"
+            android:layout_toLeftOf="@+id/view_one"
+            android:text="Cancel"
+            android:textColor="#ffffff"
+            android:textSize="12dp"
+            android:visibility="invisible"/>
+
+        <View
+            android:id="@+id/view_one"
+            android:layout_width="1dp"
+            android:layout_height="30dp"
+            android:layout_centerHorizontal="true"
+            android:layout_centerVertical="true"
+            android:layout_gravity="center"
+            android:background="#ffffff" />
+
+        <Button
+            android:id="@+id/btn_rating_dialog_done"
+            style="?android:attr/buttonBarButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="fill_parent"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentRight="true"
+            android:layout_centerHorizontal="true"
+            android:layout_centerVertical="true"
+            android:layout_toRightOf="@+id/view_one"
+            android:text="Done"
+            android:textColor="#ffffff"
+            android:textSize="12dp"
+            android:textStyle="bold" />
+    </RelativeLayout>
+</LinearLayout>
