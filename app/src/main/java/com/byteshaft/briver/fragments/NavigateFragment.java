@@ -93,7 +93,7 @@ public class NavigateFragment extends android.support.v4.app.Fragment {
                 CameraPosition cameraPosition =
                         new CameraPosition.Builder()
                                 .target(Helpers.latLngForNavigation)
-                                .zoom(15.0f)
+                                .zoom(14.0f)
                                 .build();
                 mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
             }

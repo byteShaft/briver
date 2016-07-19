@@ -28,6 +28,7 @@ import android.os.Environment;
 import android.os.Handler;
 import android.provider.Settings;
 import android.support.design.widget.Snackbar;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.Window;
@@ -73,6 +74,7 @@ public class Helpers {
     private static final int MINUTE_MILLIS = 60 * SECOND_MILLIS;
     private static final int HOUR_MILLIS = 60 * MINUTE_MILLIS;
     private static final int DAY_MILLIS = 24 * HOUR_MILLIS;
+    public static String nameForRatingsDialog;
     public static LatLng latLngForNavigation;
     public static int countDownTimerMillisUntilFinished;
     public static boolean isCustomUserDetailsDialogOpenedFromMap;
@@ -360,6 +362,23 @@ public class Helpers {
                 .show();
     }
 
+    public static void customRatingDialog(final Context context, String fullName) {
+        Dialog ratingDialog = new Dialog(context);
+        ratingDialog.setContentView(R.layout.layout_rating_dialog);
+        ratingDialog.setTitle("Rate " + fullName);
+        final RatingBar rbarRatingDialog = (RatingBar) ratingDialog.findViewById(R.id.rBar_rating_dialog);
+
+        Button btnRatingDialogDone = (Button) ratingDialog.findViewById(R.id.btn_rating_dialog_done);
+        btnRatingDialogDone.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Log.i("rating", "" + rbarRatingDialog.getRating());
+            }
+        });
+
+        ratingDialog.show();
+    }
+
     public static void customDialogWithPositiveFunctionNegativeButtonForOnMapMarkerClickHiring(
             final Context context, String fullName, String eMail, String contact, String address,
             String locationLastUpdated, String experience, String numberOfHires, String bio, String status, String numberOfRatings, String numberOfStars,
@@ -371,6 +390,7 @@ public class Helpers {
         onMapMarkerClickHireDialog.setContentView(R.layout.layout_on_map_marker_click_hire_dialog);
 
         final RelativeLayout rlDialogDocumentsMain = (RelativeLayout) onMapMarkerClickHireDialog.findViewById(R.id.rl_main_document);
+        final RelativeLayout rlDialogButtons = (RelativeLayout) onMapMarkerClickHireDialog.findViewById(R.id.buttonsLayout);
         final ImageView ivDialogDocumentsMain = (ImageView) onMapMarkerClickHireDialog.findViewById(R.id.iv_main_document);
         LinearLayout llSpinner = (LinearLayout) onMapMarkerClickHireDialog.findViewById(R.id.ll_custom_dialog_spinner);
         spinnerServiceHours = (Spinner) onMapMarkerClickHireDialog.findViewById(R.id.spinner_hire_dialog_service_hours);
@@ -380,6 +400,7 @@ public class Helpers {
             @Override
             public void onClick(View v) {
                 rlDialogDocumentsMain.setVisibility(View.GONE);
+                rlDialogButtons.setVisibility(View.VISIBLE);
                 llDocuments.setVisibility(View.VISIBLE);
                 fullImageViewShown = false;
             }
@@ -391,6 +412,7 @@ public class Helpers {
             public void onClick(View v) {
                 llDocuments.setVisibility(View.GONE);
                 ivDialogDocumentsMain.setImageBitmap(bmOne);
+                rlDialogButtons.setVisibility(View.GONE);
                 rlDialogDocumentsMain.setVisibility(View.VISIBLE);
                 fullImageViewShown = true;
             }
@@ -402,6 +424,7 @@ public class Helpers {
             public void onClick(View v) {
                 llDocuments.setVisibility(View.GONE);
                 ivDialogDocumentsMain.setImageBitmap(bmTwo);
+                rlDialogButtons.setVisibility(View.GONE);
                 rlDialogDocumentsMain.setVisibility(View.VISIBLE);
                 fullImageViewShown = true;
             }
@@ -413,6 +436,7 @@ public class Helpers {
             public void onClick(View v) {
                 llDocuments.setVisibility(View.GONE);
                 ivDialogDocumentsMain.setImageBitmap(bmThree);
+                rlDialogButtons.setVisibility(View.GONE);
                 rlDialogDocumentsMain.setVisibility(View.VISIBLE);
                 fullImageViewShown = true;
             }
@@ -854,6 +878,11 @@ public class Helpers {
 
             dialogDocumentsShown = true;
         }
+    }
+
+    public static String getDeviceID() {
+        return Settings.Secure.getString(AppGlobals.getContext().getContentResolver(),
+                Settings.Secure.ANDROID_ID);
     }
 
 }

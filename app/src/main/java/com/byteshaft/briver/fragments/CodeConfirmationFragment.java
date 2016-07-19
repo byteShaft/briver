@@ -289,6 +289,11 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
                     AppGlobals.putVehicleModel(jsonObject.getString("vehicle_model"));
                 } else if (jsonObject.getInt("user_type") == 1) {
                     AppGlobals.putDrivingExperience(jsonObject.getString("driving_experience"));
+                    AppGlobals.putDriverLocationReportingIntervalTime(jsonObject.getInt("location_reporting_interval"));
+                    AppGlobals.putLocationReportingType(jsonObject.getInt("location_reporting_type"));
+                    AppGlobals.putDocOne(jsonObject.getString("doc1"));
+                    AppGlobals.putDocTwo(jsonObject.getString("doc2"));
+                    AppGlobals.putDocThree(jsonObject.getString("doc3"));
                     AppGlobals.putDriverBio(jsonObject.getString("bio"));
                 }
             } catch (IOException e) {

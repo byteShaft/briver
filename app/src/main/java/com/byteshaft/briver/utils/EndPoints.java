@@ -12,6 +12,7 @@ public class EndPoints {
     public static final String HIRING_REQUESTS = BASE_URL_HIRE + "list";
     public static final String HIRE_RESPONSE = BASE_URL + "hire-response";
     public static final String BASE_URL_USER = BASE_URL + "user/";
+    public static final String PUSH_NOTIFICATION_ACTIVATION = BASE_URL_USER + "push-id/add";
     public static final String BASE_ACCOUNTS_ME =  BASE_URL_USER + "me";
     public static final String REGISTER_DRIVER = BASE_URL_USER + "driver-registration";
     public static final String REGISTER_CUSTOMER = BASE_URL_USER + "customer-registration";

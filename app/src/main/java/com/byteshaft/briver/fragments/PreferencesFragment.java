@@ -400,7 +400,9 @@ public class PreferencesFragment extends android.support.v4.app.Fragment impleme
                     preferencesVehicleModel = etPreferencesCustomerVehicleModel.getText().toString();
                 }
                 if (validateProfileChangeInfo()) {
-                    if (driverPreferencesLocationReportingType == 1 || driverPreferencesLocationReportingType == 0 &&
+                    if (AppGlobals.getUserType() == 0) {
+                        taskEditPreference = (EditPreferenceTask) new EditPreferenceTask().execute();
+                    } else if(driverPreferencesLocationReportingType == 1 || driverPreferencesLocationReportingType == 0 &&
                             tvPreferencesDriverLocationDisplay.getText().toString().equalsIgnoreCase("Fixed location set") ||
                             driverPreferencesLocationReportingType == 0 && tvPreferencesDriverLocationDisplay.getText().toString().equalsIgnoreCase("Current location set as fixed location")) {
                         taskEditPreference = (EditPreferenceTask) new EditPreferenceTask().execute();

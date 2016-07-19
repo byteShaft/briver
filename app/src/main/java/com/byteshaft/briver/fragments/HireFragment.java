@@ -60,6 +60,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.util.ArrayList;
@@ -74,34 +75,18 @@ import java.util.TimerTask;
  */
 public class HireFragment extends android.support.v4.app.Fragment implements View.OnClickListener {
 
+    public static final String[] itemsForHoursSelectingDialog = {"2 Hours", "4 Hours", "6 Hours", "8 Hours", "12 Hours", "24 Hours", "48 Hours"};
     public static int responseCode;
-    HttpURLConnection connection;
     public static ArrayList<Integer> driversIdList;
     public static HashMap<Integer, ArrayList<String>> hashMapDriverData;
-    private static GoogleMap mMap = null;
     public static HiringTask taskHiringDriver;
-    public static final String[] itemsForHoursSelectingDialog = {"2 Hours", "4 Hours", "6 Hours", "8 Hours", "12 Hours", "24 Hours", "48 Hours"};
+    public static String serviceStartTime;
+    public static boolean isQuickHire;
+    public static int totalHoursOfService;
+    public static String hireMeetUpPoint;
+    public static ArrayList<String> arrayListPricingDetails;
+    private static GoogleMap mMap = null;
     private static String[] stringArrayForDriverHiring;
-    private String driverIdForHiring;
-    private String driverTimeSpanForHiring;
-    private String driverTimeOfHiring;
-    Timer textChangeTimer;
-    final Runnable btnCustomHireDialogHire = new Runnable() {
-        public void run() {
-            Helpers.AlertDialogWithPositiveFunctionNegativeButton(getActivity(), "Confirmation",
-                    "Do you really want to hire this driver?", "Yes", "Cancel", hire);
-        }
-    };
-    final Runnable hire = new Runnable() {
-        public void run() {
-            hireMeetUpPoint = currentLatLngAuto.latitude + "," + currentLatLngAuto.longitude;
-            driverTimeSpanForHiring = Helpers.spinnerServiceHours.getSelectedItem().toString().substring(0, 2).trim();
-            driverTimeOfHiring = Helpers.getCurrentTimeOfDevice();
-            stringArrayForDriverHiring = new String[]{driverIdForHiring, "", driverTimeSpanForHiring,
-                    hireMeetUpPoint};
-            taskHiringDriver = (HiringTask) new HiringTask().execute(stringArrayForDriverHiring);
-        }
-    };
     final Runnable openLocationServiceSettings = new Runnable() {
         public void run() {
             Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
@@ -117,22 +102,45 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
             }
         }
     };
+    HttpURLConnection connection;
+    GetPricingTask taskGetPricing;
+    String driverName;
+    Timer textChangeTimer;
     View baseViewHireFragment;
-    public static String serviceStartTime;
     boolean gettingNearbyDriversToShowMarkers;
     boolean driversMarkersShownOnMap;
     boolean isGetNearbyDriversTaskRunning;
     boolean isHireFragmentOpen;
-    public static boolean isQuickHire;
-
     TimePickerDialog tpd;
     Marker hireMeetUpPointMarker;
     Button btnQuickHire;
     Button btnScheduledHire;
-    public static int totalHoursOfService;
+    private String driverIdForHiring;
+    private String driverTimeSpanForHiring;
+    final Runnable btnCustomHireDialogHire = new Runnable() {
+        public void run() {
+            driverTimeSpanForHiring = Helpers.spinnerServiceHours.getSelectedItem().toString().substring(0, 2).trim();
+            taskGetPricing = (GetPricingTask) new GetPricingTask().execute(driverTimeSpanForHiring);
+        }
+    };
+    final Runnable retryPricingTask = new Runnable() {
+        public void run() {
+            taskGetPricing = (GetPricingTask) new GetPricingTask().execute(driverTimeSpanForHiring);
+        }
+    };
+    private String driverTimeOfHiring;
     private FragmentManager fm;
     private SupportMapFragment mapFragment;
     private LatLng currentLatLngAuto = null;
+    final Runnable hire = new Runnable() {
+        public void run() {
+            hireMeetUpPoint = currentLatLngAuto.latitude + "," + currentLatLngAuto.longitude;
+            driverTimeOfHiring = Helpers.getCurrentTimeOfDevice();
+            stringArrayForDriverHiring = new String[]{driverIdForHiring, "", driverTimeSpanForHiring,
+                    hireMeetUpPoint};
+            taskHiringDriver = (HiringTask) new HiringTask().execute(stringArrayForDriverHiring);
+        }
+    };
     private Boolean simpleMapView = true;
     private Menu actionsMenu;
     private boolean hireMarkerAdded;
@@ -142,7 +150,6 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
     private Animation animLayoutBottomDown;
     private Animation animLayoutMapSearchBarTopUp;
     private Animation animLayoutMapSearchBarTopDown;
-    public static String hireMeetUpPoint;
     private GetNearbyDriversAvailableToHire getNearbyDriversTask;
     private LinearLayout llMapHireButtons;
     private TextView tvMapHireAddress;
@@ -327,6 +334,7 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
                                             hashMapDriverData.get(id).get(7), hashMapDriverData.get(id).get(8),
                                             hashMapDriverData.get(id).get(9), hashMapDriverData.get(id).get(10),
                                             btnCustomHireDialogHire, null, null, null);
+                                    driverName = hashMapDriverData.get(id).get(0);
                                 } else {
                                     Helpers.showSnackBar(getView(), "Driver info cannot be retrieved at the moment", Snackbar.LENGTH_LONG, "#f44336");
                                 }
@@ -762,6 +770,12 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
         ft.commit();
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        isHireFragmentOpen = true;
+    }
+
     private class GetNearbyDriversAvailableToHire extends AsyncTask<Void, Integer, Void> {
 
         boolean dataEmpty;
@@ -782,14 +796,14 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
                 String url;
                 if (gettingNearbyDriversToShowMarkers) {
                     url = EndPoints.BASE_FILTER_DRIVERS + getNearbyDriversString(
-                            hireMeetUpPoint, 50, serviceStartTime, totalHoursOfService * 60);
+                            hireMeetUpPoint, 50, serviceStartTime, totalHoursOfService);
                 } else {
                     if (isQuickHire) {
                         url = EndPoints.BASE_FILTER_DRIVERS + getNearbyDriversString(
-                                hireMeetUpPoint, AppGlobals.getDriverSearchRadius(), "", totalHoursOfService * 60);
+                                hireMeetUpPoint, AppGlobals.getDriverSearchRadius(), "", totalHoursOfService);
                     } else {
                         url = EndPoints.BASE_FILTER_DRIVERS + getNearbyDriversString(
-                                hireMeetUpPoint, AppGlobals.getDriverSearchRadius(), serviceStartTime, totalHoursOfService * 60);
+                                hireMeetUpPoint, AppGlobals.getDriverSearchRadius(), serviceStartTime, totalHoursOfService);
                     }
                 }
                 connection = WebServiceHelpers.openConnectionForUrl(url, "GET", true);
@@ -804,22 +818,22 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
                     JSONObject jsonObject = jsonArray.getJSONObject(i);
                     if (!driversIdList.contains(jsonObject.getInt("id"))) {
                         driversIdList.add(jsonObject.getInt("id"));
-                            if (Integer.parseInt(jsonObject.getString("status")) != 0
-                            && AppGlobals.getTransmissionType() == jsonObject.getInt("transmission_type")
-                            || jsonObject.getInt("transmission_type") == 2) {
-                        ArrayList<String> arrayListString = new ArrayList<>();
-                        arrayListString.add(jsonObject.getString("full_name"));
-                        arrayListString.add(jsonObject.getString("email"));
-                        arrayListString.add(jsonObject.getString("phone_number"));
-                        arrayListString.add(jsonObject.getString("location"));
-                        arrayListString.add(jsonObject.getString("location_last_updated"));
-                        arrayListString.add(jsonObject.getString("driving_experience"));
-                        arrayListString.add(jsonObject.getString("number_of_hires"));
-                        arrayListString.add(jsonObject.getString("bio"));
-                        arrayListString.add(jsonObject.getString("status"));
-                        arrayListString.add(jsonObject.getString("review_count"));
-                        arrayListString.add(jsonObject.getString("review_stars"));
-                        hashMapDriverData.put(jsonObject.getInt("id"), arrayListString);
+                        if (Integer.parseInt(jsonObject.getString("status")) != 0
+                                && AppGlobals.getTransmissionType() == jsonObject.getInt("transmission_type")
+                                || jsonObject.getInt("transmission_type") == 2) {
+                            ArrayList<String> arrayListString = new ArrayList<>();
+                            arrayListString.add(jsonObject.getString("full_name"));
+                            arrayListString.add(jsonObject.getString("email"));
+                            arrayListString.add(jsonObject.getString("phone_number"));
+                            arrayListString.add(jsonObject.getString("location"));
+                            arrayListString.add(jsonObject.getString("location_last_updated"));
+                            arrayListString.add(jsonObject.getString("driving_experience"));
+                            arrayListString.add(jsonObject.getString("number_of_hires"));
+                            arrayListString.add(jsonObject.getString("bio"));
+                            arrayListString.add(jsonObject.getString("status"));
+                            arrayListString.add(jsonObject.getString("review_count"));
+                            arrayListString.add(jsonObject.getString("review_stars"));
+                            hashMapDriverData.put(jsonObject.getInt("id"), arrayListString);
                         }
                     }
                 }
@@ -860,9 +874,80 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
         }
     }
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        isHireFragmentOpen = true;
+    public class GetPricingTask extends AsyncTask<String, String, String> {
+
+        public int responseCode;
+        HttpURLConnection connection;
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            Helpers.showProgressDialog(AppGlobals.getRunningActivityInstance(), "Calculating prices");
+            arrayListPricingDetails = new ArrayList<>();
+        }
+
+        @Override
+        protected String doInBackground(String[] params) {
+            try {
+                String url = EndPoints.BASE_URL_HIRE + "get-price";
+                connection = WebServiceHelpers.openConnectionForUrl(url, "POST", true);
+                DataOutputStream out = new DataOutputStream(connection.getOutputStream());
+                out.writeBytes(getPricingRequestString(params[0], AppGlobals.getVehicleType()));
+                Log.i("data", getPricingRequestString(params[0], AppGlobals.getVehicleType()));
+                out.flush();
+                out.close();
+                responseCode = connection.getResponseCode();
+                Log.i("responseMessage", "" + connection.getResponseMessage());
+                JSONObject jsonObject = new JSONObject(WebServiceHelpers.readResponse(connection));
+                arrayListPricingDetails.add(jsonObject.getString("hours"));
+                arrayListPricingDetails.add(jsonObject.getString("briver_price"));
+                arrayListPricingDetails.add(jsonObject.getString("driver_price"));
+                arrayListPricingDetails.add(jsonObject.getString("driver_hourly_rate"));
+                arrayListPricingDetails.add(jsonObject.getString("total_price"));
+
+                Log.i("pricingResponse", "" + jsonObject);
+            } catch (IOException | JSONException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(String o) {
+            super.onPostExecute(o);
+            Helpers.dismissProgressDialog();
+            Log.i("PricingTaskResponseCode", "" + responseCode);
+            if (responseCode == 200) {
+                Helpers.AlertDialogWithPositiveFunctionNegativeButton(getActivity(), "Confirmation",
+                        "Do you really want to hire " + driverName + "?" + "\n\n" + "Total Hours of Service: " + arrayListPricingDetails.get(0) + " Hours\n" +
+                                "Initial Hiring Price: ₹" + arrayListPricingDetails.get(1) + "\n" +
+                                "Driver Price: ₹" + arrayListPricingDetails.get(2) + "\n" +
+                                "Driver Hourly Rate: ₹" + arrayListPricingDetails.get(3) + "\n" +
+                                "Total Price: ₹" + arrayListPricingDetails.get(4) + "\n\n" +
+                                "Note: Only the Initial Hiring Price will be paid at this moment.", "Yes", "Cancel", hire);
+            } else {
+                Helpers.AlertDialogWithPositiveFunctionNegativeButton(getActivity(), "Failed",
+                        "Unable to calculate prices", "Retry", "Cancel", retryPricingTask);
+            }
+        }
+
+        @Override
+        protected void onCancelled() {
+            super.onCancelled();
+            Helpers.dismissProgressDialog();
+        }
+
+        public String getPricingRequestString(
+                String hours, int segment) {
+            JSONObject json = new JSONObject();
+            try {
+                json.put("hours", hours);
+                json.put("segment", segment);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            return json.toString();
+        }
     }
+
 }

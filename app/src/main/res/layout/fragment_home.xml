@@ -1,7 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical" android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:animateLayoutChanges="true">
+
+    <LinearLayout
+        android:id="@+id/ll_home_loading"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_alignParentBottom="true"
+        android:layout_centerInParent="true">
+
+        <ProgressBar
+            android:id="@+id/pb_home"
+            android:layout_gravity="center_horizontal"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="30dp"
+            android:indeterminate="true" />
+
+        <TextView
+            android:id="@+id/tv_home_loading_status"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginBottom="30dp"
+            android:textAllCaps="true"
+            android:textSize="16dp"/>
+    </LinearLayout>
+
     <LinearLayout
         android:id="@+id/ll_home_hires_list"
         android:layout_width="match_parent"
@@ -9,7 +37,8 @@
         android:weightSum="2"
         android:paddingBottom="15dp"
         android:layout_margin="8dp"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:visibility="gone">
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"

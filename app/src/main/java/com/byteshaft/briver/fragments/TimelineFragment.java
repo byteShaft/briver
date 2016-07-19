@@ -24,6 +24,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import com.byteshaft.briver.R;
+import com.byteshaft.briver.Tasks.ReviewHireTask;
 import com.byteshaft.briver.Tasks.UpdateHireStatusTask;
 import com.byteshaft.briver.utils.AppGlobals;
 import com.byteshaft.briver.utils.EndPoints;
@@ -119,7 +120,9 @@ public class TimelineFragment extends android.support.v4.app.Fragment implements
                         tvHiresHistoryEmpty.setVisibility(View.GONE);
                         CustomHiresListAdapter customHiresListAdapter3 = new CustomHiresListAdapter(getActivity(), R.layout.hires_list_row, hiresIdsListHistory);
                         lvHistoryHires.setAdapter(customHiresListAdapter3);
-                        lvHistoryHires.setEnabled(false);
+                        if (AppGlobals.getUserType() == 1) {
+                            registerForContextMenu(lvHistoryHires);
+                        }
                     }
                 }
             }
@@ -168,21 +171,30 @@ public class TimelineFragment extends android.support.v4.app.Fragment implements
         AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) menuInfo;
         Log.i("info.Position", "" + info.position);
         String userName = null;
-        MenuItem finish = menu.findItem(R.id.item_context_hires_list_finish);
+        int status = Integer.parseInt(hashMapTimelineData.get(returnProperID(info.position)).get(0));
         MenuInflater inflater = this.getActivity().getMenuInflater();
         if (AppGlobals.getUserType() == 0 && tabSelected != 2) {
             inflater.inflate(R.menu.context_menu_hires_list_customer, menu);
-        } else {
+        } else if (tabSelected != 2 || status == 5) {
             inflater.inflate(R.menu.context_menu_hires_list_driver, menu);
+        } else if (AppGlobals.getUserType() == 1 && tabSelected == 2 && status != 5) {
+            Helpers.AlertDialogMessage(getActivity(), "Note", "You can only Review an entry which has a 'Done' Status", "Dismiss");
         }
+        userName = hashMapTimelineData.get(returnProperID(info.position)).get(2);
         if (tabSelected == 0) {
-            userName = hashMapTimelineData.get(returnProperID(info.position)).get(2);
             menu.removeItem(R.id.item_context_hires_list_accept);
             menu.removeItem(R.id.item_context_hires_list_decline);
             menu.removeItem(R.id.item_context_hires_list_navigate);
         } else if (tabSelected == 1) {
-            userName = hashMapTimelineData.get(returnProperID(info.position)).get(2);
             menu.removeItem(R.id.item_context_hires_list_finish);
+        } else if (tabSelected == 2){
+            menu.removeItem(R.id.item_context_hires_list_accept);
+            menu.removeItem(R.id.item_context_hires_list_decline);
+            menu.removeItem(R.id.item_context_hires_list_navigate);
+            menu.removeItem(R.id.item_context_hires_list_finish);
+            menu.removeItem(R.id.item_context_hires_list_call);
+            menu.removeItem(R.id.item_context_hires_list_view_user_details);
+            menu.removeItem(R.id.item_context_hires_list_navigate);
         }
         menu.setHeaderTitle(userName);
     }
@@ -212,18 +224,23 @@ public class TimelineFragment extends android.support.v4.app.Fragment implements
             case R.id.item_context_hires_list_call:
                 Helpers.initiateCallIntent(getActivity(), hashMapTimelineData.get(returnProperID(info.position)).get(3));
                 return true;
+            case R.id.item_context_hires_list_review:
+                String reviewId = String.valueOf(returnProperID(info.position));
+                String[] reviewTaskStringArray = new String[] {reviewId, "0"};
+                new ReviewHireTask().execute(reviewTaskStringArray);
+                return true;
             case R.id.item_context_hires_list_finish:
-                String[] dataFinish = new String[]{"" + returnProperID(info.position), "5"};
-                new UpdateHireStatusTask().execute(dataFinish);
+                if (AppGlobals.getUserType() == 0) {
+                    String[] dataFinish = new String[]{"" + returnProperID(info.position), "5"};
+                    new UpdateHireStatusTask().execute(dataFinish);
+                } else {
+                    Helpers.nameForRatingsDialog = hashMapTimelineData.get(returnProperID(info.position)).get(2);
+                    new ReviewHireTask().execute();
+                }
                 return true;
             case R.id.item_context_hires_list_view_user_details:
-                if (AppGlobals.getUserType() == 0) {
                     taskViewUserData = (ViewUserDetailsTask) new ViewUserDetailsTask().execute(
                             Integer.valueOf(hashMapTimelineData.get(returnProperID(info.position)).get(1)));
-                } else {
-                    taskViewUserData = (ViewUserDetailsTask) new ViewUserDetailsTask().execute(
-                            Integer.valueOf(hashMapTimelineData.get(returnProperID(info.position)).get(1)));
-                }
                 return true;
         }
         return true;
@@ -316,15 +333,33 @@ public class TimelineFragment extends android.support.v4.app.Fragment implements
                 lvConfirmedHires = (ListView) rootView.findViewById(R.id.lv_confirmed_hires);
                 registerForContextMenu(lvConfirmedHires);
                 tvHiresConfirmedEmpty = (TextView) rootView.findViewById(R.id.tv_timeline_confirmed_empty);
+                lvConfirmedHires.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                    @Override
+                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                        view.showContextMenu();
+                    }
+                });
             } else if (tabCount == 2) {
                 rootView = inflater.inflate(R.layout.timeline_tab_fragement_pending_hires, container, false);
                 lvPendingHires = (ListView) rootView.findViewById(R.id.lv_pending_hires);
                 tvHiresPendingEmpty = (TextView) rootView.findViewById(R.id.tv_timeline_pending_empty);
+                lvPendingHires.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                    @Override
+                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                        view.showContextMenu();
+                    }
+                });
             } else if (tabCount == 3) {
                 rootView = inflater.inflate(R.layout.timeline_tab_fragement_history_hires, container, false);
                 lvHistoryHires = (ListView) rootView.findViewById(R.id.lv_history_hires);
                 registerForContextMenu(lvHistoryHires);
                 tvHiresHistoryEmpty = (TextView) rootView.findViewById(R.id.tv_timeline_history_empty);
+                lvHistoryHires.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                    @Override
+                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                        view.showContextMenu();
+                    }
+                });
             }
             return rootView;
         }
@@ -402,6 +437,10 @@ public class TimelineFragment extends android.support.v4.app.Fragment implements
             Helpers.dismissProgressDialog();
             if (hiresIdsListConfirmed.size() == 0) {
                 tvHiresConfirmedEmpty.setVisibility(View.VISIBLE);
+            } else {
+                CustomHiresListAdapter customHiresListAdapter1 = new CustomHiresListAdapter(getActivity(), R.layout.hires_list_row, hiresIdsListConfirmed);
+                lvConfirmedHires.setAdapter(customHiresListAdapter1);
+                registerForContextMenu(lvConfirmedHires);
             }
         }
 
@@ -459,7 +498,7 @@ public class TimelineFragment extends android.support.v4.app.Fragment implements
             } else if (hireStatus == 4) {
                 viewHolder.tvHiresStatus.setText("Status: InProgress");
             } else if (hireStatus == 5) {
-                viewHolder.tvHiresStatus.setText("Status: Done");
+                viewHolder.tvHiresStatus.setText("Status: Finished");
             } else if (hireStatus == 6) {
                 viewHolder.tvHiresStatus.setText("Status: Conflict");
             }
@@ -472,7 +511,6 @@ public class TimelineFragment extends android.support.v4.app.Fragment implements
             viewHolder.tvHiresStartTime.setText("Start Time: " + Helpers.formatTimeToDisplay(hashMapTimelineData.get(arrayListIntIds.get(position)).get(4)));
             viewHolder.tvHiresEndTime.setText("End Time: " + Helpers.formatTimeToDisplay(hashMapTimelineData.get(arrayListIntIds.get(position)).get(5)));
             viewHolder.tvHiresTimeSpan.setText("Time Span: " + hashMapTimelineData.get(arrayListIntIds.get(position)).get(6) + " Hours");
-
             return convertView;
         }
 

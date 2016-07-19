@@ -9,16 +9,12 @@ import android.util.Log;
 
 import com.byteshaft.briver.R;
 import com.byteshaft.briver.utils.AppGlobals;
-import com.google.android.gms.gcm.GcmPubSub;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.google.android.gms.iid.InstanceID;
-
-import java.io.IOException;
 
 public class RegistrationIntentService extends IntentService {
 
     private static final String TAG = "RegIntentService";
-    private static final String[] TOPICS = {"global"};
 
     public static String gcmToken = null;
 
@@ -56,13 +52,4 @@ public class RegistrationIntentService extends IntentService {
         Intent registrationComplete = new Intent(QuickstartPreferences.REGISTRATION_COMPLETE);
         LocalBroadcastManager.getInstance(this).sendBroadcast(registrationComplete);
     }
-
-    // [START subscribe_topics]
-    private void subscribeTopics(String token) throws IOException {
-        GcmPubSub pubSub = GcmPubSub.getInstance(this);
-        for (String topic : TOPICS) {
-            pubSub.subscribe(token, "/topics/" + topic, null);
-        }
-    }
-    // [END subscribe_topics]
 }

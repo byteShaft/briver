@@ -192,6 +192,8 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
             }
         });
 
+        startGcmService();
+
         return baseViewLoginFragment;
     }
 
@@ -249,7 +251,6 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
 
     public void onLoginSuccess() {
         Log.i("Login", "Success");
-        startGcmService();
         taskGetUserData = (GetUserDataTask) new GetUserDataTask().execute();
         AppGlobals.putUserPassword(sLoginPassword);
         AppGlobals.setLoggedIn(true);
@@ -263,9 +264,9 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
 
     public void onGetUserDataSuccess() {
         Log.i("UserDataRetrieval", "Success");
-//        if (!AppGlobals.isPushNotificationsEnabled()) {
-//            taskEnablePushNotification = (EnablePushNotificationsTask) new EnablePushNotificationsTask().execute();
-//        }
+        if (!AppGlobals.isPushNotificationsEnabled()) {
+            taskEnablePushNotification = (EnablePushNotificationsTask) new EnablePushNotificationsTask().execute();
+        }
         Intent intent = new Intent(getActivity(), MainActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
         getActivity().finish();
@@ -512,13 +513,8 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
                 }
             }
         };
-
-        if (AppGlobals.checkPlayServicesAvailability()) {
-            Log.i("PlayService", "Available");
-            // Start IntentService to register this application with GCM.
             Intent intent = new Intent(getActivity(), RegistrationIntentService.class);
             getActivity().startService(intent);
-        }
     }
 
     private void cancelAllTasks() {
