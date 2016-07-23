@@ -1,13 +1,11 @@
-<?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <RelativeLayout
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
         android:layout_margin="10dp"
         android:background="@drawable/background_layout_contact_us"
         android:orientation="horizontal"
@@ -17,57 +15,126 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="vertical">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Briver"
+                android:textColor="#000000"
+                android:textSize="18dp"
+                android:textStyle="bold" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Developed By"
-                android:textAllCaps="true"
+                android:text="We're available 24 hours a day and 7 days a week!"
                 android:textColor="#000000"
-                android:textSize="10dp" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="byteShaft Software Services"
-                android:textColor="#000000"
-                android:textSize="13dp" />
+                android:textSize="14dp" />
 
             <LinearLayout
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="bottom"
-                android:layout_marginTop="20dp"
-                android:gravity="center_horizontal"
+                android:layout_marginTop="5dp"
                 android:orientation="horizontal">
 
-                <ImageButton
-                    android:id="@+id/btn_contact_us_call"
+                <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:background="@drawable/background_button_call"
-                    android:clickable="true"
-                    android:text="Call"
+                    android:text="Call: "
+                    android:textAllCaps="true"
+                    android:textColor="#000000"
                     android:textSize="14dp" />
 
-                <ImageButton
-                    android:id="@+id/btn_contact_us_mail"
+                <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="40dp"
-                    android:background="@drawable/background_button_mail"
-                    android:clickable="true"
-                    android:text="Mail"
+                    android:autoLink="phone"
+                    android:text="(011) 40516818"
+                    android:textColorLink="#3F51B5"
+                    android:textSize="14dp" />
+
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="5dp"
+                    android:layout_marginRight="5dp"
+                    android:text="or"
+                    android:textAllCaps="true"
+                    android:textColor="#000000"
+                    android:textSize="14dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:autoLink="phone"
+                    android:text="+91-8750875045"
+                    android:textColorLink="#3F51B5"
                     android:textSize="14dp" />
             </LinearLayout>
-        </LinearLayout>
 
-        <ImageView
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="E-Mail: "
+                    android:textAllCaps="true"
+                    android:textColor="#000000"
+                    android:textSize="14dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:autoLink="email"
+                    android:text="support@briver.in"
+                    android:textColorLink="#3F51B5"
+                    android:textSize="14dp" />
+
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        android:background="@drawable/background_layout_contact_us"
+        android:orientation="vertical"
+        android:padding="10dp">
+
+        <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignParentRight="true"
-            android:layout_centerVertical="true"
-            android:background="@mipmap/ic_byteshaft_logo" />
-    </RelativeLayout>
+            android:text="Mailing Address"
+            android:textColor="#000000"
+            android:textSize="18dp"
+            android:textStyle="bold" />
 
-</RelativeLayout>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Briver And You,\nC-63,\nFriends Colony East,\nNew Delhi - 110065,\nKarnataka, India."
+            android:textColor="#000000"
+            android:textSize="14dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="15dp"
+            android:text="Corporate Address"
+            android:textColor="#000000"
+            android:textSize="18dp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Briver And You OPC,\nM-55,\nGreater Kailash Part II,\nMain Market,\nNew Delhi – 110048"
+            android:textColor="#000000"
+            android:textSize="14dp" />
+    </LinearLayout>
+</LinearLayout>

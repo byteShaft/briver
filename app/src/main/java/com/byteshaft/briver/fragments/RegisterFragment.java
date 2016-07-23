@@ -144,7 +144,7 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
     String userRegisterVehicleModel;
     int userRegisterVehicleType = -1;
     int transmissionType = -1;
-    HttpURLConnection connection;
+    public static HttpURLConnection connection;
     LocationService mLocationService;
     final Runnable recheckLocationServiceStatus = new Runnable() {
         public void run() {
@@ -664,7 +664,6 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
                     out.writeBytes(dataForRegistration);
                     out.flush();
                     out.close();
-                    responseCode = connection.getResponseCode();
                 } else {
                     MultipartDataUtility http;
                     try {
@@ -701,6 +700,7 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
                         e.printStackTrace();
                     }
                 }
+                responseCode = connection.getResponseCode();
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -712,7 +712,7 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
             super.onPostExecute(aVoid);
             Helpers.dismissProgressDialog();
 
-            if (responseCode == 201) {
+            if (responseCode == 201 || responseCode == 200) {
                 onRegistrationSuccess();
             } else if (responseCode == 400) {
                 onRegistrationFailed("Registration failed. Email already in use");

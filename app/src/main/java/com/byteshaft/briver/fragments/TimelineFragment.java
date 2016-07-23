@@ -62,6 +62,7 @@ public class TimelineFragment extends android.support.v4.app.Fragment implements
     View baseViewTimelineFragment;
     boolean isTimelineDataTaskRunning;
     boolean isViewUserDetailsTaskRunning;
+    public static boolean isTimelineFragemntOpen;
     GetTimelineData taskTimelineData;
     ViewUserDetailsTask taskViewUserData;
     int tabSelected;
@@ -69,7 +70,9 @@ public class TimelineFragment extends android.support.v4.app.Fragment implements
     TextView tvHiresConfirmedEmpty;
     TextView tvHiresPendingEmpty;
     TextView tvHiresHistoryEmpty;
+    int selectedContextMenuId;
     private SectionsPagerAdapter mSectionsPagerAdapter;
+
 
     @Nullable
     @Override
@@ -120,9 +123,7 @@ public class TimelineFragment extends android.support.v4.app.Fragment implements
                         tvHiresHistoryEmpty.setVisibility(View.GONE);
                         CustomHiresListAdapter customHiresListAdapter3 = new CustomHiresListAdapter(getActivity(), R.layout.hires_list_row, hiresIdsListHistory);
                         lvHistoryHires.setAdapter(customHiresListAdapter3);
-                        if (AppGlobals.getUserType() == 1) {
-                            registerForContextMenu(lvHistoryHires);
-                        }
+                        registerForContextMenu(lvHistoryHires);
                     }
                 }
             }
@@ -156,6 +157,7 @@ public class TimelineFragment extends android.support.v4.app.Fragment implements
     @Override
     public void onPause() {
         super.onPause();
+        isTimelineFragemntOpen = false;
         if (isTimelineDataTaskRunning) {
             taskTimelineData.cancel(true);
         }
@@ -166,6 +168,12 @@ public class TimelineFragment extends android.support.v4.app.Fragment implements
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+        isTimelineFragemntOpen = true;
+    }
+
+    @Override
     public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
         super.onCreateContextMenu(menu, v, menuInfo);
         AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) menuInfo;
@@ -173,20 +181,22 @@ public class TimelineFragment extends android.support.v4.app.Fragment implements
         String userName = null;
         int status = Integer.parseInt(hashMapTimelineData.get(returnProperID(info.position)).get(0));
         MenuInflater inflater = this.getActivity().getMenuInflater();
-        if (AppGlobals.getUserType() == 0 && tabSelected != 2) {
+        if (AppGlobals.getUserType() == 0) {
             inflater.inflate(R.menu.context_menu_hires_list_customer, menu);
         } else if (tabSelected != 2 || status == 5) {
             inflater.inflate(R.menu.context_menu_hires_list_driver, menu);
         } else if (AppGlobals.getUserType() == 1 && tabSelected == 2 && status != 5) {
-            Helpers.AlertDialogMessage(getActivity(), "Note", "You can only Review an entry which has a 'Done' Status", "Dismiss");
+            Helpers.AlertDialogMessage(getActivity(), "Note", "You can only Review an entry which has a 'Finished' Status", "Dismiss");
         }
         userName = hashMapTimelineData.get(returnProperID(info.position)).get(2);
         if (tabSelected == 0) {
             menu.removeItem(R.id.item_context_hires_list_accept);
             menu.removeItem(R.id.item_context_hires_list_decline);
             menu.removeItem(R.id.item_context_hires_list_navigate);
+            menu.removeItem(R.id.item_context_hires_list_review);
         } else if (tabSelected == 1) {
             menu.removeItem(R.id.item_context_hires_list_finish);
+            menu.removeItem(R.id.item_context_hires_list_review);
         } else if (tabSelected == 2){
             menu.removeItem(R.id.item_context_hires_list_accept);
             menu.removeItem(R.id.item_context_hires_list_decline);
@@ -225,18 +235,17 @@ public class TimelineFragment extends android.support.v4.app.Fragment implements
                 Helpers.initiateCallIntent(getActivity(), hashMapTimelineData.get(returnProperID(info.position)).get(3));
                 return true;
             case R.id.item_context_hires_list_review:
-                String reviewId = String.valueOf(returnProperID(info.position));
-                String[] reviewTaskStringArray = new String[] {reviewId, "0"};
+                Helpers.nameForRatingsDialog = hashMapTimelineData.get(returnProperID(info.position)).get(2);
+                String hireId = String.valueOf(returnProperID(info.position));
+                String[] reviewTaskStringArray = new String[] {hireId, "0"};
                 new ReviewHireTask().execute(reviewTaskStringArray);
                 return true;
             case R.id.item_context_hires_list_finish:
-                if (AppGlobals.getUserType() == 0) {
-                    String[] dataFinish = new String[]{"" + returnProperID(info.position), "5"};
-                    new UpdateHireStatusTask().execute(dataFinish);
-                } else {
-                    Helpers.nameForRatingsDialog = hashMapTimelineData.get(returnProperID(info.position)).get(2);
-                    new ReviewHireTask().execute();
-                }
+                selectedContextMenuId = info.position;
+                Helpers.AlertDialogWithPositiveFunctionNegativeButton(getActivity(), "Are you sure?", "Want to complete this Hire?\n\n" +
+                "DriverFee: " + hashMapTimelineData.get(returnProperID(info.position)).get(8) + "\n" +
+                "TotalCharges: " + hashMapTimelineData.get(returnProperID(info.position)).get(9) + "\n\n" +
+                        "Note: You'll have to pay the TotalCharges to complete this Hire", "Yes", "Cancel", finishHire);
                 return true;
             case R.id.item_context_hires_list_view_user_details:
                     taskViewUserData = (ViewUserDetailsTask) new ViewUserDetailsTask().execute(
@@ -421,6 +430,11 @@ public class TimelineFragment extends android.support.v4.app.Fragment implements
                         arrayListString.add(jsonObject.getString("end_time"));
                         arrayListString.add(jsonObject.getString("time_span"));
                         arrayListString.add(jsonObject.getString("location"));
+
+                        JSONObject jsonObjectPricingData = new JSONObject(jsonObject.getString("price"));
+                        arrayListString.add(jsonObjectPricingData.getString("driver_price"));
+                        arrayListString.add(jsonObjectPricingData.getString("total_price"));
+
                         hashMapTimelineData.put(jsonObject.getInt("id"), arrayListString);
                     }
                 }
@@ -481,10 +495,11 @@ public class TimelineFragment extends android.support.v4.app.Fragment implements
             } else {
                 viewHolder = (ViewHolder) convertView.getTag();
             }
-            viewHolder.tvHiresPrice.setText("₹234");
             if (AppGlobals.getUserType() == 0) {
+                viewHolder.tvHiresPrice.setText("₹" + hashMapTimelineData.get(arrayListIntIds.get(position)).get(9));
                 viewHolder.tvHiresPrice.setTextColor(Color.parseColor("#F44336"));
             } else {
+                viewHolder.tvHiresPrice.setText("₹" + hashMapTimelineData.get(arrayListIntIds.get(position)).get(8));
                 viewHolder.tvHiresPrice.setTextColor(Color.parseColor("#A4C639"));
             }
 
@@ -596,5 +611,17 @@ public class TimelineFragment extends android.support.v4.app.Fragment implements
             isViewUserDetailsTaskRunning = false;
         }
     }
+
+
+    final Runnable finishHire = new Runnable() {
+        public void run() {
+            Log.i("userNameTimeline", "" + hashMapTimelineData.get(returnProperID(selectedContextMenuId)).get(2));
+            Helpers.nameForRatingsDialog = hashMapTimelineData.get(returnProperID(selectedContextMenuId)).get(2);
+            if (AppGlobals.getUserType() == 0) {
+                String[] dataFinish = new String[]{"" + returnProperID(selectedContextMenuId), "5"};
+                new UpdateHireStatusTask().execute(dataFinish);
+            }
+        }
+    };
 
 }

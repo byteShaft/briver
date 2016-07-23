@@ -471,11 +471,8 @@ public class ProfileFragment extends android.support.v4.app.Fragment implements 
                                 } catch (IOException ignored) {
                                 }
                             }
-                            JSONObject jsonObject = new JSONObject(WebServiceHelpers.readResponse(connection));
-                            AppGlobals.putDocOne(jsonObject.getString("doc1"));
-                            AppGlobals.putDocTwo(jsonObject.getString("doc2"));
-                            AppGlobals.putDocThree(jsonObject.getString("doc3"));
-                        } catch (IOException | URISyntaxException | JSONException e) {
+                            responseCode = connection.getResponseCode();
+                        } catch (IOException | URISyntaxException e) {
                             e.printStackTrace();
                         }
                     } else {
@@ -490,7 +487,15 @@ public class ProfileFragment extends android.support.v4.app.Fragment implements 
                     out.close();
                     responseCode = connection.getResponseCode();
                 }
-            } catch (IOException e) {
+
+                if (AppGlobals.getUserType() == 1 && imagePendingUpload) {
+                    JSONObject jsonObject = new JSONObject(WebServiceHelpers.readResponse(connection));
+                    Log.i("profileChangeResponse", "" + jsonObject);
+                    AppGlobals.putDocOne(jsonObject.getString("doc1"));
+                    AppGlobals.putDocTwo(jsonObject.getString("doc2"));
+                    AppGlobals.putDocThree(jsonObject.getString("doc3"));
+                }
+            } catch (IOException | JSONException e) {
                 e.printStackTrace();
             }
             return null;

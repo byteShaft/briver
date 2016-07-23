@@ -36,6 +36,7 @@ public class MyGcmListenerService extends GcmListenerService {
     @Override
     public void onMessageReceived(String from, Bundle data) {
         Log.i("messageReceived", "From:" + from + " " + data);
+
         String hireStatus ="HireStatus: " + returnHireStatusText(Integer.parseInt(data.getString("status")));
         String name;
         if (AppGlobals.getUserType() == 0) {

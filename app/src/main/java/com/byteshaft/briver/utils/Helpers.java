@@ -46,6 +46,7 @@ import android.widget.TextView;
 
 import com.byteshaft.briver.MainActivity;
 import com.byteshaft.briver.R;
+import com.byteshaft.briver.Tasks.ReviewHireTask;
 import com.byteshaft.briver.fragments.HireFragment;
 import com.google.android.gms.maps.model.LatLng;
 
@@ -104,6 +105,7 @@ public class Helpers {
     static Bitmap bmThree;
     static Button dialogButtonYes;
     static Button dialogButtonNo;
+    static Dialog ratingDialog;
     static RetrieveDocumentsTask taskRetrieveDocuments;
     private static ProgressDialog progressDialog;
     private static ProgressDialog progressDialogWithPositiveButton;
@@ -128,6 +130,10 @@ public class Helpers {
         if (progressDialog != null) {
             progressDialog.dismiss();
         }
+    }
+
+    public static void dismissCustomRatingDialog() {
+        ratingDialog.dismiss();
     }
 
     public static boolean isIsSoftKeyboardOpen() {
@@ -362,17 +368,28 @@ public class Helpers {
                 .show();
     }
 
-    public static void customRatingDialog(final Context context, String fullName) {
-        Dialog ratingDialog = new Dialog(context);
+    public static void customRatingDialog(final Context context, String fullName, final String hireId) {
+        ratingDialog = new Dialog(context);
         ratingDialog.setContentView(R.layout.layout_rating_dialog);
         ratingDialog.setTitle("Rate " + fullName);
-        final RatingBar rbarRatingDialog = (RatingBar) ratingDialog.findViewById(R.id.rBar_rating_dialog);
+        ratingDialog.setCancelable(false);
+        final RatingBar rBarRatingDialog = (RatingBar) ratingDialog.findViewById(R.id.rBar_rating_dialog);
 
         Button btnRatingDialogDone = (Button) ratingDialog.findViewById(R.id.btn_rating_dialog_done);
         btnRatingDialogDone.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.i("rating", "" + rbarRatingDialog.getRating());
+                Log.i("rating", "" + rBarRatingDialog.getRating());
+                String[] reviewTaskString = new String[] {hireId, "1", String.valueOf(rBarRatingDialog.getRating())};
+                new ReviewHireTask().execute(reviewTaskString);
+            }
+        });
+
+        Button btnRatingDialogLater = (Button) ratingDialog.findViewById(R.id.btn_rating_dialog_cancel);
+        btnRatingDialogLater.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ratingDialog.dismiss();
             }
         });
 

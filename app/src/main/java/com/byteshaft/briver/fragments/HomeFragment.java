@@ -22,7 +22,6 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.byteshaft.briver.R;
-import com.byteshaft.briver.Tasks.ReviewHireTask;
 import com.byteshaft.briver.Tasks.UpdateHireStatusTask;
 import com.byteshaft.briver.utils.AppGlobals;
 import com.byteshaft.briver.utils.EndPoints;
@@ -62,6 +61,7 @@ public class HomeFragment extends android.support.v4.app.Fragment {
     public static ArrayList<Integer> hiresIdsListConfirmed;
     public static ArrayList<Integer> hiresIdsListPending;
 
+    int selectedContextMenuId;
     public static GetHiresData taskGetHiresData;
     ViewUserDetailsTask taskViewUserData;
 
@@ -142,7 +142,6 @@ public class HomeFragment extends android.support.v4.app.Fragment {
             userName = hashMapHiresData.get(returnProperID(info.position)).get(2);
             menu.removeItem(R.id.item_context_hires_list_accept);
             menu.removeItem(R.id.item_context_hires_list_decline);
-            menu.removeItem(R.id.item_context_hires_list_navigate);
             menu.removeItem(R.id.item_context_hires_list_review);
         } else if (listViewSelected == 1) {
             userName = hashMapHiresData.get(returnProperID(info.position)).get(2);
@@ -178,12 +177,13 @@ public class HomeFragment extends android.support.v4.app.Fragment {
                 Helpers.initiateCallIntent(getActivity(), hashMapHiresData.get(returnProperID(info.position)).get(3));
                 return true;
             case R.id.item_context_hires_list_finish:
-                if (AppGlobals.getUserType() == 0) {
-                    String[] dataFinish = new String[]{"" + returnProperID(info.position), "5"};
-                    new UpdateHireStatusTask().execute(dataFinish);
-                } else {
-                    new ReviewHireTask().execute();
-                }
+                selectedContextMenuId = info.position;
+                Helpers.nameForRatingsDialog = hashMapHiresData.get(returnProperID(info.position)).get(2);
+
+                Helpers.AlertDialogWithPositiveFunctionNegativeButton(getActivity(), "Are you sure?", "Want to complete this Hire?\n\n" +
+                        "DriverFee: " + hashMapHiresData.get(returnProperID(info.position)).get(8) + "\n" +
+                        "TotalCharges: " + hashMapHiresData.get(returnProperID(info.position)).get(9) + "\n\n" +
+                        "Note: You'll have to pay the TotalCharges to complete this Hire", "Yes", "Cancel", finishHire);
                 return true;
             case R.id.item_context_hires_list_review:
 //                    new ReviewHireTask().execute();
@@ -303,6 +303,11 @@ public class HomeFragment extends android.support.v4.app.Fragment {
                         arrayListString.add(jsonObject.getString("end_time"));
                         arrayListString.add(jsonObject.getString("time_span"));
                         arrayListString.add(jsonObject.getString("location"));
+
+                        JSONObject jsonObjectPricingData = new JSONObject(jsonObject.getString("price"));
+                        arrayListString.add(jsonObjectPricingData.getString("driver_price"));
+                        arrayListString.add(jsonObjectPricingData.getString("total_price"));
+
                         hashMapHiresData.put(jsonObject.getInt("id"), arrayListString);
                     }
                 }
@@ -375,10 +380,11 @@ public class HomeFragment extends android.support.v4.app.Fragment {
                 } else {
                     viewHolder = (ViewHolder) convertView.getTag();
                 }
-                viewHolder.tvHiresPrice.setText("₹234");
                 if (AppGlobals.getUserType() == 0) {
+                    viewHolder.tvHiresPrice.setText("₹" + hashMapHiresData.get(arrayListIntIds.get(position)).get(9));
                     viewHolder.tvHiresPrice.setTextColor(Color.parseColor("#F44336"));
                 } else {
+                    viewHolder.tvHiresPrice.setText("₹" + hashMapHiresData.get(arrayListIntIds.get(position)).get(8));
                     viewHolder.tvHiresPrice.setTextColor(Color.parseColor("#A4C639"));
                 }
 
@@ -506,6 +512,16 @@ public class HomeFragment extends android.support.v4.app.Fragment {
     public static final Runnable refreshHomeHiresList = new Runnable() {
         public void run() {
             new GetHiresData().execute();
+        }
+    };
+
+
+    final Runnable finishHire = new Runnable() {
+        public void run() {
+            if (AppGlobals.getUserType() == 0) {
+                String[] dataFinish = new String[]{"" + returnProperID(selectedContextMenuId), "5"};
+                new UpdateHireStatusTask().execute(dataFinish);
+            }
         }
     };
 }
