@@ -1,7 +1,5 @@
 package com.byteshaft.briver.utils;
 
-import android.util.Log;
-
 import com.byteshaft.briver.fragments.ProfileFragment;
 import com.byteshaft.briver.fragments.RegisterFragment;
 
@@ -96,13 +94,14 @@ public class MultipartDataUtility {
         writer.close();
         if (ProfileFragment.isProfileFragmentOpen) {
             ProfileFragment.connection = connection;
-            ProfileFragment.responseCode = connection.getResponseCode();
-            Log.i("ResponseCode", "" + connection.getResponseCode());
-            Log.i("Message", "" + connection.getResponseMessage());
+//            ProfileFragment.responseCode = connection.getResponseCode();
+//            Log.i("ResponseCode", "" + connection.getResponseCode());
+//            Log.i("Message", "" + connection.getResponseMessage());
         } else {
-            RegisterFragment.responseCode = connection.getResponseCode();
-            Log.i("ResponseCode", "" + connection.getResponseCode());
-            Log.i("Message", "" + connection.getResponseMessage());
+            RegisterFragment.connection = connection;
+//            RegisterFragment.responseCode = connection.getResponseCode();
+//            Log.i("ResponseCode", "" + connection.getResponseCode());
+//            Log.i("Message", "" + connection.getResponseMessage());
         }
         InputStream is = connection.getInputStream();
         final ByteArrayOutputStream bytes = new ByteArrayOutputStream();

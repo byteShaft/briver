@@ -1,10 +1,12 @@
 package com.byteshaft.briver.fragments;
 
 import android.Manifest;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Location;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentManager;
@@ -17,6 +19,7 @@ import android.view.ViewGroup;
 import android.widget.Toast;
 
 import com.byteshaft.briver.R;
+import com.byteshaft.briver.utils.AppGlobals;
 import com.byteshaft.briver.utils.Helpers;
 import com.directions.route.Route;
 import com.directions.route.Routing;
@@ -46,6 +49,21 @@ public class NavigateFragment extends android.support.v4.app.Fragment {
     private Boolean simpleMapView = true;
     private boolean routeBuildExecuted;
     private Menu actionsMenu;
+    final Runnable openLocationServiceSettings = new Runnable() {
+        public void run() {
+            Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+            startActivity(intent);
+        }
+    };
+    final Runnable recheckLocationServiceStatus = new Runnable() {
+        public void run() {
+            if (!Helpers.isAnyLocationServiceAvailable()) {
+                Helpers.AlertDialogWithPositiveNegativeFunctions(getActivity(), "Location Service disabled",
+                        "Enable device GPS to continue driver hiring", "Settings", "ReCheck",
+                        openLocationServiceSettings, recheckLocationServiceStatus);
+            }
+        }
+    };
 
     private GoogleMap.OnMyLocationChangeListener myLocationChangeListener = new GoogleMap.OnMyLocationChangeListener() {
         @Override
@@ -82,8 +100,24 @@ public class NavigateFragment extends android.support.v4.app.Fragment {
                     //                                          int[] grantResults)
                     // to handle the case where the user grants the permission. See the documentation
                     // for ActivityCompat#requestPermissions for more details.
-                    return;
+                    Helpers.AlertDialogWithPositiveNegativeFunctions(AppGlobals.getRunningActivityInstance(), "Permission Denied",
+                            "You need to grant permissions to use Location Services for Briver", "Settings",
+                            "Exit App", Helpers.openPermissionsSettingsForMarshmallow, Helpers.exitApp);
+                    getActivity().onBackPressed();
+                } else if (!AppGlobals.checkPlayServicesAvailability()) {
+                    Helpers.AlertDialogWithPositiveNegativeFunctions(getActivity(), "Location components missing",
+                            "You need to install GooglePlayServices to continue using Briver", "Install",
+                            "Exit App", Helpers.openPlayServicesInstallation, Helpers.exitApp);
+                    getActivity().onBackPressed();
+                } else if (!Helpers.isAnyLocationServiceAvailable()) {
+                    Helpers.AlertDialogWithPositiveNegativeFunctions(getActivity(), "Location Service disabled",
+                            "Enable device GPS to continue driver hiring", "Settings", "ReCheck",
+                            openLocationServiceSettings, recheckLocationServiceStatus);
+                    getActivity().onBackPressed();
+                } else {
+                    Helpers.showProgressDialogWithPositiveButton(getActivity(), "Acquiring current location", "Dismiss", null);
                 }
+
                 mMap.setMyLocationEnabled(true);
                 mMap.getUiSettings().setMyLocationButtonEnabled(false);
                 mMap.getUiSettings().setCompassEnabled(true);

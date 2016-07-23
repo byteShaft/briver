@@ -7,6 +7,9 @@
         android:id="@+id/item_context_hires_list_finish"
         android:title="Finish/Review" />
     <item
+        android:id="@+id/item_context_hires_list_review"
+        android:title="Review" />
+    <item
         android:id="@+id/item_context_hires_list_view_user_details"
         android:title="User details" />
 </menu>

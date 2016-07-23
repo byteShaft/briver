@@ -191,9 +191,9 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
 
             }
         });
-
-        startGcmService();
-
+        if (Helpers.isNetworkAvailable(getActivity())) {
+            startGcmService();
+        }
         return baseViewLoginFragment;
     }
 

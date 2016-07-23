@@ -24,17 +24,18 @@ import android.widget.Toast;
 
 import com.byteshaft.briver.MainActivity;
 import com.byteshaft.briver.R;
+import com.byteshaft.briver.Tasks.EnablePushNotificationsTask;
 import com.byteshaft.briver.utils.AppGlobals;
 import com.byteshaft.briver.utils.EndPoints;
 import com.byteshaft.briver.utils.Helpers;
 import com.byteshaft.briver.utils.SoftKeyboard;
+import com.byteshaft.briver.utils.WebServiceHelpers;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
@@ -189,9 +190,13 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
         } else {
             AppGlobals.putUserType(1);
         }
+        if (!AppGlobals.isPushNotificationsEnabled()) {
+            new EnablePushNotificationsTask().execute();
+        }
         AppGlobals.setLoggedIn(true);
         getActivity().finish();
         startActivity(new Intent(getActivity(), MainActivity.class));
+
     }
 
     public void onConfirmationFailed() {
@@ -248,14 +253,8 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
         @Override
         protected Void doInBackground(Void... params) {
             try {
-                URL url = new URL(EndPoints.ACTIVATE_ACCOUNT);
-                connection = (HttpURLConnection) url.openConnection();
-                connection.setDoOutput(true);
-                connection.setDoInput(true);
-                connection.setInstanceFollowRedirects(false);
-                connection.setRequestMethod("POST");
-                connection.setRequestProperty("Content-Type", "application/json");
-                connection.setRequestProperty("charset", "utf-8");
+                String url = EndPoints.ACTIVATE_ACCOUNT;
+                 connection = WebServiceHelpers.openConnectionForUrl(url, "POST", false);
                 DataOutputStream out = new DataOutputStream(connection.getOutputStream());
 
                 String confirmationString = getConfirmationString(textEmailEntry, confirmationCode);
@@ -264,15 +263,7 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
                 out.flush();
                 out.close();
                 responseCode = connection.getResponseCode();
-                InputStream in = (InputStream) connection.getContent();
-                int ch;
-                StringBuilder sb;
-
-                sb = new StringBuilder();
-                while ((ch = in.read()) != -1)
-                    sb.append((char) ch);
-                JSONObject jsonObject = new JSONObject(sb.toString());
-
+                JSONObject jsonObject = new JSONObject(WebServiceHelpers.readResponse(connection));
                 Log.i("UserConfirmationTask", jsonObject.toString());
 
                 AppGlobals.putToken(jsonObject.getString("token"));

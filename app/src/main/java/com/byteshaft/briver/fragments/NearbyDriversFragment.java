@@ -64,6 +64,14 @@ public class NearbyDriversFragment extends android.support.v4.app.Fragment {
         nearbyDriversList = (ListView) baseViewNearbyDriversFragment.findViewById(R.id.lv_list_nearby_drivers);
         driversId = new ArrayList<>();
         hashMapDriverAddresses = new HashMap<>();
+
+        nearbyDriversList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                view.showContextMenu();
+            }
+        });
+
         return baseViewNearbyDriversFragment;
     }
 

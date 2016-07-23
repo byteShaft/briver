@@ -48,7 +48,7 @@ public class UpdateHireStatusTask extends AsyncTask<String, String  , String> {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return null;
+        return params[0];
     }
 
     @Override
@@ -71,7 +71,7 @@ public class UpdateHireStatusTask extends AsyncTask<String, String  , String> {
                 MainActivity.getInstance().onBackPressed();
                 }
             } else {
-                Helpers.customRatingDialog(AppGlobals.getContext(), Helpers.nameForRatingsDialog);
+                Helpers.customRatingDialog(AppGlobals.getRunningActivityInstance(), Helpers.nameForRatingsDialog, s);
             }
         } else {
             Toast.makeText(AppGlobals.getContext(), "Failed to update status", Toast.LENGTH_LONG).show();
