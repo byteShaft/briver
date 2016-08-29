@@ -3,13 +3,12 @@ apply plugin: 'com.android.application'
 android {
     compileSdkVersion 23
     buildToolsVersion "23.0.2"
-
     defaultConfig {
-        applicationId "com.byteshaft.briver"
+        applicationId 'com.beza.briver'
         minSdkVersion 15
         targetSdkVersion 23
         versionCode 1
-        versionName "1.0"
+        versionName "0.9.2"
     }
     buildTypes {
         release {
@@ -17,16 +16,17 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+    productFlavors {
+    }
 }
 
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile fileTree(include: ['*.jar'], dir: 'libs')
     testCompile 'junit:junit:4.12'
     compile 'com.android.support:appcompat-v7:23.3.0'
     compile 'com.android.support:design:23.3.0'
     compile 'com.google.android.gms:play-services:8.4.0'
     compile 'com.github.jd-alexander:library:1.0.6'
-    compile 'org.apache.directory.studio:org.apache.commons.io:2.4'
 }
 
 apply plugin: 'com.google.gms.google-services'

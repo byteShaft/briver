@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.byteshaft.briver">
+    package="com.beza.briver" >
 
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.INTERNET" />
@@ -9,7 +9,7 @@
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.CAMERA" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <uses-feature
         android:name="android.hardware.camera.autofocus"
@@ -19,32 +19,31 @@
         android:required="false" />
 
     <application
-        android:name="com.byteshaft.briver.utils.AppGlobals"
+        android:name="com.beza.briver.utils.AppGlobals"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android:supportsRtl="true"
-        android:theme="@style/AppTheme">
+        android:theme="@style/AppTheme" >
         <activity
-            android:name=".WelcomeActivity"
+            android:name="com.beza.briver.WelcomeActivity"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.TransparentWelcomeActivity"
-            android:windowSoftInputMode="adjustResize">
+            android:windowSoftInputMode="adjustResize" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
         <activity
-            android:name=".MainActivity"
+            android:name="com.beza.briver.MainActivity"
             android:label="@string/app_name"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.MainActivity"
-            android:windowSoftInputMode="adjustResize">
+            android:windowSoftInputMode="adjustResize" >
         </activity>
 
-        <receiver android:name=".utils.NetworkChangeReceiver">
+        <receiver android:name="com.beza.briver.utils.NetworkChangeReceiver" >
             <intent-filter>
                 <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
             </intent-filter>
@@ -54,21 +53,21 @@
             android:name="com.google.android.geo.API_KEY"
             android:value="@string/google_maps_key" />
 
-
         <receiver
             android:name="com.google.android.gms.gcm.GcmReceiver"
             android:exported="true"
-            android:permission="com.google.android.c2dm.permission.SEND">
+            android:permission="com.google.android.c2dm.permission.SEND" >
             <intent-filter>
                 <action android:name="com.google.android.c2dm.intent.RECEIVE" />
+
                 <category android:name="gcm.play.android.samples.com.gcmquickstart" />
             </intent-filter>
         </receiver>
 
         <!-- [START gcm_listener] -->
         <service
-            android:name="com.byteshaft.briver.gcm.MyGcmListenerService"
-            android:exported="false">
+            android:name="com.beza.briver.gcm.MyGcmListenerService"
+            android:exported="false" >
             <intent-filter>
                 <action android:name="com.google.android.c2dm.intent.RECEIVE" />
             </intent-filter>
@@ -76,27 +75,24 @@
         <!-- [END gcm_listener] -->
         <!-- [START instanceId_listener] -->
         <service
-            android:name="com.byteshaft.briver.gcm.MyInstanceIDListenerService"
-            android:exported="false">
+            android:name="com.beza.briver.gcm.MyInstanceIDListenerService"
+            android:exported="false" >
             <intent-filter>
                 <action android:name="com.google.android.gms.iid.InstanceID" />
             </intent-filter>
         </service>
         <!-- [END instanceId_listener] -->
         <service
-            android:name="com.byteshaft.briver.gcm.RegistrationIntentService"
-            android:exported="false">
+            android:name="com.beza.briver.gcm.RegistrationIntentService"
+            android:exported="false" >
         </service>
 
-        <receiver
-            android:name="com.byteshaft.briver.utils.DriverServiceAlarmReceiver">
+        <receiver android:name="com.beza.briver.utils.DriverServiceAlarmReceiver" >
             <intent-filter>
                 <action android:name="com.byteshaft.briver" />
             </intent-filter>
         </receiver>
-
-        <receiver
-            android:name="com.byteshaft.briver.utils.OnBootReceiver">
+        <receiver android:name="com.beza.briver.utils.OnBootReceiver" >
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
@@ -104,13 +100,17 @@
 
         <provider
             android:name="android.support.v4.content.FileProvider"
-            android:authorities="com.byteshaft.briver.fileprovider"
+            android:authorities="com.beza.briver.fileprovider"
             android:exported="false"
             android:grantUriPermissions="true" >
             <meta-data
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/image_path" />
         </provider>
+
+        <meta-data
+            android:name="com.google.android.gms.version"
+            android:value="@integer/google_play_services_version" />
     </application>
 
 </manifest>

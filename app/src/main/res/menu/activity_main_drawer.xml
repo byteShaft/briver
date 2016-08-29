@@ -46,6 +46,10 @@
         android:id="@+id/menu_bottom"
         android:checkableBehavior="none">
         <item
+            android:id="@+id/nav_terms"
+            android:icon="@mipmap/ic_terms_of_services"
+            android:title="Terms of Service" />
+        <item
             android:id="@+id/nav_logout"
             android:icon="@mipmap/ic_nav_logout"
             android:title="Logout" />
