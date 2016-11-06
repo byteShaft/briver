@@ -22,8 +22,10 @@ import android.widget.TextView;
 
 import com.beza.briver.fragments.ChangePasswordFragment;
 import com.beza.briver.fragments.ContactUsFragment;
+import com.beza.briver.fragments.ContractBriverHiringFragment;
 import com.beza.briver.fragments.HireFragment;
 import com.beza.briver.fragments.HomeFragment;
+import com.beza.briver.fragments.PaymentDetailsFragment;
 import com.beza.briver.fragments.PreferencesFragment;
 import com.beza.briver.fragments.ProfileFragment;
 import com.beza.briver.fragments.TermsFragment;
@@ -51,6 +53,9 @@ public class MainActivity extends AppCompatActivity
             AppGlobals.setLoggedIn(false);
             AppGlobals.setPushNotificationsEnabled(false);
             startActivity(new Intent(MainActivity.this, WelcomeActivity.class));
+            if (AppGlobals.getUserType() == 1) {
+                DriverLocationAlarmHelper.cancelAlarm();
+            }
             finish();
         }
     };
@@ -131,7 +136,6 @@ public class MainActivity extends AppCompatActivity
             navigationView.getMenu().getItem(1).setVisible(false);
             if (!AppGlobals.isAlarmSet() && AppGlobals.getLocationReportingType() == 1) {
                 DriverLocationAlarmHelper.setAlarm(AppGlobals.getDriverLocationReportingIntervalTime());
-                AppGlobals.setAlarmStatus(true);
             }
             if (AppGlobals.getDriverServiceStatus() != 0 && Helpers.isNetworkAvailable(this)) {
                 if (isDriverStatusTaskRunning) {
@@ -194,6 +198,12 @@ public class MainActivity extends AppCompatActivity
         } else if (id == R.id.nav_contact) {
             fragmentClass = ContactUsFragment.class;
             fragmentName = "ContactUSFragment";
+        } else if (id == R.id.nav_contract_briver_hiring) {
+            fragmentClass = ContractBriverHiringFragment.class;
+            fragmentName = "ContractBriverHiring";
+        } else if (id == R.id.nav_payment_details) {
+            fragmentClass = PaymentDetailsFragment.class;
+            fragmentName = "PaymentDetails";
         } else if (id == R.id.nav_terms) {
             fragmentClass = TermsFragment.class;
             fragmentName = "TermsOfService";

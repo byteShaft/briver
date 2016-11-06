@@ -39,6 +39,8 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
+import static com.beza.briver.fragments.LoginFragment.responseMessage;
+
 /**
  * Created by fi8er1 on 29/04/2016.
  */
@@ -199,8 +201,8 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
 
     }
 
-    public void onConfirmationFailed() {
-        Helpers.showSnackBar(getView(), "Confirmation failed, code error", Snackbar.LENGTH_SHORT, "#f44336");
+    public void onConfirmationFailed(String message) {
+        Helpers.showSnackBar(getView(), message, Snackbar.LENGTH_SHORT, "#f44336");
     }
 
     public void onResendSuccess() {
@@ -216,8 +218,8 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
         tvCodeConfirmationStatusDisplay.setVisibility(View.VISIBLE);
     }
 
-    public void onResendFailed() {
-        Helpers.showSnackBar(getView(), "Failed to resend E-Mail", Snackbar.LENGTH_LONG, "#f44336");
+    public void onResendFailed(String message) {
+        Helpers.showSnackBar(getView(), message, Snackbar.LENGTH_LONG, "#f44336");
         tvCodeConfirmationStatusDisplay.setText("Resend Failed");
         tvCodeConfirmationStatusDisplay.setTextColor(Color.parseColor("#f44336"));
         tvCodeConfirmationStatusDisplay.clearAnimation();
@@ -254,7 +256,7 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
         protected Void doInBackground(Void... params) {
             try {
                 String url = EndPoints.ACTIVATE_ACCOUNT;
-                 connection = WebServiceHelpers.openConnectionForUrl(url, "POST", false);
+                connection = WebServiceHelpers.openConnectionForUrl(url, "POST", false);
                 DataOutputStream out = new DataOutputStream(connection.getOutputStream());
 
                 String confirmationString = getConfirmationString(textEmailEntry, confirmationCode);
@@ -263,6 +265,7 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
                 out.flush();
                 out.close();
                 responseCode = connection.getResponseCode();
+                responseMessage = connection.getResponseMessage();
                 JSONObject jsonObject = new JSONObject(WebServiceHelpers.readResponse(connection));
                 Log.i("UserConfirmationTask", jsonObject.toString());
 
@@ -278,10 +281,12 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
                     AppGlobals.putVehicleType(jsonObject.getInt("vehicle_type"));
                     AppGlobals.putVehicleMake(jsonObject.getString("vehicle_make"));
                     AppGlobals.putVehicleModel(jsonObject.getString("vehicle_model"));
+                    AppGlobals.putVehicleModelYear(jsonObject.getString("vehicle_model_year"));
                 } else if (jsonObject.getInt("user_type") == 1) {
                     AppGlobals.putDrivingExperience(jsonObject.getString("driving_experience"));
                     AppGlobals.putDriverLocationReportingIntervalTime(jsonObject.getInt("location_reporting_interval"));
                     AppGlobals.putLocationReportingType(jsonObject.getInt("location_reporting_type"));
+                    AppGlobals.putDriverGender(jsonObject.getInt("gender"));
                     AppGlobals.putDocOne(jsonObject.getString("doc1"));
                     AppGlobals.putDocTwo(jsonObject.getString("doc2"));
                     AppGlobals.putDocThree(jsonObject.getString("doc3"));
@@ -289,7 +294,7 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
                 }
             } catch (IOException e) {
                 e.printStackTrace();
-                onConfirmationFailed();
+                onConfirmationFailed("Confirmation failed, code error");
             } catch (JSONException e) {
                 e.printStackTrace();
             }
@@ -305,8 +310,14 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
             btnCodeConfirmationSubmitCode.setEnabled(true);
             if (responseCode == 200) {
                 onConfirmationSuccess();
+            } else if (responseCode == 403) {
+                if (responseMessage.equalsIgnoreCase("user deactivated by admin.")) {
+                    onConfirmationFailed("Login Failed! User banned by admin");
+                } else {
+                    onConfirmationFailed("Confirmation failed, code error");
+                }
             } else {
-                onConfirmationFailed();
+                onConfirmationFailed("Confirmation failed, code error");
             }
         }
 
@@ -349,9 +360,10 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
                 out.flush();
                 out.close();
                 responseCode = connection.getResponseCode();
+                responseMessage = connection.getResponseMessage();
             } catch (IOException e) {
                 e.printStackTrace();
-                onConfirmationFailed();
+                onConfirmationFailed("Confirmation failed, code error");
             }
             return null;
         }
@@ -364,8 +376,14 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
             btnCodeConfirmationSubmitCode.setEnabled(true);
             if (responseCode == 200) {
                 onResendSuccess();
+            } else if (responseCode == 403) {
+                if (responseMessage.equalsIgnoreCase("user deactivated by admin.")) {
+                    onResendFailed("User banned by the admin");
+                } else {
+                    onResendFailed("Failed to resend E-Mail");
+                }
             } else {
-                onResendFailed();
+                onResendFailed("Failed to resend E-Mail");
                 Helpers.dismissProgressDialog();
             }
         }

@@ -39,12 +39,20 @@
                 android:id="@+id/nav_contact"
                 android:icon="@mipmap/ic_nav_contact_us"
                 android:title="Contact" />
+            <item
+                android:id="@+id/nav_contract_briver_hiring"
+                android:icon="@mipmap/ic_nav_contract"
+                android:title="Permanent Briver" />
         </menu>
     </item>
 
     <group
         android:id="@+id/menu_bottom"
         android:checkableBehavior="none">
+        <item
+            android:id="@+id/nav_payment_details"
+            android:icon="@mipmap/ic_nav_payment"
+            android:title="Payment Details" />
         <item
             android:id="@+id/nav_terms"
             android:icon="@mipmap/ic_terms_of_services"

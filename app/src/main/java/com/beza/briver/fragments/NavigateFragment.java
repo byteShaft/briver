@@ -103,7 +103,7 @@ public class NavigateFragment extends android.support.v4.app.Fragment {
                             "You need to grant permissions to use Location Services for Briver", "Settings",
                             "Exit App", Helpers.openPermissionsSettingsForMarshmallow, Helpers.exitApp);
                     getActivity().onBackPressed();
-                } else if (!AppGlobals.checkPlayServicesAvailability()) {
+                } else if (!Helpers.checkPlayServicesAvailability()) {
                     Helpers.AlertDialogWithPositiveNegativeFunctions(getActivity(), "Location components missing",
                             "You need to install GooglePlayServices to continue using Briver", "Install",
                             "Exit App", Helpers.openPlayServicesInstallation, Helpers.exitApp);

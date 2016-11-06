@@ -20,12 +20,6 @@ public class DriverServiceAlarmReceiver extends BroadcastReceiver {
     private static boolean isDriverLocationPostingTaskRunning;
     LocationService mLocationService;
 
-    private static void onLocationPostingSuccess() {
-        Log.i("LocationPosting", "Success");
-        AppGlobals.setLocationUploadPending(false);
-        DriverLocationAlarmHelper.setAlarm(AppGlobals.getDriverLocationReportingIntervalTime());
-    }
-
     public static String getDriverLocationPostingString(
             String location) {
         return "{" +
@@ -85,10 +79,12 @@ public class DriverServiceAlarmReceiver extends BroadcastReceiver {
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
             isDriverLocationPostingTaskRunning = false;
+            AppGlobals.setLocationUploadPending(false);
+            DriverLocationAlarmHelper.setAlarm(AppGlobals.getDriverLocationReportingIntervalTime());
             if (responseCode == 200) {
-                onLocationPostingSuccess();
+                Log.i("LocationPosting", "Success");
             } else {
-                Log.i("LocationPosting", "Failed");
+                Log.e("LocationPosting", "Failed");
             }
         }
 

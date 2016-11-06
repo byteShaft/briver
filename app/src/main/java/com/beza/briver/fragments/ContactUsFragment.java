@@ -7,23 +7,12 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.beza.briver.R;
-import com.beza.briver.utils.Helpers;
 
 /**
  * Created by fi8er1 on 01/05/2016.
  */
 public class ContactUsFragment extends android.support.v4.app.Fragment {
 
-    final Runnable callByteShaft = new Runnable() {
-        public void run() {
-            Helpers.initiateCallIntent(getActivity(), "+923457221181");
-        }
-    };
-    final Runnable mailByteShaft = new Runnable() {
-        public void run() {
-            Helpers.initiateEmailIntent(getActivity(), "byteshaft@gmail.com", "Briver", null);
-        }
-    };
     View baseViewContactUsFragment;
 
     @Nullable

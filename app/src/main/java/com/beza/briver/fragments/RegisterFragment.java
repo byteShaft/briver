@@ -6,6 +6,7 @@ import android.app.Fragment;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -19,12 +20,14 @@ import android.text.SpannableStringBuilder;
 import android.text.TextPaint;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
-import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
@@ -39,6 +42,8 @@ import com.beza.briver.utils.EndPoints;
 import com.beza.briver.utils.Helpers;
 import com.beza.briver.utils.LocationService;
 import com.beza.briver.utils.MultipartDataUtility;
+import com.beza.briver.utils.SpinnerPlus;
+import com.beza.briver.utils.StaticVehicleData;
 import com.google.android.gms.maps.model.LatLng;
 
 import org.json.JSONException;
@@ -53,19 +58,21 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 
 /**
  * Created by fi8er1 on 28/04/2016.
  */
-public class RegisterFragment extends Fragment implements View.OnClickListener, CompoundButton.OnCheckedChangeListener {
+public class RegisterFragment extends Fragment implements View.OnClickListener {
 
-    static String urlTOS = "http://139.59.228.194:8000/media/terms.html";
     public static LatLng latLngDriverLocationForRegistration;
     public static boolean isRegistrationFragmentOpen;
     public static int responseCode;
     public static View baseViewRegisterFragment;
     public static boolean locationAcquired;
+    public static HttpURLConnection connection;
+    static String urlTOS = "http://139.59.228.194:8000/media/terms.html";
     static String userRegisterEmail;
     static int registerUserType = -1;
     static String driverLocationToString;
@@ -81,9 +88,9 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
             startActivity(intent);
         }
     };
-    final Runnable driverRegistrationContinueAnyway = new Runnable() {
+    final Runnable cancelRegistration = new Runnable() {
         public void run() {
-            new RegisterUserTask().execute();
+            getActivity().onBackPressed();
         }
     };
     final private int CAPTURE_IMAGE = 1;
@@ -118,21 +125,22 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
     EditText etRegisterUserContactNumber;
     EditText etRegisterUserDrivingExperience;
     EditText etRegisterUserBasicBio;
-    EditText etRegisterUserVehicleMake;
-    EditText etRegisterUserVehicleModel;
+    SpinnerPlus spinnerRegisterUserVehicleMake;
+    SpinnerPlus spinnerRegisterUserVehicleModel;
+    EditText etRegisterUserVehicleModelYear;
     EditText etRegisterAttachments;
     LinearLayout llRegisterElements;
     LinearLayout llRegisterElementsDriver;
     LinearLayout llRegisterElementsCustomer;
+    LinearLayout llSpinnerVehicleModel;
     RadioGroup rgRegisterSelectUserType;
     RadioGroup rgRegisterCustomerSelectTransmissionType;
     RadioGroup rgRegisterDriverSelectTransmissionType;
+    RadioGroup rgRegisterDriverGenderType;
     RadioButton rbRegisterCustomer;
     RadioButton rbRegisterDriver;
-    RadioButton rbVehicleTypeMini;
-    RadioButton rbVehicleTypeHatchback;
-    RadioButton rbVehicleTypeSedan;
-    RadioButton rbVehicleTypeLuxury;
+    RadioButton rbRegisterDriverMale;
+    RadioButton rbRegisterDriverFemale;
     CheckBox cbTermsOfServiceCheck;
     String userRegisterFullName;
     String userRegisterEmailRepeat;
@@ -143,9 +151,14 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
     String userRegisterBasicBio;
     String userRegisterVehicleMake;
     String userRegisterVehicleModel;
+    String userRegisterVehicleModelYear;
+    TextView spinnerTarget;
+    TextView spinnerTargetTwo;
     int userRegisterVehicleType = -1;
     int transmissionType = -1;
-    public static HttpURLConnection connection;
+    int genderType = -1;
+    boolean dummySelectionVehicleMake = true;
+    boolean dummySelectionVehicleModel = true;
     LocationService mLocationService;
     final Runnable recheckLocationServiceStatus = new Runnable() {
         public void run() {
@@ -165,7 +178,7 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
 
     public static String getRegistrationStringForCustomer(
             String fullName, String email, String password, String phone, int transmissionType, int vehicleType,
-            String vehicleMake, String vehicleModel) {
+            String vehicleMake, String vehicleModel, String vehicleModelYear) {
 
         JSONObject json = new JSONObject();
         try {
@@ -177,6 +190,7 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
             json.put("vehicle_type", vehicleType);
             json.put("vehicle_make", vehicleMake);
             json.put("vehicle_model", vehicleModel);
+            json.put("vehicle_model_year", vehicleModelYear);
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -188,7 +202,6 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
         baseViewRegisterFragment = inflater.inflate(R.layout.fragment_register, container, false);
-
         mLocationService = new LocationService(getActivity());
 
         etRegisterUserFullName = (EditText) baseViewRegisterFragment.findViewById(R.id.et_register_full_name);
@@ -199,8 +212,9 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
         etRegisterUserContactNumber = (EditText) baseViewRegisterFragment.findViewById(R.id.et_register_phone_number);
         etRegisterUserDrivingExperience = (EditText) baseViewRegisterFragment.findViewById(R.id.et_register_driving_experience);
         etRegisterUserBasicBio = (EditText) baseViewRegisterFragment.findViewById(R.id.et_register_bio);
-        etRegisterUserVehicleMake = (EditText) baseViewRegisterFragment.findViewById(R.id.et_register_vehicle_make);
-        etRegisterUserVehicleModel = (EditText) baseViewRegisterFragment.findViewById(R.id.et_register_vehicle_model);
+        spinnerRegisterUserVehicleMake = (SpinnerPlus) baseViewRegisterFragment.findViewById(R.id.spinner_register_vehicle_make);
+        spinnerRegisterUserVehicleModel = (SpinnerPlus) baseViewRegisterFragment.findViewById(R.id.spinner_register_vehicle_model);
+        etRegisterUserVehicleModelYear = (EditText) baseViewRegisterFragment.findViewById(R.id.et_register_vehicle_model_year);
         etRegisterAttachments = (EditText) baseViewRegisterFragment.findViewById(R.id.et_register_attachments);
 
         cbTermsOfServiceCheck = (CheckBox) baseViewRegisterFragment.findViewById(R.id.cb_terms_of_service_check);
@@ -209,17 +223,12 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
         rgRegisterSelectUserType = (RadioGroup) baseViewRegisterFragment.findViewById(R.id.rg_register_select_user_type);
         rgRegisterCustomerSelectTransmissionType = (RadioGroup) baseViewRegisterFragment.findViewById(R.id.rg_register_customer_select_transmission_type);
         rgRegisterDriverSelectTransmissionType = (RadioGroup) baseViewRegisterFragment.findViewById(R.id.rg_register_driver_select_transmission_type);
+        rgRegisterDriverGenderType = (RadioGroup) baseViewRegisterFragment.findViewById(R.id.rg_register_driver_gender_type);
         rbRegisterCustomer = (RadioButton) baseViewRegisterFragment.findViewById(R.id.rb_register_customer);
         rbRegisterDriver = (RadioButton) baseViewRegisterFragment.findViewById(R.id.rb_register_driver);
-        rbVehicleTypeMini = (RadioButton) baseViewRegisterFragment.findViewById(R.id.rb_register_customer_vehicle_type_mini);
-        rbVehicleTypeHatchback = (RadioButton) baseViewRegisterFragment.findViewById(R.id.rb_register_customer_vehicle_type_hatchback);
-        rbVehicleTypeSedan = (RadioButton) baseViewRegisterFragment.findViewById(R.id.rb_register_customer_vehicle_type_sedan);
-        rbVehicleTypeLuxury = (RadioButton) baseViewRegisterFragment.findViewById(R.id.rb_register_customer_vehicle_type_luxury);
+        rbRegisterDriverMale = (RadioButton) baseViewRegisterFragment.findViewById(R.id.rb_register_driver_male);
+        rbRegisterDriverFemale = (RadioButton) baseViewRegisterFragment.findViewById(R.id.rb_register_driver_female);
 
-        rbVehicleTypeMini.setOnCheckedChangeListener(this);
-        rbVehicleTypeHatchback.setOnCheckedChangeListener(this);
-        rbVehicleTypeSedan.setOnCheckedChangeListener(this);
-        rbVehicleTypeLuxury.setOnCheckedChangeListener(this);
         etRegisterAttachments.setOnClickListener(this);
 
         btnCreateUser = (Button) baseViewRegisterFragment.findViewById(R.id.btn_register_create_account);
@@ -230,6 +239,68 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
         llRegisterElements = (LinearLayout) baseViewRegisterFragment.findViewById(R.id.layout_elements_register);
         llRegisterElementsCustomer = (LinearLayout) baseViewRegisterFragment.findViewById(R.id.layout_elements_register_customer);
         llRegisterElementsDriver = (LinearLayout) baseViewRegisterFragment.findViewById(R.id.layout_elements_register_driver);
+        llSpinnerVehicleModel = (LinearLayout) baseViewRegisterFragment.findViewById(R.id.ll_spinner_vehicle_model);
+
+        Collection<String> valuesMainHashMap = StaticVehicleData.hmMain.keySet();
+        String[] array = valuesMainHashMap.toArray(new String[valuesMainHashMap.size()]);
+        ArrayAdapter<CharSequence> dataAdapter = new ArrayAdapter<CharSequence>(getActivity(), R.layout.spinner_text, array);
+        dataAdapter.setDropDownViewResource(R.layout.simple_spinner_dropdown);
+        spinnerRegisterUserVehicleMake.setAdapter(dataAdapter);
+
+        spinnerRegisterUserVehicleMake.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                spinnerTarget = (TextView) view.findViewById(android.R.id.text1);
+                if (dummySelectionVehicleMake) {
+                    spinnerTarget.setText("Select Manufacturer");
+                    spinnerTarget.setTextColor(Color.GRAY);
+                    dummySelectionVehicleMake = false;
+                } else {
+                    Collection<String> valuesSecondaryHashMap = StaticVehicleData.hmMain.get(
+                            spinnerRegisterUserVehicleMake.getSelectedItem()).keySet();
+                    spinnerTarget.setText(spinnerRegisterUserVehicleMake.getSelectedItem().toString());
+                    spinnerTarget.setTextColor(Color.WHITE);
+                    String[] array = valuesSecondaryHashMap.toArray(new String[valuesSecondaryHashMap.size()]);
+                    ArrayAdapter<CharSequence> dataAdapterSecondary = new ArrayAdapter<CharSequence>(
+                            getActivity(), R.layout.spinner_text_two, array);
+                    dataAdapterSecondary.setDropDownViewResource(R.layout.simple_spinner_dropdown_two);
+                    if (array.length > 1) {
+                        dummySelectionVehicleModel = true;
+                    } else {
+                        dummySelectionVehicleModel = false;
+                    }
+                    spinnerRegisterUserVehicleModel.setAdapter(dataAdapterSecondary);
+                    llSpinnerVehicleModel.setVisibility(View.VISIBLE);
+                    userRegisterVehicleMake = spinnerRegisterUserVehicleMake.getSelectedItem().toString();
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {}
+        });
+
+        spinnerRegisterUserVehicleModel.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                spinnerTargetTwo = (TextView) view.findViewById(android.R.id.text2);
+                if (dummySelectionVehicleModel) {
+                    spinnerTargetTwo.setText("Select Model");
+                    spinnerTargetTwo.setTextColor(Color.GRAY);
+                    userRegisterVehicleType = -1;
+                    dummySelectionVehicleModel = false;
+                } else {
+                    spinnerTargetTwo.setText(spinnerRegisterUserVehicleModel.getSelectedItem().toString());
+                    spinnerTargetTwo.setTextColor(Color.WHITE);
+                    userRegisterVehicleModel = spinnerRegisterUserVehicleModel.getSelectedItem().toString();
+                    userRegisterVehicleType = Integer.parseInt(StaticVehicleData.hmMain.get(
+                            spinnerRegisterUserVehicleMake.getSelectedItem()).get(
+                            spinnerRegisterUserVehicleModel.getSelectedItem()).toString());
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {}
+        });
 
         rgRegisterSelectUserType.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
             @Override
@@ -239,15 +310,15 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
                     llRegisterElements.setVisibility(View.VISIBLE);
                     llRegisterElementsCustomer.setVisibility(View.VISIBLE);
                     registerUserType = 0;
-                    rbVehicleTypeSedan.setChecked(true);
                     rgRegisterCustomerSelectTransmissionType.check(R.id.rb_register_customer_transmission_type_manual);
                 } else if (checkedId == R.id.rb_register_driver) {
                     rbRegisterCustomer.setVisibility(View.INVISIBLE);
                     llRegisterElements.setVisibility(View.VISIBLE);
                     llRegisterElementsDriver.setVisibility(View.VISIBLE);
                     registerUserType = 1;
+                    rgRegisterDriverGenderType.check(R.id.rb_register_driver_male);
                     rgRegisterDriverSelectTransmissionType.check(R.id.rb_register_driver_transmission_type_both);
-                    if (AppGlobals.checkPlayServicesAvailability()) {
+                    if (Helpers.checkPlayServicesAvailability()) {
                         if (Helpers.isAnyLocationServiceAvailable()) {
                             mLocationService.startLocationServices();
                             Helpers.showSnackBar(baseViewRegisterFragment, "Acquiring location for registration", Snackbar.LENGTH_SHORT, "#ffffff");
@@ -287,6 +358,17 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
             }
         });
 
+        rgRegisterDriverGenderType.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(RadioGroup radioGroup, int i) {
+                if (i == R.id.rb_register_driver_male) {
+                    genderType = 0;
+                } else if (i == R.id.rb_register_driver_female) {
+                    genderType = 1;
+                }
+            }
+        });
+
         SpannableStringBuilder text = new SpannableStringBuilder();
         text.append(getString(R.string.TermsOfServiceInitialText)).append(" ");
 
@@ -321,8 +403,7 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
                 userRegisterContactNumber = etRegisterUserContactNumber.getText().toString();
                 userRegisterDrivingExperience = etRegisterUserDrivingExperience.getText().toString();
                 userRegisterBasicBio = etRegisterUserBasicBio.getText().toString();
-                userRegisterVehicleMake = etRegisterUserVehicleMake.getText().toString();
-                userRegisterVehicleModel = etRegisterUserVehicleModel.getText().toString();
+                userRegisterVehicleModelYear = etRegisterUserVehicleModelYear.getText().toString();
 
                 if (validateRegisterInfo()) {
                     if (registerUserType == 1) {
@@ -332,12 +413,14 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
                         } else {
                             driverLocationToString = null;
                             Helpers.AlertDialogWithPositiveFunctionNegativeButton(getActivity(), "Location Unavailable",
-                                    "Your location is being acquired. You can either wait or it can be acquired later",
-                                    "Continue Anyway", "Wait", driverRegistrationContinueAnyway);
+                                    "Your location is being acquired. You'll have to wait for the location to be acquired before you proceed",
+                                    "Cancel Registration", "Wait", cancelRegistration);
                         }
                     } else {
-                        new RegisterUserTask().execute();
+                        taskRegisterUser = (RegisterUserTask) new RegisterUserTask().execute();
                     }
+                } else {
+                    Log.e("validation", "failed");
                 }
                 break;
             case R.id.et_register_attachments:
@@ -361,6 +444,8 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
         if (userRegisterFullName.trim().isEmpty()) {
             etRegisterUserFullName.setError("Empty");
             valid = false;
+        } else {
+            etRegisterUserFullName.setError(null);
         }
 
         if (userRegisterEmail.trim().isEmpty()) {
@@ -396,23 +481,6 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
             etRegisterUserContactNumber.setError(null);
         }
 
-        if (registerUserType == 0) {
-            if (userRegisterVehicleMake.isEmpty() || userRegisterVehicleMake.length() < 3) {
-                etRegisterUserVehicleMake.setError("Minimum 3 Characters");
-                valid = false;
-            } else {
-                etRegisterUserVehicleMake.setError(null);
-            }
-
-            if (userRegisterVehicleModel.isEmpty()) {
-                etRegisterUserVehicleModel.setError("Empty");
-                valid = false;
-            } else if (userRegisterVehicleModel.length() < 4) {
-                etRegisterUserVehicleModel.setError("Minimum 4 Characters");
-                valid = false;
-            }
-        }
-
         if (registerUserType == 1) {
             if (userRegisterDrivingExperience.trim().isEmpty()) {
                 etRegisterUserDrivingExperience.setError("Empty");
@@ -426,6 +494,20 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
                 valid = false;
             } else {
                 etRegisterAttachments.setError(null);
+            }
+        } else if (registerUserType == 0) {
+
+            if (userRegisterVehicleModelYear.isEmpty()) {
+                etRegisterUserVehicleModelYear.setError("Empty");
+                valid = false;
+            } else if (userRegisterVehicleModelYear.length() < 4) {
+                etRegisterUserVehicleModelYear.setError("Minimum 4 Characters");
+                valid = false;
+            }
+
+            if (valid && userRegisterVehicleType == -1) {
+                Helpers.showSnackBar(getView(), "Select Vehicle", Snackbar.LENGTH_LONG, "#f44336");
+                valid = false;
             }
         }
 
@@ -462,32 +544,6 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
                         "Enable device GPS to continue driver registration", "Settings", "Exit", "Re-Check",
                         openLocationServiceSettings, closeRegistration, recheckLocationServiceStatus);
             }
-        }
-    }
-
-    @Override
-    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-        rbVehicleTypeMini.setChecked(false);
-        rbVehicleTypeHatchback.setChecked(false);
-        rbVehicleTypeSedan.setChecked(false);
-        rbVehicleTypeLuxury.setChecked(false);
-        switch (buttonView.getId()) {
-            case R.id.rb_register_customer_vehicle_type_mini:
-                userRegisterVehicleType = 0;
-                rbVehicleTypeMini.setChecked(isChecked);
-                break;
-            case R.id.rb_register_customer_vehicle_type_hatchback:
-                userRegisterVehicleType = 1;
-                rbVehicleTypeHatchback.setChecked(isChecked);
-                break;
-            case R.id.rb_register_customer_vehicle_type_sedan:
-                userRegisterVehicleType = 2;
-                rbVehicleTypeSedan.setChecked(isChecked);
-                break;
-            case R.id.rb_register_customer_vehicle_type_luxury:
-                userRegisterVehicleType = 3;
-                rbVehicleTypeLuxury.setChecked(isChecked);
-                break;
         }
     }
 
@@ -661,7 +717,7 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
                 if (registerUserType == 0) {
                     String dataForRegistration = getRegistrationStringForCustomer(userRegisterFullName,
                             userRegisterEmail, userRegisterPassword, userRegisterContactNumber, transmissionType, userRegisterVehicleType,
-                            userRegisterVehicleMake, userRegisterVehicleModel);
+                            userRegisterVehicleMake, userRegisterVehicleModel, userRegisterVehicleModelYear);
                     out.writeBytes(dataForRegistration);
                     out.flush();
                     out.close();
@@ -674,6 +730,7 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
                         http.addFormField("password", userRegisterPassword);
                         http.addFormField("phone_number", userRegisterContactNumber);
                         http.addFormField("transmission_type", String.valueOf(transmissionType));
+                        http.addFormField("gender", String.valueOf(genderType));
                         http.addFormField("driving_experience", userRegisterDrivingExperience);
                         if (userRegisterBasicBio != null || !userRegisterBasicBio.equals("")) {
                             http.addFormField("bio", userRegisterBasicBio);
@@ -695,7 +752,8 @@ public class RegisterFragment extends Fragment implements View.OnClickListener, 
                                 OutputStream os = new FileOutputStream(item.get(counter));
                                 os.write(bytes);
                                 counter++;
-                            } catch (IOException ignored) {}
+                            } catch (IOException ignored) {
+                            }
                         }
                     } catch (IOException e) {
                         e.printStackTrace();

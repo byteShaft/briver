@@ -9,6 +9,7 @@ import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -17,11 +18,14 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
+import android.widget.Spinner;
 import android.widget.Switch;
 import android.widget.TextView;
 
@@ -31,25 +35,32 @@ import com.beza.briver.utils.DriverLocationAlarmHelper;
 import com.beza.briver.utils.EndPoints;
 import com.beza.briver.utils.Helpers;
 import com.beza.briver.utils.LocationService;
+import com.beza.briver.utils.SpinnerPlus;
+import com.beza.briver.utils.StaticVehicleData;
 import com.beza.briver.utils.WebServiceHelpers;
 import com.google.android.gms.maps.model.LatLng;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.util.Collection;
 import java.util.Timer;
 import java.util.TimerTask;
 
 /**
  * Created by fi8er1 on 01/05/2016.
  */
-public class PreferencesFragment extends android.support.v4.app.Fragment implements CompoundButton.OnCheckedChangeListener {
+public class PreferencesFragment extends android.support.v4.app.Fragment {
 
     public static View baseViewPreferencesFragment;
     public static LatLng latLngDriverLocationFixed;
     public static boolean isPreferencesFragmentOpen;
     public static boolean locationSet = true;
     public static String locationString;
+    TextView spinnerTarget;
+    boolean customerPreferenceFirstRun = true;
+    Spinner spinnerPreferencesUserVehicleMake;
+    SpinnerPlus spinnerPreferencesUserVehicleModel;
     public static int responseCode;
     static TextView tvPreferencesDriverLocationDisplay;
     static Animation animTexViewFading;
@@ -74,20 +85,15 @@ public class PreferencesFragment extends android.support.v4.app.Fragment impleme
     RadioGroup rgPreferencesCustomerTransmissionType;
     RadioButton rbPreferencesDriverLocationFixed;
     RadioButton rbPreferencesDriverLocationInterval;
-    RadioButton rbVehicleTypeMini;
-    RadioButton rbVehicleTypeHatchback;
-    RadioButton rbVehicleTypeSedan;
-    RadioButton rbVehicleTypeLuxury;
 
     EditText etPreferencesDriverLocationIntervalTime;
     final Runnable handleDriverLocationIntervalInputError = new Runnable() {
         public void run() {
-            etPreferencesDriverLocationIntervalTime.setText("1");
+            etPreferencesDriverLocationIntervalTime.setText("15");
         }
     };
     EditText etPreferencesCustomerDriverSearchRadiusInput;
-    EditText etPreferencesCustomerVehicleMake;
-    EditText etPreferencesCustomerVehicleModel;
+    EditText etPreferencesCustomerVehicleModelYear;
     int intLocationIntervalTime;
     int userPreferencesVehicleType = -1;
     LocationService mLocationService;
@@ -106,9 +112,11 @@ public class PreferencesFragment extends android.support.v4.app.Fragment impleme
     String preferencesSearchRadius;
     String preferencesVehicleMake;
     String preferencesVehicleModel;
+    String preferencesVehicleModelYear;
     String preferencesLocationReportingIntervalTime;
     int transmissionType;
     HttpURLConnection connection;
+    boolean dummySelectionVehicleModel;
     EditPreferenceTask taskEditPreference;
     boolean isEditPreferenceTaskRunning;
 
@@ -174,19 +182,11 @@ public class PreferencesFragment extends android.support.v4.app.Fragment impleme
         switchPreferencesDriverServiceStatus = (Switch) baseViewPreferencesFragment.findViewById(R.id.switch_driver_availability);
         etPreferencesDriverLocationIntervalTime = (EditText) baseViewPreferencesFragment.findViewById(R.id.et_preferences_driver_location_interval_time);
         etPreferencesCustomerDriverSearchRadiusInput = (EditText) baseViewPreferencesFragment.findViewById(R.id.et_preferences_customer_radius_for_driver);
-        etPreferencesCustomerVehicleMake = (EditText) baseViewPreferencesFragment.findViewById(R.id.et_preferences_customer_vehicle_make);
-        etPreferencesCustomerVehicleModel = (EditText) baseViewPreferencesFragment.findViewById(R.id.et_preferences_customer_vehicle_model);
         tvPreferencesDriverLocationDisplay = (TextView) baseViewPreferencesFragment.findViewById(R.id.tv_preferences_driver_location);
+        spinnerPreferencesUserVehicleMake = (Spinner) baseViewPreferencesFragment.findViewById(R.id.spinner_preferences_vehicle_make);
+        spinnerPreferencesUserVehicleModel = (SpinnerPlus) baseViewPreferencesFragment.findViewById(R.id.spinner_preferences_vehicle_model);
+        etPreferencesCustomerVehicleModelYear = (EditText) baseViewPreferencesFragment.findViewById(R.id.et_preferences_customer_vehicle_model_year);
         animTexViewFading = AnimationUtils.loadAnimation(getActivity(), R.anim.anim_text_complete_fading);
-        rbVehicleTypeMini = (RadioButton) baseViewPreferencesFragment.findViewById(R.id.rb_preferences_customer_vehicle_type_mini);
-        rbVehicleTypeHatchback = (RadioButton) baseViewPreferencesFragment.findViewById(R.id.rb_preferences_customer_vehicle_type_hatchback);
-        rbVehicleTypeSedan = (RadioButton) baseViewPreferencesFragment.findViewById(R.id.rb_preferences_customer_vehicle_type_sedan);
-        rbVehicleTypeLuxury = (RadioButton) baseViewPreferencesFragment.findViewById(R.id.rb_preferences_customer_vehicle_type_luxury);
-
-        rbVehicleTypeMini.setOnCheckedChangeListener(this);
-        rbVehicleTypeHatchback.setOnCheckedChangeListener(this);
-        rbVehicleTypeSedan.setOnCheckedChangeListener(this);
-        rbVehicleTypeLuxury.setOnCheckedChangeListener(this);
 
         llCustomerPreferences = (LinearLayout) baseViewPreferencesFragment.findViewById(R.id.layout_preferences_customer);
         llDriverPreferences = (LinearLayout) baseViewPreferencesFragment.findViewById(R.id.layout_preferences_driver);
@@ -197,9 +197,7 @@ public class PreferencesFragment extends android.support.v4.app.Fragment impleme
             llCustomerPreferences.setVisibility(View.VISIBLE);
             llDriverPreferences.setVisibility(View.GONE);
             etPreferencesCustomerDriverSearchRadiusInput.setText(String.valueOf(AppGlobals.getDriverSearchRadius()));
-            setVehicleTypeRadioButton(AppGlobals.getVehicleType());
-            etPreferencesCustomerVehicleMake.setText(AppGlobals.getVehicleMake());
-            etPreferencesCustomerVehicleModel.setText(AppGlobals.getVehicleModel());
+            etPreferencesCustomerVehicleModelYear.setText(AppGlobals.getVehicleModelYear());
             if (AppGlobals.getTransmissionType() == 0) {
                 rgPreferencesCustomerTransmissionType.check(R.id.rb_preferences_customer_transmission_type_manual);
             } else if (AppGlobals.getTransmissionType() == 1) {
@@ -296,9 +294,7 @@ public class PreferencesFragment extends android.support.v4.app.Fragment impleme
             Timer timer = new Timer();
 
             @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
-            }
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
@@ -316,19 +312,15 @@ public class PreferencesFragment extends android.support.v4.app.Fragment impleme
                         getActivity().runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                if (intLocationIntervalTime > 0) {
-                                    if (intLocationIntervalTime == 1) {
-                                        tvPreferencesDriverLocationDisplay.setText("Location will be refreshed every hour");
-                                    } else {
+                                if (intLocationIntervalTime > 14) {
                                         tvPreferencesDriverLocationDisplay.setText("Location will be refreshed every " +
-                                                intLocationIntervalTime + " hours");
-                                    }
-                                } else if (intLocationIntervalTime < 1) {
+                                                intLocationIntervalTime + " minutes");
+                                    } else if (intLocationIntervalTime < 15) {
                                     Helpers.AlertDialogMessageWithPositiveFunction(getActivity(), "Wrong Input",
-                                            "Interval input cannot be set to less than 1", "Ok",
+                                            "Interval input cannot be set to less than 15 minutes", "Ok",
                                             handleDriverLocationIntervalInputError);
-                                    etPreferencesDriverLocationIntervalTime.setText("1");
-                                    tvPreferencesDriverLocationDisplay.setText("Location will be refreshed every hour");
+                                    etPreferencesDriverLocationIntervalTime.setText("15");
+                                    tvPreferencesDriverLocationDisplay.setText("Location will be refreshed every 15 minutes");
                                 }
                             }
                         });
@@ -337,10 +329,67 @@ public class PreferencesFragment extends android.support.v4.app.Fragment impleme
             }
 
             @Override
-            public void afterTextChanged(Editable s) {
-
-            }
+            public void afterTextChanged(Editable s) {}
         });
+
+        Collection<String> valuesMainHashMap = StaticVehicleData.hmMain.keySet();
+        String[] array = valuesMainHashMap.toArray(new String[valuesMainHashMap.size()]);
+        ArrayAdapter<CharSequence> dataAdapter = new ArrayAdapter<CharSequence>(getActivity(), R.layout.spinner_text, array);
+        dataAdapter.setDropDownViewResource(R.layout.simple_spinner_dropdown);
+        spinnerPreferencesUserVehicleMake.setAdapter(dataAdapter);
+        Log.e("Adapter", "GetPositionFromText: " + dataAdapter.getPosition(AppGlobals.getVehicleMake()));
+        spinnerPreferencesUserVehicleMake.setSelection(dataAdapter.getPosition(AppGlobals.getVehicleMake()));
+
+        spinnerPreferencesUserVehicleMake.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                    Collection<String> valuesSecondaryHashMap = StaticVehicleData.hmMain.get(
+                            spinnerPreferencesUserVehicleMake.getSelectedItem()).keySet();
+                    String[] array = valuesSecondaryHashMap.toArray(new String[valuesSecondaryHashMap.size()]);
+                    ArrayAdapter<CharSequence> dataAdapterSecondary = new ArrayAdapter<CharSequence>(
+                            getActivity(), R.layout.spinner_text_two, array);
+                    dataAdapterSecondary.setDropDownViewResource(R.layout.simple_spinner_dropdown_two);
+                    if (array.length > 1 && !customerPreferenceFirstRun) {
+                        dummySelectionVehicleModel = true;
+                    } else {
+                        dummySelectionVehicleModel = false;
+                    }
+                    spinnerPreferencesUserVehicleModel.setAdapter(dataAdapterSecondary);
+                    if (customerPreferenceFirstRun) {
+                        Log.e("Adapter", "GetPositionFromText2: " + dataAdapterSecondary.getPosition(AppGlobals.getVehicleModel()));
+                        spinnerPreferencesUserVehicleModel.setSelection(dataAdapterSecondary.getPosition(AppGlobals.getVehicleModel()));
+                        customerPreferenceFirstRun = false;
+                    }
+                    preferencesVehicleMake = spinnerPreferencesUserVehicleMake.getSelectedItem().toString();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {}
+        });
+
+        spinnerPreferencesUserVehicleModel.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                spinnerTarget = (TextView) view.findViewById(android.R.id.text2);
+                if (dummySelectionVehicleModel) {
+                    spinnerTarget.setText("Select Model");
+                    spinnerTarget.setTextColor(Color.GRAY);
+                    userPreferencesVehicleType = -1;
+                    dummySelectionVehicleModel = false;
+                } else {
+                    spinnerTarget.setText(spinnerPreferencesUserVehicleModel.getSelectedItem().toString());
+                    spinnerTarget.setTextColor(Color.WHITE);
+                    preferencesVehicleModel = spinnerPreferencesUserVehicleModel.getSelectedItem().toString();
+                    userPreferencesVehicleType = Integer.parseInt(StaticVehicleData.hmMain.get(
+                            spinnerPreferencesUserVehicleMake.getSelectedItem()).get(
+                            spinnerPreferencesUserVehicleModel.getSelectedItem()).toString());
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {}
+        });
+
         return baseViewPreferencesFragment;
     }
 
@@ -348,32 +397,6 @@ public class PreferencesFragment extends android.support.v4.app.Fragment impleme
     public void onResume() {
         super.onResume();
         isPreferencesFragmentOpen = true;
-    }
-
-    @Override
-    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-        rbVehicleTypeMini.setChecked(false);
-        rbVehicleTypeHatchback.setChecked(false);
-        rbVehicleTypeSedan.setChecked(false);
-        rbVehicleTypeLuxury.setChecked(false);
-        switch (buttonView.getId()) {
-            case R.id.rb_preferences_customer_vehicle_type_mini:
-                userPreferencesVehicleType = 0;
-                rbVehicleTypeMini.setChecked(isChecked);
-                break;
-            case R.id.rb_preferences_customer_vehicle_type_hatchback:
-                userPreferencesVehicleType = 1;
-                rbVehicleTypeHatchback.setChecked(isChecked);
-                break;
-            case R.id.rb_preferences_customer_vehicle_type_sedan:
-                userPreferencesVehicleType = 2;
-                rbVehicleTypeSedan.setChecked(isChecked);
-                break;
-            case R.id.rb_preferences_customer_vehicle_type_luxury:
-                userPreferencesVehicleType = 3;
-                rbVehicleTypeLuxury.setChecked(isChecked);
-                break;
-        }
     }
 
     @Override
@@ -396,8 +419,7 @@ public class PreferencesFragment extends android.support.v4.app.Fragment impleme
                     preferencesLocationReportingIntervalTime = etPreferencesDriverLocationIntervalTime.getText().toString();
                 } else {
                     preferencesSearchRadius = etPreferencesCustomerDriverSearchRadiusInput.getText().toString();
-                    preferencesVehicleMake = etPreferencesCustomerVehicleMake.getText().toString();
-                    preferencesVehicleModel = etPreferencesCustomerVehicleModel.getText().toString();
+                    preferencesVehicleModelYear = etPreferencesCustomerVehicleModelYear.getText().toString();
                 }
                 if (validateProfileChangeInfo()) {
                     if (AppGlobals.getUserType() == 0) {
@@ -428,6 +450,7 @@ public class PreferencesFragment extends android.support.v4.app.Fragment impleme
                 }
             }
         } else {
+
             if (preferencesSearchRadius.trim().isEmpty()) {
                 etPreferencesCustomerDriverSearchRadiusInput.setError("Empty");
                 valid = false;
@@ -435,24 +458,19 @@ public class PreferencesFragment extends android.support.v4.app.Fragment impleme
                 etPreferencesCustomerDriverSearchRadiusInput.setError(null);
             }
 
-            if (preferencesVehicleMake.trim().isEmpty()) {
-                etPreferencesCustomerVehicleMake.setError("empty");
+            if (preferencesVehicleModelYear.trim().isEmpty()) {
+                etPreferencesCustomerVehicleModelYear.setError("empty");
                 valid = false;
-            } else if (preferencesVehicleMake.trim().length() < 3) {
-                etPreferencesCustomerVehicleMake.setError("at least 3 characters");
+            } else if (preferencesVehicleModelYear.trim().length() < 4) {
+                etPreferencesCustomerVehicleModelYear.setError("at least 4 characters");
                 valid = false;
             } else {
-                etPreferencesCustomerVehicleMake.setError(null);
+                etPreferencesCustomerVehicleModelYear.setError(null);
             }
 
-            if (preferencesVehicleModel.trim().isEmpty()) {
-                etPreferencesCustomerVehicleModel.setError("empty");
+            if (userPreferencesVehicleType == -1) {
+                Helpers.showSnackBar(getView(), "Select Vehicle", Snackbar.LENGTH_LONG, "#f44336");
                 valid = false;
-            } else if (preferencesVehicleModel.trim().length() < 4) {
-                etPreferencesCustomerVehicleModel.setError("at least 4 characters");
-                valid = false;
-            } else {
-                etPreferencesCustomerVehicleModel.setError(null);
             }
         }
         return valid;
@@ -475,6 +493,7 @@ public class PreferencesFragment extends android.support.v4.app.Fragment impleme
             AppGlobals.putVehicleType(userPreferencesVehicleType);
             AppGlobals.putVehicleMake(preferencesVehicleMake);
             AppGlobals.putVehicleModel(preferencesVehicleModel);
+            AppGlobals.putVehicleModelYear(preferencesVehicleModelYear);
         }
         AppGlobals.putTransmissionType(transmissionType);
         Helpers.showSnackBar(getView(), message, Snackbar.LENGTH_LONG, "#A4C639");
@@ -505,24 +524,8 @@ public class PreferencesFragment extends android.support.v4.app.Fragment impleme
         tvPreferencesDriverLocationDisplay.clearAnimation();
         etPreferencesDriverLocationIntervalTime.setText(String.valueOf(AppGlobals.getDriverLocationReportingIntervalTime()));
         int intervalValue = Integer.parseInt(etPreferencesDriverLocationIntervalTime.getText().toString());
-        if (intervalValue > 1) {
-            tvPreferencesDriverLocationDisplay.setText("Your location will be updated every " + intervalValue + " hours");
-        } else {
-            tvPreferencesDriverLocationDisplay.setText("Your location will be updated every " + intervalValue + " hour");
-        }
+        tvPreferencesDriverLocationDisplay.setText("Your location will be updated every " + intervalValue + " minutes ");
         tvPreferencesDriverLocationDisplay.setTextColor(Color.parseColor("#ffffff"));
-    }
-
-    private void setVehicleTypeRadioButton(int rb) {
-        if (rb == 0) {
-            rbVehicleTypeMini.setChecked(true);
-        } else if (rb == 1) {
-            rbVehicleTypeHatchback.setChecked(true);
-        } else if (rb == 2) {
-            rbVehicleTypeSedan.setChecked(true);
-        } else if (rb == 3) {
-            rbVehicleTypeLuxury.setChecked(true);
-        }
     }
 
     private class EditPreferenceTask extends AsyncTask<Void, Integer, Void> {

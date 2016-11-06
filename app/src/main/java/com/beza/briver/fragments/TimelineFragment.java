@@ -29,6 +29,7 @@ import com.beza.briver.Tasks.UpdateHireStatusTask;
 import com.beza.briver.utils.AppGlobals;
 import com.beza.briver.utils.EndPoints;
 import com.beza.briver.utils.Helpers;
+import com.beza.briver.utils.Paytm;
 import com.beza.briver.utils.WebServiceHelpers;
 import com.google.android.gms.maps.model.LatLng;
 
@@ -71,6 +72,7 @@ public class TimelineFragment extends android.support.v4.app.Fragment implements
     static TextView tvHiresPendingEmpty;
     static TextView tvHiresHistoryEmpty;
     int selectedContextMenuId;
+    String finalPricingForPayment;
     private SectionsPagerAdapter mSectionsPagerAdapter;
 
     @Nullable
@@ -241,10 +243,11 @@ public class TimelineFragment extends android.support.v4.app.Fragment implements
                 return true;
             case R.id.item_context_hires_list_finish:
                 selectedContextMenuId = info.position;
+                finalPricingForPayment = hashMapTimelineData.get(returnProperID(info.position)).get(9);
                 Helpers.AlertDialogWithPositiveFunctionNegativeButton(getActivity(), "Are you sure?", "Want to complete this Hire?\n\n" +
                 "DriverFee: " + hashMapTimelineData.get(returnProperID(info.position)).get(8) + "\n" +
                 "TotalCharges: " + hashMapTimelineData.get(returnProperID(info.position)).get(9) + "\n\n" +
-                        "Note: You'll have to pay the TotalCharges to complete this Hire", "Yes", "Cancel", finishHire);
+                        "Note: You'll have to pay the TotalCharges to complete this Hire", "Yes", "Cancel", finalPayment);
                 return true;
             case R.id.item_context_hires_list_view_user_details:
                     taskViewUserData = (ViewUserDetailsTask) new ViewUserDetailsTask().execute(
@@ -373,14 +376,10 @@ public class TimelineFragment extends android.support.v4.app.Fragment implements
         }
 
         @Override
-        public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-
-        }
+        public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {}
 
         @Override
-        public void onNothingSelected(AdapterView<?> parent) {
-
-        }
+        public void onNothingSelected(AdapterView<?> parent) {}
     }
 
     private class GetTimelineData extends AsyncTask<Void, Integer, Void> {
@@ -611,7 +610,6 @@ public class TimelineFragment extends android.support.v4.app.Fragment implements
         }
     }
 
-
     final Runnable finishHire = new Runnable() {
         public void run() {
             Log.i("userNameTimeline", "" + hashMapTimelineData.get(returnProperID(selectedContextMenuId)).get(2));
@@ -620,6 +618,13 @@ public class TimelineFragment extends android.support.v4.app.Fragment implements
                 String[] dataFinish = new String[]{"" + returnProperID(selectedContextMenuId), "5"};
                 new UpdateHireStatusTask().execute(dataFinish);
             }
+        }
+    };
+
+    final Runnable finalPayment = new Runnable() {
+        @Override
+        public void run() {
+            Paytm.onStartTransaction(getActivity(), finalPricingForPayment, finishHire);
         }
     };
 
