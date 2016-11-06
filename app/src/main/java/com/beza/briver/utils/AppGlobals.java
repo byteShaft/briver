@@ -8,8 +8,6 @@ import android.preference.PreferenceManager;
 
 import com.beza.briver.MainActivity;
 import com.beza.briver.WelcomeActivity;
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GoogleApiAvailability;
 
 /**
  * Created by fi8er1 on 26/04/2016.
@@ -45,10 +43,12 @@ public class AppGlobals extends Application {
     private static final String VEHICLE_TYPE = "vehicle_type";
     private static final String VEHICLE_MAKE = "vehicle_make";
     private static final String VEHICLE_MODEL = "vehicle_model";
+    private static final String VEHICLE_MODEL_YEAR = "vehicle_model";
     private static final String NUMBER_OF_HIRES = "total_hires";
     private static final String TRANSMISSION_TYPE = "transmission_type";
     private static final String FIRST_RUN_HIRE_FRAGMENT = "first_run_hire_fragment";
     private static final String FIRST_RUN_NEARBY_DRIVERS_FRAGMENT = "first_run__fragment";
+    private static final String DRIVER_GENDER = "driver_gender";
     private static Context sContext;
     private static SharedPreferences sPreferences;
 
@@ -150,7 +150,7 @@ public class AppGlobals extends Application {
     }
 
     public static String getPhoneNumber() {
-        return sPreferences.getString(PHONE_NUMBER, null);
+        return sPreferences.getString(PHONE_NUMBER, "");
     }
 
 
@@ -168,6 +168,14 @@ public class AppGlobals extends Application {
 
     public static String getVehicleModel() {
         return sPreferences.getString(VEHICLE_MODEL, null);
+    }
+
+    public static void putVehicleModelYear(String vehicleModelYear) {
+        sPreferences.edit().putString(VEHICLE_MODEL_YEAR, vehicleModelYear).apply();
+    }
+
+    public static String getVehicleModelYear() {
+        return sPreferences.getString(VEHICLE_MODEL_YEAR, null);
     }
 
     public static void putDriverBio(String bio) {
@@ -291,8 +299,16 @@ public class AppGlobals extends Application {
         sPreferences.edit().putInt(USER_TYPE, userType).apply();
     }
 
+    public static int getDriverGender() {
+        return sPreferences.getInt(DRIVER_GENDER, 0);
+    }
+
+    public static void putDriverGender(int driverGender) {
+        sPreferences.edit().putInt(DRIVER_GENDER, driverGender).apply();
+    }
+
     public static int getDriverLocationReportingIntervalTime() {
-        return sPreferences.getInt(LOCATION_INTERVAL, 2);
+        return sPreferences.getInt(LOCATION_INTERVAL, 15);
     }
 
     public static void putDriverLocationReportingIntervalTime(int interval) {
@@ -314,18 +330,6 @@ public class AppGlobals extends Application {
             return WelcomeActivity.getInstance();
         }
         return null;
-    }
-
-    public static boolean checkPlayServicesAvailability() {
-        GoogleApiAvailability apiAvailability = GoogleApiAvailability.getInstance();
-        int resultCode = apiAvailability.isGooglePlayServicesAvailable(getRunningActivityInstance());
-        if (resultCode != ConnectionResult.SUCCESS) {
-            Helpers.AlertDialogWithPositiveNegativeFunctions(getRunningActivityInstance(), "PlayServices not found",
-                    "You need to install Google Play Services to continue using Briver", "Install", "Exit App", Helpers.openPlayServicesInstallation, Helpers.exitApp);
-            return false;
-        } else {
-            return true;
-        }
     }
 
     @Override

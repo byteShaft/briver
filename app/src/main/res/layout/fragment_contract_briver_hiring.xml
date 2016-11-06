@@ -1,0 +1,220 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:animateLayoutChanges="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="15dp"
+        android:orientation="vertical"
+        android:background="#4D000000">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Briver Gender Preference"
+            android:layout_marginLeft="15dp"
+            android:layout_marginRight="15dp"
+            android:layout_marginBottom="15dp"
+            android:textColor="#ffffff"
+            android:layout_gravity="center_horizontal"/>
+
+        <RadioGroup
+            android:id="@+id/rg_fragment_contract_briver_type"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:weightSum="2"
+            android:orientation="horizontal">
+            <RadioButton
+                android:id="@+id/rb_fragment_contract_briver_type_male"
+                android:layout_width="0dp"
+                android:layout_marginLeft="35dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Male"/>
+            <RadioButton
+                android:id="@+id/rb_fragment_contract_briver_type_female"
+                android:layout_width="0dp"
+                android:layout_marginLeft="35dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Female"/>
+        </RadioGroup>
+    </LinearLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:animateLayoutChanges="true"
+        android:scrollIndicators="none">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="15dp"
+            android:layout_marginLeft="32dp"
+            android:layout_marginRight="32dp"
+            android:layout_marginBottom="15dp"
+            android:animateLayoutChanges="true">
+
+            <CheckBox
+                android:id="@+id/cb_fragment_contract_live_in_driver"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="10dp"
+                android:layout_gravity="center_horizontal"
+                android:text="Want a live-in Driver?"
+                android:textColor="#ffffff"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#ffffff"
+                android:text="Your Name" />
+            <EditText
+                android:id="@+id/et_fragment_contract_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="#ffffff"
+                android:padding="10dp"
+                android:background="@drawable/background_edit_text" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:textColor="#ffffff"
+                android:text="Your Address or Location" />
+            <EditText
+                android:id="@+id/et_fragment_contract_address"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="#ffffff"
+                android:maxLength="160"
+                android:padding="10dp"
+                android:background="@drawable/background_edit_text" />
+
+            <LinearLayout
+                android:id="@+id/ll_fragment_contract_working_hours_a_day"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginTop="10dp">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="#ffffff"
+                    android:text="Number Of Working Hours in a Day" />
+                <EditText
+                    android:id="@+id/et_fragment_contract_working_hours_per_day"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Hours"
+                    android:inputType="number"
+                    android:maxLength="1"
+                    android:textColor="#ffffff"
+                    android:padding="10dp"
+                    android:background="@drawable/background_edit_text" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:textColor="#ffffff"
+                android:text="Number Of Working Days in a Week" />
+            <EditText
+                android:id="@+id/et_fragment_contract_working_days_per_week"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="#ffffff"
+                android:hint="Days"
+                android:inputType="number"
+                android:maxLength="1"
+                android:padding="10dp"
+                android:background="@drawable/background_edit_text"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:textColor="#ffffff"
+                android:text="Salary range you are willing to offer" />
+            <EditText
+                android:id="@+id/et_fragment_contract_salary_range_you_are_willing_to_offer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="#ffffff"
+                android:padding="10dp"
+                android:inputType="number"
+                android:maxLength="32"
+                android:digits="0123456789-"
+                android:background="@drawable/background_edit_text"
+                android:hint="e.g: ₹10000 - ₹13000"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:textColor="#ffffff"
+                android:text="Leaves you are willing to offer in a month" />
+            <EditText
+                android:id="@+id/et_fragment_contract_leaves_you_are_willing_to_offer_in_a_month"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="#ffffff"
+                android:padding="10dp"
+                android:inputType="number"
+                android:background="@drawable/background_edit_text"
+                android:hint="Days"
+                android:maxLength="1"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:textColor="#ffffff"
+                android:text="Any Special Preferences/Requirements" />
+            <EditText
+                android:id="@+id/et_fragment_contract_special_preferences"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="10dp"
+                android:textColor="#ffffff"
+                android:padding="10dp"
+                android:inputType="textMultiLine"
+                android:background="@drawable/background_edit_text"
+                android:maxLength="160"/>
+
+            <Button
+                android:id="@+id/btn_fragment_contract_send_email"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:background="@drawable/background_button"
+                android:padding="10dp"
+                android:text="Send E-Mail"
+                android:textColor="@drawable/button_text_color"
+                android:textSize="16dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:textColor="#ffffff"
+                android:layout_gravity="center_horizontal"
+                android:text="We Promise to Get Back to You within Few Minutes!"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#ffffff"
+                android:layout_marginBottom="20dp"
+                android:textStyle="bold"
+                android:layout_gravity="center_horizontal"
+                android:text="Wait For Us :D"/>
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

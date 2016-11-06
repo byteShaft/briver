@@ -9,13 +9,11 @@ import com.beza.briver.fragments.LoginFragment;
 import com.beza.briver.utils.AppGlobals;
 import com.beza.briver.utils.Helpers;
 
-
 public class WelcomeActivity extends Activity {
 
     static FragmentManager fragmentManager;
     public static boolean isWelcomeActivityRunning;
     private static WelcomeActivity sInstance;
-
 
     public static WelcomeActivity getInstance() {
         return sInstance;

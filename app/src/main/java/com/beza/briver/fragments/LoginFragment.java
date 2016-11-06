@@ -46,10 +46,6 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-/**
- * Created by fi8er1 on 28/04/2016.
- */
-
 public class LoginFragment extends Fragment implements View.OnClickListener {
 
     ImageView ivWelcomeLogoMain;
@@ -71,12 +67,15 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
     Animation animMainLogoFadeIn;
     Animation animMainLogoFadeOut;
 
+    private static int driverLocationReportingAlarmTime;
+
     boolean launchingMainActivity;
     boolean loginInterrupted;
     boolean userDataTaskInterrupted;
 
     HttpURLConnection connection;
     public static int responseCode;
+    public static String responseMessage;
 
     FragmentManager fragmentManager;
     public static BroadcastReceiver mRegistrationBroadcastReceiver;
@@ -338,6 +337,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
                 out.flush();
                 out.close();
                 responseCode = connection.getResponseCode();
+                responseMessage = connection.getResponseMessage();
 
                 JSONObject jsonObject = new JSONObject(WebServiceHelpers.readResponse(connection));
                 AppGlobals.putToken(jsonObject.getString("token"));
@@ -359,9 +359,13 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
                 if (responseCode == 404) {
                     onLoginFailed("Login Failed! Account not found");
                 } else if (responseCode == 403) {
-                    onLoginFailed("Login Failed! Account not activated");
-                    loadFragment(new CodeConfirmationFragment());
-                    CodeConfirmationFragment.isFragmentOpenedFromLogin = true;
+                    if (responseMessage.equalsIgnoreCase("user deactivated by admin.")) {
+                        onLoginFailed("Login Failed! User banned by admin");
+                    } else {
+                        onLoginFailed("Login Failed! Account not activated");
+                        loadFragment(new CodeConfirmationFragment());
+                        CodeConfirmationFragment.isFragmentOpenedFromLogin = true;
+                    }
                 } else {
                     onLoginFailed("Login Failed! Invalid Email or Password");
                 }
@@ -416,10 +420,12 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
                     AppGlobals.putVehicleType(jsonObject.getInt("vehicle_type"));
                     AppGlobals.putVehicleMake(jsonObject.getString("vehicle_make"));
                     AppGlobals.putVehicleModel(jsonObject.getString("vehicle_model"));
+                    AppGlobals.putVehicleModelYear(jsonObject.getString("vehicle_model_year"));
                 } else if (jsonObject.getInt("user_type") == 1) {
                     AppGlobals.putDrivingExperience(jsonObject.getString("driving_experience"));
                     AppGlobals.putDriverLocationReportingIntervalTime(jsonObject.getInt("location_reporting_interval"));
                     AppGlobals.putLocationReportingType(jsonObject.getInt("location_reporting_type"));
+                    AppGlobals.putDriverGender(jsonObject.getInt("gender"));
                     AppGlobals.putDocOne(jsonObject.getString("doc1"));
                     AppGlobals.putDocTwo(jsonObject.getString("doc2"));
                     AppGlobals.putDocThree(jsonObject.getString("doc3"));

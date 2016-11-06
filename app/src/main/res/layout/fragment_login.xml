@@ -32,7 +32,7 @@
             android:textCursorDrawable="@null"
             android:textSize="18dp"
             android:hint="E-Mail"
-            android:maxLength="32"
+            android:maxLength="48"
             android:textColor="#ffffff"
             android:inputType="textEmailAddress"
             android:padding="10dp"

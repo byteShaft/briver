@@ -35,6 +35,7 @@ import java.net.URL;
 public class ForgotPasswordFragment extends Fragment implements View.OnClickListener {
 
     public static int responseCode;
+    public static String responseMessage;
     public static int responseCodePasswordChangeSubmit;
     View baseViewForgotPasswordFragment;
     EditText etForgotPasswordEmail;
@@ -220,6 +221,7 @@ public class ForgotPasswordFragment extends Fragment implements View.OnClickList
                 out.flush();
                 out.close();
                 responseCode = connection.getResponseCode();
+                responseMessage = connection.getResponseMessage();
 
                 Log.i("Response", "Code " + responseCode);
                 Log.i("Response", "Message " + connection.getResponseMessage());
@@ -237,6 +239,12 @@ public class ForgotPasswordFragment extends Fragment implements View.OnClickList
             } else {
                 if (responseCode == 404 || responseCode == 400) {
                     onRecoveryFailed("Recovery Failed. User does not exist");
+                } else if (responseCode == 403) {
+                    if (responseMessage.equalsIgnoreCase("user deactivated by admin.")) {
+                        onRecoveryFailed("User banned by admin");
+                    } else {
+                        onRecoveryFailed("Recovery Failed");
+                    }
                 } else {
                     onRecoveryFailed("Recovery Failed");
                 }

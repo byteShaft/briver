@@ -12,10 +12,9 @@ public class OnBootReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         Log.i("BootReceiver", "Called");
-        if (AppGlobals.getUserType() == 1) {
-        if (AppGlobals.isLoggedIn() && AppGlobals.isAlarmSet()) {
+        if (AppGlobals.getUserType() == 1 && AppGlobals.isLoggedIn() && AppGlobals.getLocationReportingType() == 1) {
+            DriverLocationAlarmHelper.cancelAlarm();
             DriverLocationAlarmHelper.setAlarm(AppGlobals.getDriverLocationReportingIntervalTime());
-            }
         }
     }
 }

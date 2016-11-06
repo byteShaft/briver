@@ -22,6 +22,7 @@ import com.beza.briver.Tasks.HiringTask;
 import com.beza.briver.utils.AppGlobals;
 import com.beza.briver.utils.EndPoints;
 import com.beza.briver.utils.Helpers;
+import com.beza.briver.utils.Paytm;
 import com.beza.briver.utils.WebServiceHelpers;
 import com.google.android.gms.maps.model.LatLng;
 
@@ -33,6 +34,8 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.HashMap;
+
+import static com.beza.briver.fragments.HireFragment.hireMeetUpPoint;
 
 /**
  * Created by fi8er1 on 18/05/2016.
@@ -50,12 +53,19 @@ public class NearbyDriversFragment extends android.support.v4.app.Fragment {
     private String driverTimeSpanForHiring;
     private String driverTimeOfHiring;
 
-
     public static ArrayList<String> arrayListPricingDetails;
 
     GetPricingTask taskGetPricing;
+    String initialPricingForPayment;
 
     ListView nearbyDriversList;
+
+    final Runnable initialPayment = new Runnable() {
+        @Override
+        public void run() {
+            Paytm.onStartTransaction(getActivity(), initialPricingForPayment, hire);
+        }
+    };
 
     @Nullable
     @Override
@@ -244,7 +254,7 @@ public class NearbyDriversFragment extends android.support.v4.app.Fragment {
                 driverTimeOfHiring = HireFragment.serviceStartTime;
             }
             stringArrayForDriverHiring = new String[]{driverIdForHiring, driverTimeOfHiring,
-                    driverTimeSpanForHiring, HireFragment.hireMeetUpPoint};
+                    driverTimeSpanForHiring, hireMeetUpPoint};
             taskHiringDriver = (HiringTask) new HiringTask().execute(stringArrayForDriverHiring);
         }
     };
@@ -299,13 +309,14 @@ public class NearbyDriversFragment extends android.support.v4.app.Fragment {
             Helpers.dismissProgressDialog();
             Log.i("PricingTaskResponseCode", "" + responseCode);
             if (responseCode == 200) {
+                initialPricingForPayment = arrayListPricingDetails.get(1);
                 Helpers.AlertDialogWithPositiveFunctionNegativeButton(getActivity(), "Confirmation",
                         "Do you really want to hire " + driverName + "?" + "\n\n" + "Total Hours of Service: " + arrayListPricingDetails.get(0) + " Hours\n" +
                         "Initial Hiring Price: ₹" + arrayListPricingDetails.get(1) + "\n" +
                         "Driver Price: ₹" + arrayListPricingDetails.get(2) + "\n" +
                         "Driver Hourly Rate: ₹" + arrayListPricingDetails.get(3) + "\n" +
                         "Total Price: ₹" + arrayListPricingDetails.get(4) + "\n\n" +
-                        "Note: Only the Initial Hiring Price will be paid at this moment.", "Yes", "Cancel", hire);
+                        "Note: Only the Initial Hiring Price will be paid at this moment.", "Yes", "Cancel", initialPayment);
             } else {
                 Helpers.AlertDialogWithPositiveFunctionNegativeButton(getActivity(), "Failed",
                         "Unable to calculate prices", "Retry", "Cancel", retryPricingTask);

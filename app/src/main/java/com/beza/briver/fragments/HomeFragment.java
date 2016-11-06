@@ -26,6 +26,7 @@ import com.beza.briver.Tasks.UpdateHireStatusTask;
 import com.beza.briver.utils.AppGlobals;
 import com.beza.briver.utils.EndPoints;
 import com.beza.briver.utils.Helpers;
+import com.beza.briver.utils.Paytm;
 import com.beza.briver.utils.WebServiceHelpers;
 import com.google.android.gms.maps.model.LatLng;
 
@@ -69,6 +70,7 @@ public class HomeFragment extends android.support.v4.app.Fragment {
     public static HashMap<Integer, ArrayList<String>> hashMapHiresData;
 
     static boolean isHiresDataTaskRunning;
+    String finalPricingForPayment;
     boolean isViewUserDetailsTaskRunning;
 
     @Nullable
@@ -179,11 +181,11 @@ public class HomeFragment extends android.support.v4.app.Fragment {
             case R.id.item_context_hires_list_finish:
                 selectedContextMenuId = info.position;
                 Helpers.nameForRatingsDialog = hashMapHiresData.get(returnProperID(info.position)).get(2);
-
+                finalPricingForPayment = hashMapHiresData.get(returnProperID(info.position)).get(9);
                 Helpers.AlertDialogWithPositiveFunctionNegativeButton(getActivity(), "Are you sure?", "Want to complete this Hire?\n\n" +
                         "DriverFee: " + hashMapHiresData.get(returnProperID(info.position)).get(8) + "\n" +
                         "TotalCharges: " + hashMapHiresData.get(returnProperID(info.position)).get(9) + "\n\n" +
-                        "Note: You'll have to pay the TotalCharges to complete this Hire", "Yes", "Cancel", finishHire);
+                        "Note: You'll have to pay the TotalCharges to complete this Hire", "Yes", "Cancel", finalPayment);
                 return true;
             case R.id.item_context_hires_list_review:
 //                    new ReviewHireTask().execute();
@@ -508,13 +510,11 @@ public class HomeFragment extends android.support.v4.app.Fragment {
         return properID;
     }
 
-
     public static final Runnable refreshHomeHiresList = new Runnable() {
         public void run() {
             new GetHiresData().execute();
         }
     };
-
 
     final Runnable finishHire = new Runnable() {
         public void run() {
@@ -522,6 +522,13 @@ public class HomeFragment extends android.support.v4.app.Fragment {
                 String[] dataFinish = new String[]{"" + returnProperID(selectedContextMenuId), "5"};
                 new UpdateHireStatusTask().execute(dataFinish);
             }
+        }
+    };
+
+    final Runnable finalPayment = new Runnable() {
+        @Override
+        public void run() {
+            Paytm.onStartTransaction(getActivity(), finalPricingForPayment, finishHire);
         }
     };
 }

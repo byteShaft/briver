@@ -53,6 +53,8 @@ import com.beza.briver.MainActivity;
 import com.beza.briver.R;
 import com.beza.briver.Tasks.ReviewHireTask;
 import com.beza.briver.fragments.HireFragment;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.maps.model.LatLng;
 
 import java.io.ByteArrayOutputStream;
@@ -68,11 +70,13 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
+import static com.beza.briver.utils.AppGlobals.getRunningActivityInstance;
+
 public class Helpers {
 
     public static final Runnable exitApp = new Runnable() {
         public void run() {
-            AppGlobals.getRunningActivityInstance().finish();
+            getRunningActivityInstance().finish();
             System.exit(0);
         }
     };
@@ -87,14 +91,14 @@ public class Helpers {
     public static Spinner spinnerServiceHours;
     public static Runnable openPermissionsSettingsForMarshmallow = new Runnable() {
         public void run() {
-            Helpers.openAppDetailsActivityForSettingPermissions(AppGlobals.getRunningActivityInstance());
-            AppGlobals.getRunningActivityInstance().onBackPressed();
+            Helpers.openAppDetailsActivityForSettingPermissions(getRunningActivityInstance());
+            getRunningActivityInstance().onBackPressed();
         }
     };
     public static Runnable openPlayServicesInstallation = new Runnable() {
         public void run() {
-            Helpers.openInstallationActivityForPlayServices(AppGlobals.getRunningActivityInstance());
-            AppGlobals.getRunningActivityInstance().onBackPressed();
+            Helpers.openInstallationActivityForPlayServices(getRunningActivityInstance());
+            getRunningActivityInstance().onBackPressed();
         }
     };
     static String docOneMain;
@@ -949,4 +953,15 @@ public class Helpers {
                 Settings.Secure.ANDROID_ID);
     }
 
+    public static boolean checkPlayServicesAvailability() {
+        GoogleApiAvailability apiAvailability = GoogleApiAvailability.getInstance();
+        int resultCode = apiAvailability.isGooglePlayServicesAvailable(getRunningActivityInstance());
+        if (resultCode != ConnectionResult.SUCCESS) {
+//            Helpers.AlertDialogWithPositiveNegativeFunctions(getRunningActivityInstance(), "PlayServices not found",
+//                    "You need to install Google Play Services to continue using Briver", "Install", "Exit App", Helpers.openPlayServicesInstallation, Helpers.exitApp);
+            return false;
+        } else {
+            return true;
+        }
+    }
 }

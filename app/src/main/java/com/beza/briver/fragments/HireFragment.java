@@ -45,6 +45,7 @@ import com.beza.briver.Tasks.HiringTask;
 import com.beza.briver.utils.AppGlobals;
 import com.beza.briver.utils.EndPoints;
 import com.beza.briver.utils.Helpers;
+import com.beza.briver.utils.Paytm;
 import com.beza.briver.utils.WebServiceHelpers;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -75,7 +76,8 @@ import java.util.TimerTask;
  */
 public class HireFragment extends android.support.v4.app.Fragment implements View.OnClickListener {
 
-    public static final String[] itemsForHoursSelectingDialog = {"2 Hours", "4 Hours", "6 Hours", "8 Hours", "12 Hours", "24 Hours", "48 Hours"};
+    public static final String[] itemsForHoursSelectingDialog = {"2 Hours", "4 Hours", "6 Hours",
+            "8 Hours", "12 Hours", "14 Hours", "16 Hours", "24 Hours", "48 Hours"};
     public static int responseCode;
     public static ArrayList<Integer> driversIdList;
     public static HashMap<Integer, ArrayList<String>> hashMapDriverData;
@@ -99,10 +101,29 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
                 Helpers.AlertDialogWithPositiveNegativeFunctions(getActivity(), "Location Service disabled",
                         "Enable device GPS to continue driver hiring", "Settings", "ReCheck",
                         openLocationServiceSettings, recheckLocationServiceStatus);
+            } else {
+                Helpers.showProgressDialogWithPositiveButton(getActivity(), "Acquiring current location", "Dismiss", null);
+                if (ActivityCompat.checkSelfPermission(getActivity(),
+                        Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                        ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.ACCESS_COARSE_LOCATION) !=
+                                PackageManager.PERMISSION_GRANTED) {
+                    // TODO: Consider calling
+                    //    ActivityCompat#requestPermissions
+                    // here to request the missing permissions, and then overriding
+                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                    //                                          int[] grantResults)
+                    // to handle the case where the user grants the permission. See the documentation
+                    // for ActivityCompat#requestPermissions for more details.
+                    return;
+                }
+                mMap.setMyLocationEnabled(true);
+                mMap.getUiSettings().setMyLocationButtonEnabled(false);
+                mMap.getUiSettings().setCompassEnabled(true);
             }
         }
     };
     HttpURLConnection connection;
+    String initialPricingForPayment;
     GetPricingTask taskGetPricing;
     String driverName;
     Timer textChangeTimer;
@@ -115,8 +136,8 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
     Marker hireMeetUpPointMarker;
     Button btnQuickHire;
     Button btnScheduledHire;
-    private String driverIdForHiring;
-    private String driverTimeSpanForHiring;
+    private static String driverIdForHiring;
+    private static String driverTimeSpanForHiring;
     final Runnable btnCustomHireDialogHire = new Runnable() {
         public void run() {
             driverTimeSpanForHiring = Helpers.spinnerServiceHours.getSelectedItem().toString().substring(0, 2).trim();
@@ -128,17 +149,23 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
             taskGetPricing = (GetPricingTask) new GetPricingTask().execute(driverTimeSpanForHiring);
         }
     };
-    private String driverTimeOfHiring;
+    private static String driverTimeOfHiring;
     private FragmentManager fm;
     private SupportMapFragment mapFragment;
-    private LatLng currentLatLngAuto = null;
-    final Runnable hire = new Runnable() {
+    private static LatLng currentLatLngAuto;
+    public static final Runnable hire = new Runnable() {
         public void run() {
             hireMeetUpPoint = currentLatLngAuto.latitude + "," + currentLatLngAuto.longitude;
             driverTimeOfHiring = Helpers.getCurrentTimeOfDevice();
             stringArrayForDriverHiring = new String[]{driverIdForHiring, "", driverTimeSpanForHiring,
                     hireMeetUpPoint};
             taskHiringDriver = (HiringTask) new HiringTask().execute(stringArrayForDriverHiring);
+        }
+    };
+    final Runnable initialPayment = new Runnable() {
+        @Override
+        public void run() {
+            Paytm.onStartTransaction(getActivity(), initialPricingForPayment, hire);
         }
     };
     private Boolean simpleMapView = true;
@@ -226,15 +253,11 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
         btnScheduledHire = (Button) baseViewHireFragment.findViewById(R.id.btn_map_hire_scheduled);
         driversIdList = new ArrayList<>();
         hashMapDriverData = new HashMap<>();
-
         btnMapHireRemoveMarker.setOnClickListener(this);
         btnQuickHire.setOnClickListener(this);
         btnScheduledHire.setOnClickListener(this);
-
         fm = getChildFragmentManager();
-
         mapFragment = (SupportMapFragment) fm.findFragmentById(R.id.map);
-
         mapFragment.getMapAsync(new OnMapReadyCallback() {
             @Override
             public void onMapReady(GoogleMap googleMap) {
@@ -254,7 +277,7 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
                             "You need to grant permissions to use Location Services for Briver", "Settings",
                             "Exit App", Helpers.openPermissionsSettingsForMarshmallow, Helpers.exitApp);
                     getActivity().onBackPressed();
-                } else if (!AppGlobals.checkPlayServicesAvailability()) {
+                } else if (!Helpers.checkPlayServicesAvailability()) {
                     Helpers.AlertDialogWithPositiveNegativeFunctions(getActivity(), "Location components missing",
                             "You need to install GooglePlayServices to continue using Briver", "Install",
                             "Exit App", Helpers.openPlayServicesInstallation, Helpers.exitApp);
@@ -266,11 +289,10 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
                     getActivity().onBackPressed();
                 } else {
                     Helpers.showProgressDialogWithPositiveButton(getActivity(), "Acquiring current location", "Dismiss", null);
+                    mMap.setMyLocationEnabled(true);
+                    mMap.getUiSettings().setMyLocationButtonEnabled(false);
+                    mMap.getUiSettings().setCompassEnabled(true);
                 }
-
-                mMap.setMyLocationEnabled(true);
-                mMap.getUiSettings().setMyLocationButtonEnabled(false);
-                mMap.getUiSettings().setCompassEnabled(true);
 
                 mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
                     @Override
@@ -381,7 +403,6 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
                         }
                     }
                 });
-
             }
         });
 
@@ -722,18 +743,31 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
 
     private void drawNearbyDriversOnMapWithMarkers() {
         for (int i = 0; i < driversIdList.size(); i++) {
-//            hashMapDriverData.get(driversIdList.get(i));
-            Log.i("Data", "Location: " + "ID: " + i + " " + hashMapDriverData.get(driversIdList.get(i)).get(3));
+            try {
             String[] latLngString = hashMapDriverData.get(driversIdList.get(i)).get(3).split(",");
             double latitude = Double.parseDouble(latLngString[0]);
             double longitude = Double.parseDouble(latLngString[1]);
             LatLng latLngDriverPosition = new LatLng(latitude, longitude);
             if (Integer.parseInt(hashMapDriverData.get(driversIdList.get(i)).get(8)) == 1) {
-                mMap.addMarker(new MarkerOptions().position(latLngDriverPosition)
-                        .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_marker_driver_normal)).snippet("" + driversIdList.get(i)));
+                if (Integer.parseInt(hashMapDriverData.get(driversIdList.get(i)).get(11)) == 0) {
+                    mMap.addMarker(new MarkerOptions().position(latLngDriverPosition)
+                            .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_marker_driver_normal)).snippet("" + driversIdList.get(i)));
+                } else {
+                    mMap.addMarker(new MarkerOptions().position(latLngDriverPosition)
+                            .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_marker_lady_driver_normal)).snippet("" + driversIdList.get(i)));
+                }
             } else {
-                mMap.addMarker(new MarkerOptions().position(latLngDriverPosition)
-                        .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_marker_driver_online)).snippet("" + driversIdList.get(i)));
+                if (Integer.parseInt(hashMapDriverData.get(driversIdList.get(i)).get(11)) == 1) {
+
+                    mMap.addMarker(new MarkerOptions().position(latLngDriverPosition)
+                            .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_marker_driver_online)).snippet("" + driversIdList.get(i)));
+                } else {
+                    mMap.addMarker(new MarkerOptions().position(latLngDriverPosition)
+                            .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_marker_driver_online)).snippet("" + driversIdList.get(i)));
+                    }
+                }
+            } catch (NullPointerException e) {
+                e.printStackTrace();
             }
         }
     }
@@ -833,6 +867,7 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
                             arrayListString.add(jsonObject.getString("status"));
                             arrayListString.add(jsonObject.getString("review_count"));
                             arrayListString.add(jsonObject.getString("review_stars"));
+                            arrayListString.add(jsonObject.getString("gender"));
                             hashMapDriverData.put(jsonObject.getInt("id"), arrayListString);
                         }
                     }
@@ -918,13 +953,14 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
             Helpers.dismissProgressDialog();
             Log.i("PricingTaskResponseCode", "" + responseCode);
             if (responseCode == 200) {
+                initialPricingForPayment = arrayListPricingDetails.get(1);
                 Helpers.AlertDialogWithPositiveFunctionNegativeButton(getActivity(), "Confirmation",
                         "Do you really want to hire " + driverName + "?" + "\n\n" + "Total Hours of Service: " + arrayListPricingDetails.get(0) + " Hours\n" +
                                 "Initial Hiring Price: ₹" + arrayListPricingDetails.get(1) + "\n" +
                                 "Driver Price: ₹" + arrayListPricingDetails.get(2) + "\n" +
                                 "Driver Hourly Rate: ₹" + arrayListPricingDetails.get(3) + "\n" +
                                 "Total Price: ₹" + arrayListPricingDetails.get(4) + "\n\n" +
-                                "Note: Only the Initial Hiring Price will be paid at this moment.", "Yes", "Cancel", hire);
+                                "Note: Only the Initial Hiring Price will be paid at this moment.", "Yes", "Cancel", initialPayment);
             } else {
                 Helpers.AlertDialogWithPositiveFunctionNegativeButton(getActivity(), "Failed",
                         "Unable to calculate prices", "Retry", "Cancel", retryPricingTask);
@@ -949,5 +985,4 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
             return json.toString();
         }
     }
-
 }
