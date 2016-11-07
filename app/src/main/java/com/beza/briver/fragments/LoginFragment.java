@@ -1,5 +1,6 @@
 package com.beza.briver.fragments;
 
+import android.Manifest;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.Service;
@@ -13,6 +14,7 @@ import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -72,6 +74,10 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
     boolean launchingMainActivity;
     boolean loginInterrupted;
     boolean userDataTaskInterrupted;
+    int PERMISSION_ALL = 1;
+    String[] PERMISSIONS = {Manifest.permission.READ_SMS, Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.CAMERA};
+
 
     HttpURLConnection connection;
     public static int responseCode;
@@ -159,9 +165,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
 
         animMainLogoTransitionUp.setAnimationListener(new Animation.AnimationListener() {
             @Override
-            public void onAnimationStart(Animation animation) {
-
-            }
+            public void onAnimationStart(Animation animation) {}
 
             @Override
             public void onAnimationEnd(Animation animation) {
@@ -169,16 +173,12 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
             }
 
             @Override
-            public void onAnimationRepeat(Animation animation) {
-
-            }
+            public void onAnimationRepeat(Animation animation) {}
         });
 
         animMainLogoTransitionDown.setAnimationListener(new Animation.AnimationListener() {
             @Override
-            public void onAnimationStart(Animation animation) {
-
-            }
+            public void onAnimationStart(Animation animation) {}
 
             @Override
             public void onAnimationEnd(Animation animation) {
@@ -186,9 +186,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
             }
 
             @Override
-            public void onAnimationRepeat(Animation animation) {
-
-            }
+            public void onAnimationRepeat(Animation animation) {}
         });
         if (Helpers.isNetworkAvailable(getActivity())) {
             startGcmService();
@@ -200,20 +198,28 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.btn_login_login:
-                sLoginEmail = etLoginEmail.getText().toString();
-                sLoginPassword = etLoginPassword.getText().toString();
-                if (validateLoginInput()) {
-                    if (Helpers.isIsSoftKeyboardOpen()) {
-                        softKeyboard.closeSoftKeyboard();
+                if (!Helpers.hasPermissions(getActivity(), PERMISSIONS)) {
+                    ActivityCompat.requestPermissions(getActivity(), PERMISSIONS, PERMISSION_ALL);
+                } else {
+                    sLoginEmail = etLoginEmail.getText().toString();
+                    sLoginPassword = etLoginPassword.getText().toString();
+                    if (validateLoginInput()) {
+                        if (Helpers.isIsSoftKeyboardOpen()) {
+                            softKeyboard.closeSoftKeyboard();
+                        }
+                        taskUserLogin = (UserLoginTask) new UserLoginTask().execute();
                     }
-                    taskUserLogin = (UserLoginTask) new UserLoginTask().execute();
                 }
                 break;
             case R.id.btn_login_register:
-                if (Helpers.isIsSoftKeyboardOpen()) {
-                    softKeyboard.closeSoftKeyboard();
+                if (!Helpers.hasPermissions(getActivity(), PERMISSIONS)) {
+                    ActivityCompat.requestPermissions(getActivity(), PERMISSIONS, PERMISSION_ALL);
+                } else {
+                    if (Helpers.isIsSoftKeyboardOpen()) {
+                        softKeyboard.closeSoftKeyboard();
+                    }
+                    loadRegisterFragment(new RegisterFragment());
                 }
-                loadRegisterFragment(new RegisterFragment());
                 break;
             case R.id.tv_login_forgot_password:
                 if (Helpers.isIsSoftKeyboardOpen()) {

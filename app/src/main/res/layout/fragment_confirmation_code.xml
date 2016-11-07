@@ -50,20 +50,36 @@
             android:drawableLeft="@mipmap/ic_edit_text_email" />
 
         <EditText
-            android:id="@+id/et_confirmation_code"
+            android:id="@+id/et_confirmation_code_email_otp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@drawable/background_edit_text"
             android:textCursorDrawable="@null"
             android:textSize="18dp"
-            android:hint="Confirmation Code"
-            android:maxLength="6"
+            android:hint="E-Mail OTP"
+            android:maxLength="8"
             android:textColor="#ffffff"
             android:inputType="number"
             android:padding="10dp"
             android:drawablePadding="10dp"
             android:layout_marginBottom="10dp"
             android:drawableLeft="@mipmap/ic_edit_text_confirmation_code" />
+
+        <EditText
+            android:id="@+id/et_confirmation_code_sms_otp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/background_edit_text"
+            android:textCursorDrawable="@null"
+            android:textSize="18dp"
+            android:hint="SMS OTP"
+            android:maxLength="8"
+            android:textColor="#ffffff"
+            android:inputType="number"
+            android:padding="10dp"
+            android:drawablePadding="10dp"
+            android:layout_marginBottom="10dp"
+            android:drawableLeft="@mipmap/ic_edit_text_sms_otp" />
 
         <Button
             android:id="@+id/btn_confirmation_code_submit"

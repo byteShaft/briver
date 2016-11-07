@@ -177,7 +177,24 @@
                     android:background="@drawable/background_edit_text"
                     android:drawableLeft="@mipmap/ic_edit_text_phone"
                     android:drawablePadding="10dp"
-                    android:hint="Contact Number"
+                    android:hint="Contact"
+                    android:inputType="phone"
+                    android:maxLength="20"
+                    android:padding="10dp"
+                    android:textColor="#ffffff"
+                    android:textCursorDrawable="@null"
+                    android:textSize="18dp" />
+
+
+                <EditText
+                    android:id="@+id/et_register_phone_number_repeat"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="10dp"
+                    android:background="@drawable/background_edit_text"
+                    android:drawableLeft="@mipmap/ic_edit_text_phone"
+                    android:drawablePadding="10dp"
+                    android:hint="Repeat Contact"
                     android:inputType="phone"
                     android:maxLength="20"
                     android:padding="10dp"
