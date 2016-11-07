@@ -49,9 +49,11 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
 
     public static int responseCode;
     public static boolean isFragmentOpenedFromLogin;
+    static boolean isCodeConfirmationFragmentOpen;
     RelativeLayout layoutCodeConfirmation;
     EditText etCodeConfirmationEmail;
-    EditText etCodeConfirmationCode;
+    EditText etCodeConfirmationEmailOtp;
+    static EditText etCodeConfirmationSmsOtp;
     Button btnCodeConfirmationSubmitCode;
     Button btnCodeConfirmationResendCode;
     TextView tvCodeConfirmationStatusDisplay;
@@ -63,7 +65,8 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
         }
     };
     Animation animTimerFading;
-    String confirmationCode;
+    String confirmationOtpEmail;
+    String confirmationOtpSms;
     String textEmailEntry;
     View baseViewCodeConfirmationFragment;
     HttpURLConnection connection;
@@ -78,10 +81,11 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
     };
 
     public static String getConfirmationString(
-            String email, String activationCode) {
+            String email, String emailOtp, String smsOtp) {
         return "{" +
                 String.format("\"email\": \"%s\", ", email) +
-                String.format("\"activation_key\": \"%s\"", activationCode) +
+                String.format("\"email_otp\": \"%s\", ", emailOtp) +
+                String.format("\"sms_otp\": \"%s\"", smsOtp) +
                 "}";
     }
 
@@ -93,7 +97,8 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
     }
 
     UserConfirmationTask taskUserConfirmation;
-    UserResendEmail taskResendEmail;
+    UserResendOTP taskResendEmail;
+    public static String otp;
     boolean isUserConfirmationTaskRunning;
     boolean isResendEmailTaskRunning;
 
@@ -104,7 +109,8 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
 
         layoutCodeConfirmation = (RelativeLayout) baseViewCodeConfirmationFragment.findViewById(R.id.layout_code_confirmation);
         etCodeConfirmationEmail = (EditText) baseViewCodeConfirmationFragment.findViewById(R.id.et_confirmation_code_email);
-        etCodeConfirmationCode = (EditText) baseViewCodeConfirmationFragment.findViewById(R.id.et_confirmation_code);
+        etCodeConfirmationEmailOtp = (EditText) baseViewCodeConfirmationFragment.findViewById(R.id.et_confirmation_code_email_otp);
+        etCodeConfirmationSmsOtp = (EditText) baseViewCodeConfirmationFragment.findViewById(R.id.et_confirmation_code_sms_otp);
         btnCodeConfirmationSubmitCode = (Button) baseViewCodeConfirmationFragment.findViewById(R.id.btn_confirmation_code_submit);
         btnCodeConfirmationResendCode = (Button) baseViewCodeConfirmationFragment.findViewById(R.id.btn_confirmation_code_resend);
         tvCodeConfirmationStatusDisplay = (TextView) baseViewCodeConfirmationFragment.findViewById(R.id.tv_confirmation_code_status_display);
@@ -122,7 +128,7 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
             return baseViewCodeConfirmationFragment;
         }
 
-        tvCodeConfirmationStatusDisplay.setText("Code Sent - Check Mail");
+        tvCodeConfirmationStatusDisplay.setText("OTP Sent - Check Inbox");
         tvCodeConfirmationStatusDisplay.setTextColor(Color.parseColor("#A4C639"));
 
         isTimerActive = true;
@@ -153,7 +159,8 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
         switch (v.getId()) {
             case R.id.btn_confirmation_code_submit:
                 textEmailEntry = etCodeConfirmationEmail.getText().toString();
-                confirmationCode = etCodeConfirmationCode.getText().toString();
+                confirmationOtpEmail = etCodeConfirmationEmailOtp.getText().toString();
+                confirmationOtpSms = etCodeConfirmationSmsOtp.getText().toString();
                 if (validateConfirmationCode()) {
                     taskUserConfirmation = (UserConfirmationTask) new UserConfirmationTask().execute();
                 }
@@ -162,10 +169,10 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
                 textEmailEntry = etCodeConfirmationEmail.getText().toString();
                 if (isTimerActive) {
                     Helpers.showSnackBar(baseViewCodeConfirmationFragment,
-                            "Code already sent - Wait for the CountDown",
+                            "OTP already sent - Wait for the Countdown",
                             Snackbar.LENGTH_SHORT, "#ffffff");
                 } else {
-                    taskResendEmail = (UserResendEmail) new UserResendEmail().execute();
+                    taskResendEmail = (UserResendOTP) new UserResendOTP().execute();
                 }
                 break;
         }
@@ -173,11 +180,18 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
 
     public boolean validateConfirmationCode() {
         boolean valid = true;
-        if (confirmationCode.isEmpty() || confirmationCode.length() < 4) {
-            etCodeConfirmationCode.setError("Minimum 4 Characters");
+        if (confirmationOtpEmail.isEmpty() || confirmationOtpEmail.length() < 4) {
+            etCodeConfirmationEmailOtp.setError("Minimum 4 Characters");
             valid = false;
         } else {
-            etCodeConfirmationCode.setError(null);
+            etCodeConfirmationEmailOtp.setError(null);
+        }
+
+        if (confirmationOtpSms.isEmpty() || confirmationOtpSms.length() < 4) {
+            etCodeConfirmationSmsOtp.setError("Minimum 4 Characters");
+            valid = false;
+        } else {
+            etCodeConfirmationSmsOtp.setError(null);
         }
         return valid;
     }
@@ -198,7 +212,7 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
         AppGlobals.setLoggedIn(true);
         getActivity().finish();
         startActivity(new Intent(getActivity(), MainActivity.class));
-
+        otp = null;
     }
 
     public void onConfirmationFailed(String message) {
@@ -206,8 +220,8 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
     }
 
     public void onResendSuccess() {
-        Helpers.showSnackBar(getView(), "E-Mail successfully sent", Snackbar.LENGTH_LONG, "#A4C639");
-        tvCodeConfirmationStatusDisplay.setText("Code Sent - Check Mail");
+        Helpers.showSnackBar(getView(), "OTP successfully sent", Snackbar.LENGTH_LONG, "#A4C639");
+        tvCodeConfirmationStatusDisplay.setText("OTP Sent - Check Inbox");
         tvCodeConfirmationStatusDisplay.setTextColor(Color.parseColor("#A4C639"));
         tvCodeConfirmationStatusDisplay.clearAnimation();
 
@@ -216,6 +230,7 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
         tvCodeConfirmationStatusDisplayTimer.startAnimation(animTimerFading);
         tvCodeConfirmationStatusDisplayTimer.setVisibility(View.VISIBLE);
         tvCodeConfirmationStatusDisplay.setVisibility(View.VISIBLE);
+        otp = null;
     }
 
     public void onResendFailed(String message) {
@@ -233,12 +248,20 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
     @Override
     public void onPause() {
         super.onPause();
+        isCodeConfirmationFragmentOpen = false;
         if (isUserConfirmationTaskRunning) {
             taskUserConfirmation.cancel(true);
         }
         if (isResendEmailTaskRunning) {
             taskResendEmail.cancel(true);
         }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        isCodeConfirmationFragmentOpen = true;
+        otpReceived();
     }
 
     private class UserConfirmationTask extends AsyncTask<Void, Integer, Void> {
@@ -259,7 +282,7 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
                 connection = WebServiceHelpers.openConnectionForUrl(url, "POST", false);
                 DataOutputStream out = new DataOutputStream(connection.getOutputStream());
 
-                String confirmationString = getConfirmationString(textEmailEntry, confirmationCode);
+                String confirmationString = getConfirmationString(textEmailEntry, confirmationOtpEmail, confirmationOtpSms);
                 Log.i("ConfirmationCode", "String: " + confirmationString);
                 out.writeBytes(confirmationString);
                 out.flush();
@@ -328,7 +351,7 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
         }
     }
 
-    private class UserResendEmail extends AsyncTask<Void, Integer, Void> {
+    private class UserResendOTP extends AsyncTask<Void, Integer, Void> {
 
         @Override
         protected void onPreExecute() {
@@ -336,7 +359,7 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
             isResendEmailTaskRunning = true;
             btnCodeConfirmationResendCode.setEnabled(false);
             btnCodeConfirmationSubmitCode.setEnabled(false);
-            tvCodeConfirmationStatusDisplay.setText("Resending Email");
+            tvCodeConfirmationStatusDisplay.setText("Resending OTP");
             tvCodeConfirmationStatusDisplayTimer.setTextColor(Color.parseColor("#ffa500"));
             tvCodeConfirmationStatusDisplay.startAnimation(animTimerFading);
             tvCodeConfirmationStatusDisplayTimer.setVisibility(View.GONE);
@@ -380,10 +403,10 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
                 if (responseMessage.equalsIgnoreCase("user deactivated by admin.")) {
                     onResendFailed("User banned by the admin");
                 } else {
-                    onResendFailed("Failed to resend E-Mail");
+                    onResendFailed("Failed to resend OTP");
                 }
             } else {
-                onResendFailed("Failed to resend E-Mail");
+                onResendFailed("Failed to resend OTP");
                 Helpers.dismissProgressDialog();
             }
         }
@@ -392,6 +415,12 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
         protected void onCancelled() {
             super.onCancelled();
             isResendEmailTaskRunning = false;
+        }
+    }
+
+    public static void otpReceived() {
+        if (otp != null && isCodeConfirmationFragmentOpen) {
+            etCodeConfirmationSmsOtp.setText(otp);
         }
     }
 

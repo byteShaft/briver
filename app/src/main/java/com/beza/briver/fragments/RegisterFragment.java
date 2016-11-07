@@ -16,8 +16,10 @@ import android.provider.Settings;
 import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
 import android.telephony.PhoneNumberUtils;
+import android.text.Editable;
 import android.text.SpannableStringBuilder;
 import android.text.TextPaint;
+import android.text.TextWatcher;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
 import android.util.Log;
@@ -123,6 +125,7 @@ public class RegisterFragment extends Fragment implements View.OnClickListener {
     EditText etRegisterUserPassword;
     EditText etRegisterUserConfirmPassword;
     EditText etRegisterUserContactNumber;
+    EditText etRegisterUserContactNumberRepeat;
     EditText etRegisterUserDrivingExperience;
     EditText etRegisterUserBasicBio;
     SpinnerPlus spinnerRegisterUserVehicleMake;
@@ -147,6 +150,7 @@ public class RegisterFragment extends Fragment implements View.OnClickListener {
     String userRegisterPassword;
     String userRegisterConfirmPassword;
     String userRegisterContactNumber;
+    String userRegisterConfirmContactNumber;
     String userRegisterDrivingExperience;
     String userRegisterBasicBio;
     String userRegisterVehicleMake;
@@ -210,6 +214,7 @@ public class RegisterFragment extends Fragment implements View.OnClickListener {
         etRegisterUserPassword = (EditText) baseViewRegisterFragment.findViewById(R.id.et_register_password);
         etRegisterUserConfirmPassword = (EditText) baseViewRegisterFragment.findViewById(R.id.et_register_confirm_password);
         etRegisterUserContactNumber = (EditText) baseViewRegisterFragment.findViewById(R.id.et_register_phone_number);
+        etRegisterUserContactNumberRepeat = (EditText) baseViewRegisterFragment.findViewById(R.id.et_register_phone_number_repeat);
         etRegisterUserDrivingExperience = (EditText) baseViewRegisterFragment.findViewById(R.id.et_register_driving_experience);
         etRegisterUserBasicBio = (EditText) baseViewRegisterFragment.findViewById(R.id.et_register_bio);
         spinnerRegisterUserVehicleMake = (SpinnerPlus) baseViewRegisterFragment.findViewById(R.id.spinner_register_vehicle_make);
@@ -246,6 +251,58 @@ public class RegisterFragment extends Fragment implements View.OnClickListener {
         ArrayAdapter<CharSequence> dataAdapter = new ArrayAdapter<CharSequence>(getActivity(), R.layout.spinner_text, array);
         dataAdapter.setDropDownViewResource(R.layout.simple_spinner_dropdown);
         spinnerRegisterUserVehicleMake.setAdapter(dataAdapter);
+
+        etRegisterUserContactNumber.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                if(etRegisterUserContactNumber.getText().toString().length() < 4) {
+                    etRegisterUserContactNumber.setText("+91-");
+                    etRegisterUserContactNumber.setSelection(etRegisterUserContactNumber.getText().length());
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {}
+        });
+
+        etRegisterUserContactNumberRepeat.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                if(etRegisterUserContactNumberRepeat.getText().toString().length() < 4) {
+                    etRegisterUserContactNumberRepeat.setText("+91-");
+                    etRegisterUserContactNumberRepeat.setSelection(etRegisterUserContactNumberRepeat.getText().length());
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {}
+        });
+
+        etRegisterUserContactNumber.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View view, boolean b) {
+                if (b) {
+                    etRegisterUserContactNumber.setText("+91-");
+                    etRegisterUserContactNumber.setSelection(etRegisterUserContactNumber.getText().length());
+                }
+            }
+        });
+
+        etRegisterUserContactNumberRepeat.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View view, boolean b) {
+                if (b) {
+                    etRegisterUserContactNumberRepeat.setText("+91-");
+                    etRegisterUserContactNumberRepeat.setSelection(etRegisterUserContactNumberRepeat.getText().length());
+                }
+            }
+        });
 
         spinnerRegisterUserVehicleMake.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
@@ -401,6 +458,7 @@ public class RegisterFragment extends Fragment implements View.OnClickListener {
                 userRegisterPassword = etRegisterUserPassword.getText().toString();
                 userRegisterConfirmPassword = etRegisterUserConfirmPassword.getText().toString();
                 userRegisterContactNumber = etRegisterUserContactNumber.getText().toString();
+                userRegisterConfirmContactNumber = etRegisterUserContactNumberRepeat.getText().toString();
                 userRegisterDrivingExperience = etRegisterUserDrivingExperience.getText().toString();
                 userRegisterBasicBio = etRegisterUserBasicBio.getText().toString();
                 userRegisterVehicleModelYear = etRegisterUserVehicleModelYear.getText().toString();
@@ -473,6 +531,9 @@ public class RegisterFragment extends Fragment implements View.OnClickListener {
 
         if (userRegisterContactNumber.trim().isEmpty()) {
             etRegisterUserContactNumber.setError("Empty");
+            valid = false;
+        } else if (!userRegisterContactNumber.equals(userRegisterConfirmContactNumber)) {
+            etRegisterUserContactNumberRepeat.setError("Contact doesn't match");
             valid = false;
         } else if (!userRegisterContactNumber.isEmpty() && !PhoneNumberUtils.isGlobalPhoneNumber(userRegisterContactNumber)) {
             etRegisterUserContactNumber.setError("Number is invalid");
