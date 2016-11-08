@@ -26,6 +26,7 @@ public class UpdateHireStatusTask extends AsyncTask<String, String  , String> {
     HttpURLConnection connection;
     public static int responseCode;
     boolean reviewAsWell;
+    String[] paramsForRetry;
 
     @Override
     protected void onPreExecute() {
@@ -37,6 +38,7 @@ public class UpdateHireStatusTask extends AsyncTask<String, String  , String> {
     @Override
     protected String doInBackground(String[] params) {
         try {
+            paramsForRetry = params;
             connection = WebServiceHelpers.openConnectionForUrl(EndPoints.BASE_URL_HIRE + params[0] + "/update", "PUT", true);
             DataOutputStream out = new DataOutputStream(connection.getOutputStream());
             out.writeBytes(getStatusChangeString(params[1]));
@@ -74,6 +76,8 @@ public class UpdateHireStatusTask extends AsyncTask<String, String  , String> {
                 Helpers.customRatingDialog(AppGlobals.getRunningActivityInstance(), Helpers.nameForRatingsDialog, s);
             }
         } else {
+            Helpers.AlertDialogWithPositiveFunctionNegativeButton(AppGlobals.getRunningActivityInstance(),
+                    "TaskFailed", "UpdateHireStatus request failed.", "Retry", "Cancel", retryTask);
             Toast.makeText(AppGlobals.getContext(), "Failed to update status", Toast.LENGTH_LONG).show();
         }
     }
@@ -99,6 +103,14 @@ public class UpdateHireStatusTask extends AsyncTask<String, String  , String> {
     final Runnable initiateReviewTask = new Runnable() {
         public void run() {
             new ReviewHireTask().execute();
+        }
+    };
+
+    final Runnable retryTask = new Runnable() {
+        public void run() {
+            if (paramsForRetry != null) {
+                new UpdateHireStatusTask().execute(paramsForRetry);
+            }
         }
     };
 

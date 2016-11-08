@@ -129,13 +129,15 @@ public class PreferencesFragment extends android.support.v4.app.Fragment {
     }
 
     public static String getProfileEditStringForCustomer(
-            String driver_filter_radius, int transmissionType, int vehicle_type, String vehicle_make, String vehicle_model) {
+            String driver_filter_radius, int transmissionType, int vehicle_type, String vehicle_make,
+            String vehicle_model, String vehicle_model_year) {
         return "{" +
                 String.format("\"driver_filter_radius\": \"%s\", ", driver_filter_radius) +
                 String.format("\"transmission_type\": \"%s\", ", transmissionType) +
                 String.format("\"vehicle_type\": \"%s\", ", vehicle_type) +
                 String.format("\"vehicle_make\": \"%s\", ", vehicle_make) +
                 String.format("\"vehicle_model\": \"%s\"", vehicle_model) +
+                String.format("\"vehicle_model_year\": \"%s\"", vehicle_model_year) +
                 "}";
     }
 
@@ -345,17 +347,19 @@ public class PreferencesFragment extends android.support.v4.app.Fragment {
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
                     Collection<String> valuesSecondaryHashMap = StaticVehicleData.hmMain.get(
                             spinnerPreferencesUserVehicleMake.getSelectedItem()).keySet();
-                    String[] array = valuesSecondaryHashMap.toArray(new String[valuesSecondaryHashMap.size()]);
+                    String[] arraySecondary = valuesSecondaryHashMap.toArray(new String[valuesSecondaryHashMap.size()]);
                     ArrayAdapter<CharSequence> dataAdapterSecondary = new ArrayAdapter<CharSequence>(
-                            getActivity(), R.layout.spinner_text_two, array);
+                            getActivity(), R.layout.spinner_text_two, arraySecondary);
                     dataAdapterSecondary.setDropDownViewResource(R.layout.simple_spinner_dropdown_two);
-                    if (array.length > 1 && !customerPreferenceFirstRun) {
+                    if (arraySecondary.length > 1 && !customerPreferenceFirstRun) {
                         dummySelectionVehicleModel = true;
                     } else {
                         dummySelectionVehicleModel = false;
                     }
                     spinnerPreferencesUserVehicleModel.setAdapter(dataAdapterSecondary);
                     if (customerPreferenceFirstRun) {
+                        Log.i("dataAdapterSecondary", "" + dataAdapterSecondary);
+                        Log.i("getVehicleModel", "" + AppGlobals.getVehicleModel());
                         Log.e("Adapter", "GetPositionFromText2: " + dataAdapterSecondary.getPosition(AppGlobals.getVehicleModel()));
                         spinnerPreferencesUserVehicleModel.setSelection(dataAdapterSecondary.getPosition(AppGlobals.getVehicleModel()));
                         customerPreferenceFirstRun = false;
@@ -540,18 +544,14 @@ public class PreferencesFragment extends android.support.v4.app.Fragment {
         @Override
         protected Void doInBackground(Void... params) {
             try {
-                String url;
-                if (AppGlobals.getUserType() == 0) {
-                    url = EndPoints.BASE_ACCOUNTS_ME;
-                } else {
-                    url = EndPoints.BASE_ACCOUNTS_ME;
-                }
+                String url = EndPoints.BASE_ACCOUNTS_ME;
+                Log.i("token", "" + AppGlobals.getToken());
                 connection = WebServiceHelpers.openConnectionForUrl(url, "PUT", true);
                 DataOutputStream out = new DataOutputStream(connection.getOutputStream());
                 String editProfileString = "";
                 if (AppGlobals.getUserType() == 0) {
                     editProfileString = getProfileEditStringForCustomer(preferencesSearchRadius, transmissionType,
-                            userPreferencesVehicleType, preferencesVehicleMake, preferencesVehicleModel);
+                            userPreferencesVehicleType, preferencesVehicleMake, preferencesVehicleModel, preferencesVehicleModelYear);
                 } else if (driverPreferencesLocationReportingType == 1) {
                     editProfileString = getProfileEditStringForDriver(driverStatus, transmissionType,
                             String.valueOf(driverPreferencesLocationReportingType),

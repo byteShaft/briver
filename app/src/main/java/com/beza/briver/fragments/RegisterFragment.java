@@ -452,6 +452,8 @@ public class RegisterFragment extends Fragment implements View.OnClickListener {
         switch (v.getId()) {
             case R.id.btn_register_create_account:
 
+                CodeConfirmationFragment.otp = null;
+
                 userRegisterFullName = etRegisterUserFullName.getText().toString();
                 userRegisterEmail = etRegisterUserEmail.getText().toString();
                 userRegisterEmailRepeat = etRegisterUserEmailRepeat.getText().toString();
@@ -482,6 +484,7 @@ public class RegisterFragment extends Fragment implements View.OnClickListener {
                 }
                 break;
             case R.id.et_register_attachments:
+                CodeConfirmationFragment.otp = null;
                 showDocumentsAttachmentCustomDialog();
                 etRegisterAttachments.setError(null);
                 break;

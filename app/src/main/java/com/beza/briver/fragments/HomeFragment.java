@@ -185,7 +185,7 @@ public class HomeFragment extends android.support.v4.app.Fragment {
                 Helpers.AlertDialogWithPositiveFunctionNegativeButton(getActivity(), "Are you sure?", "Want to complete this Hire?\n\n" +
                         "DriverFee: " + hashMapHiresData.get(returnProperID(info.position)).get(8) + "\n" +
                         "TotalCharges: " + hashMapHiresData.get(returnProperID(info.position)).get(9) + "\n\n" +
-                        "Note: You'll have to pay the TotalCharges to complete this Hire", "Yes", "Cancel", finalPayment);
+                        "Note: You'll have to pay the TotalCharges to complete this Hire", "Yes", "Cancel", finishHireDialog);
                 return true;
             case R.id.item_context_hires_list_review:
 //                    new ReviewHireTask().execute();
@@ -529,6 +529,14 @@ public class HomeFragment extends android.support.v4.app.Fragment {
         @Override
         public void run() {
             Paytm.onStartTransaction(getActivity(), finalPricingForPayment, finishHire);
+        }
+    };
+
+    final Runnable finishHireDialog = new Runnable() {
+        @Override
+        public void run() {
+            Helpers.AlertDialogWithPositiveNegativeFunctions(getActivity(), "Payment Method",
+                    "How do you wanna pay the service fee?", "Via Paytm", "Paid to driver by hand", finalPayment, finishHire);
         }
     };
 }

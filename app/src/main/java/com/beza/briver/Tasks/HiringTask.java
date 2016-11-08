@@ -3,6 +3,7 @@ package com.beza.briver.Tasks;
 import android.os.AsyncTask;
 import android.support.design.widget.Snackbar;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.beza.briver.MainActivity;
 import com.beza.briver.R;
@@ -26,6 +27,7 @@ public class HiringTask extends AsyncTask<String, String , String> {
 
     HttpURLConnection connection;
     public static int responseCode;
+    String[] paramsForRetry;
 
     @Override
     protected void onPreExecute() {
@@ -36,6 +38,7 @@ public class HiringTask extends AsyncTask<String, String , String> {
 
     @Override
     protected String doInBackground(String[] params) {
+        paramsForRetry = params;
         try {
             String url = EndPoints.HIRE_REQUEST;
             connection = WebServiceHelpers.openConnectionForUrl(url, "POST", true);
@@ -65,8 +68,9 @@ public class HiringTask extends AsyncTask<String, String , String> {
                 MainActivity.getInstance().onBackPressed();
             }
         } else {
-            Helpers.showSnackBar(AppGlobals.getRunningActivityInstance().findViewById(R.id.container_main),
-                    "Failed to send hiring request", Snackbar.LENGTH_LONG, "#f44336");
+            Toast.makeText(AppGlobals.getContext(), "Failed to send hiring request", Toast.LENGTH_LONG).show();
+            Helpers.AlertDialogWithPositiveFunctionNegativeButton(AppGlobals.getRunningActivityInstance(),
+                    "TaskFailed", "Hiring request failed.", "Retry", "Cancel", retryTask);
         }
     }
 
@@ -92,4 +96,13 @@ public class HiringTask extends AsyncTask<String, String , String> {
         }
         return json.toString();
     }
+
+
+    final Runnable retryTask = new Runnable() {
+        public void run() {
+            if (paramsForRetry != null) {
+                new HiringTask().execute(paramsForRetry);
+            }
+        }
+    };
 }

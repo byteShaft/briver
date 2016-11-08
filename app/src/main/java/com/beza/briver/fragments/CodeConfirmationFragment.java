@@ -39,6 +39,7 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
+import static com.beza.briver.fragments.LoginFragment.callAdmin;
 import static com.beza.briver.fragments.LoginFragment.responseMessage;
 
 /**
@@ -289,6 +290,8 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
                 out.close();
                 responseCode = connection.getResponseCode();
                 responseMessage = connection.getResponseMessage();
+
+                Log.i("responseCode", "" + responseCode + " " + responseMessage);
                 JSONObject jsonObject = new JSONObject(WebServiceHelpers.readResponse(connection));
                 Log.i("UserConfirmationTask", jsonObject.toString());
 
@@ -334,8 +337,10 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
             if (responseCode == 200) {
                 onConfirmationSuccess();
             } else if (responseCode == 403) {
-                if (responseMessage.equalsIgnoreCase("user deactivated by admin.")) {
-                    onConfirmationFailed("Login Failed! User banned by admin");
+                if (responseMessage.equalsIgnoreCase("Forbidden")) {
+                    Helpers.AlertDialogWithPositiveNegativeFunctions(getActivity(), "Pending Approval",
+                            "Wait for your account to be approved by Briver administration", "Ok", "Call Briver",
+                            Helpers.exitApp, callAdmin);
                 } else {
                     onConfirmationFailed("Confirmation failed, code error");
                 }

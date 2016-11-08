@@ -535,7 +535,8 @@
                     <CheckBox
                         android:id="@+id/cb_terms_of_service_check"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"/>
+                        android:layout_height="wrap_content"
+                        android:buttonTint="@android:color/darker_gray"/>
                 </LinearLayout>
             </LinearLayout>
         </LinearLayout>
