@@ -5,7 +5,6 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.beza.briver.fragments.HireFragment;
 import com.paytm.pgsdk.PaytmMerchant;
 import com.paytm.pgsdk.PaytmOrder;
 import com.paytm.pgsdk.PaytmPGService;
@@ -59,7 +58,6 @@ public class Paytm {
                         // parameters.
                         Log.d("LOG", "Payment Transaction is successful " + inResponse);
                         Toast.makeText(context, "Payment Transaction is successful", Toast.LENGTH_LONG).show();
-                        HireFragment.hire.run();
                         onSuccessTask.run();
                     }
 

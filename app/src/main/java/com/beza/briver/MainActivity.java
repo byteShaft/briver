@@ -134,6 +134,8 @@ public class MainActivity extends AppCompatActivity
 
         if (AppGlobals.getUserType() == 1) {
             navigationView.getMenu().getItem(1).setVisible(false);
+            navigationView.getMenu().getItem(2).setVisible(false);
+            navigationView.getMenu().getItem(5).setVisible(false);
             if (!AppGlobals.isAlarmSet() && AppGlobals.getLocationReportingType() == 1) {
                 DriverLocationAlarmHelper.setAlarm(AppGlobals.getDriverLocationReportingIntervalTime());
             }

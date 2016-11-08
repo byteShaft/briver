@@ -320,36 +320,6 @@ public class Helpers {
                 .show();
     }
 
-    public static void AlertDialogWithPositiveNegativeNeutralFunctions(
-            Context context, String title, String message, String positiveButtonText,
-            String negativeButtonText, String neutralButtonText, final Runnable listenerYes,
-            final Runnable listenerNo, final Runnable listenerNeutral) {
-        new AlertDialog.Builder(context)
-                .setTitle(title)
-                .setMessage(message)
-                .setCancelable(false)
-                .setPositiveButton(positiveButtonText, new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
-                        listenerYes.run();
-                    }
-                })
-                .setNegativeButton(negativeButtonText, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        if (listenerNo != null) {
-                            listenerNo.run();
-                        }
-                    }
-                })
-                .setNeutralButton(neutralButtonText, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        listenerNeutral.run();
-                    }
-                })
-                .show();
-    }
-
     public static void AlertDialogWithPositiveNegativeFunctionsNeutralButton(
             Context context, String title, String message, String positiveButtonText,
             String negativeButtonText, String neutralButtonText, final Runnable listenerYes,
@@ -375,6 +345,36 @@ public class Helpers {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         dialog.dismiss();
+                    }
+                })
+                .show();
+    }
+
+    public static void AlertDialogWithPositiveNegativeNeutralFunctions (
+            Context context, String title, String message, String positiveButtonText,
+            String negativeButtonText, String neutralButtonText, final Runnable listenerYes,
+            final Runnable listenerNo, final Runnable listenerNeutral) {
+        new AlertDialog.Builder(context)
+                .setTitle(title)
+                .setMessage(message)
+                .setCancelable(false)
+                .setPositiveButton(positiveButtonText, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        listenerYes.run();
+                    }
+                })
+                .setNegativeButton(negativeButtonText, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        if (listenerNo != null) {
+                            listenerNo.run();
+                        }
+                    }
+                })
+                .setNeutralButton(neutralButtonText, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        listenerNeutral.run();
                     }
                 })
                 .show();

@@ -77,7 +77,7 @@ import java.util.TimerTask;
 public class HireFragment extends android.support.v4.app.Fragment implements View.OnClickListener {
 
     public static final String[] itemsForHoursSelectingDialog = {"2 Hours", "4 Hours", "6 Hours",
-            "8 Hours", "12 Hours", "14 Hours", "16 Hours", "24 Hours", "48 Hours"};
+            "8 Hours", "12 Hours", "14 Hours", "16 Hours", "24 Hours", "48 Hours", "72 Hours", "96 Hours", "120 Hours"};
     public static int responseCode;
     public static ArrayList<Integer> driversIdList;
     public static HashMap<Integer, ArrayList<String>> hashMapDriverData;
@@ -153,13 +153,14 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
     private FragmentManager fm;
     private SupportMapFragment mapFragment;
     private static LatLng currentLatLngAuto;
-    public static final Runnable hire = new Runnable() {
+    private Runnable hire = new Runnable() {
         public void run() {
             hireMeetUpPoint = currentLatLngAuto.latitude + "," + currentLatLngAuto.longitude;
             driverTimeOfHiring = Helpers.getCurrentTimeOfDevice();
             stringArrayForDriverHiring = new String[]{driverIdForHiring, "", driverTimeSpanForHiring,
                     hireMeetUpPoint};
             taskHiringDriver = (HiringTask) new HiringTask().execute(stringArrayForDriverHiring);
+            Log.i("payment", "hireFragment");
         }
     };
     final Runnable initialPayment = new Runnable() {
@@ -537,10 +538,25 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
                                 totalHoursOfService = 12;
                                 break;
                             case 5:
-                                totalHoursOfService = 24;
+                                totalHoursOfService = 14;
                                 break;
                             case 6:
+                                totalHoursOfService = 16;
+                                break;
+                            case 7:
+                                totalHoursOfService = 24;
+                                break;
+                            case 8:
                                 totalHoursOfService = 48;
+                                break;
+                            case 9:
+                                totalHoursOfService = 72;
+                                break;
+                            case 10:
+                                totalHoursOfService = 96;
+                                break;
+                            case 11:
+                                totalHoursOfService = 120;
                                 break;
                         }
                         Log.i("SelectedHoursOfService", "" + totalHoursOfService);
@@ -588,10 +604,25 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
                                 totalHoursOfService = 12;
                                 break;
                             case 5:
-                                totalHoursOfService = 24;
+                                totalHoursOfService = 14;
                                 break;
                             case 6:
+                                totalHoursOfService = 16;
+                                break;
+                            case 7:
+                                totalHoursOfService = 24;
+                                break;
+                            case 8:
                                 totalHoursOfService = 48;
+                                break;
+                            case 9:
+                                totalHoursOfService = 72;
+                                break;
+                            case 10:
+                                totalHoursOfService = 96;
+                                break;
+                            case 11:
+                                totalHoursOfService = 120;
                                 break;
                         }
                         Log.i("SelectedHoursOfService", "" + totalHoursOfService);

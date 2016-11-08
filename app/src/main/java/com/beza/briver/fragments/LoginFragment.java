@@ -48,6 +48,8 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
+import static com.beza.briver.utils.AppGlobals.getRunningActivityInstance;
+
 public class LoginFragment extends Fragment implements View.OnClickListener {
 
     ImageView ivWelcomeLogoMain;
@@ -69,6 +71,12 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
     Animation animMainLogoFadeIn;
     Animation animMainLogoFadeOut;
 
+
+    public static Runnable callAdmin = new Runnable() {
+        public void run() {
+            Helpers.initiateCallIntent(getRunningActivityInstance(), "+91-8750875045");
+        }
+    };
     private static int driverLocationReportingAlarmTime;
 
     boolean launchingMainActivity;
@@ -262,9 +270,13 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
     }
 
     public void onLoginFailed(String message) {
-        Log.i("Login", "Failed");
         Helpers.showSnackBar(getView(), message, Snackbar.LENGTH_LONG, "#f44336");
         ivWelcomeLogoMain.startAnimation(animMainLogoTransitionUp);
+        if (message.equals("Login Failed! Account forbidden")) {
+            Helpers.AlertDialogWithPositiveFunctionNegativeButton(getActivity(), "Forbidden",
+                    "Contact Briver administration to request approval", "Call", "Cancel",
+                    callAdmin);
+        }
     }
 
     public void onGetUserDataSuccess() {
@@ -345,8 +357,11 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
                 responseCode = connection.getResponseCode();
                 responseMessage = connection.getResponseMessage();
 
+                Log.i("responseCode", "" + responseCode + " " + responseMessage);
+
                 JSONObject jsonObject = new JSONObject(WebServiceHelpers.readResponse(connection));
                 AppGlobals.putToken(jsonObject.getString("token"));
+
 
             } catch (IOException | JSONException e) {
                 e.printStackTrace();
@@ -365,8 +380,8 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
                 if (responseCode == 404) {
                     onLoginFailed("Login Failed! Account not found");
                 } else if (responseCode == 403) {
-                    if (responseMessage.equalsIgnoreCase("user deactivated by admin.")) {
-                        onLoginFailed("Login Failed! User banned by admin");
+                    if (responseMessage.equalsIgnoreCase("Forbidden")) {
+                        onLoginFailed("Login Failed! Account forbidden");
                     } else {
                         onLoginFailed("Login Failed! Account not activated");
                         loadFragment(new CodeConfirmationFragment());

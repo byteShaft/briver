@@ -74,6 +74,7 @@
                 android:layout_height="wrap_content"
                 android:textColor="#ffffff"
                 android:text="Your Name" />
+
             <EditText
                 android:id="@+id/et_fragment_contract_name"
                 android:layout_width="match_parent"

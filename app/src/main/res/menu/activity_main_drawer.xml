@@ -11,6 +11,10 @@
             android:icon="@mipmap/ic_nav_hire"
             android:title="Hire a Briver" />
         <item
+            android:id="@+id/nav_payment_details"
+            android:icon="@mipmap/ic_nav_payment"
+            android:title="Briver Pricing" />
+        <item
             android:id="@+id/nav_hire_timeline"
             android:icon="@mipmap/ic_nav_timeline"
             android:title="Timeline" />
@@ -49,10 +53,6 @@
     <group
         android:id="@+id/menu_bottom"
         android:checkableBehavior="none">
-        <item
-            android:id="@+id/nav_payment_details"
-            android:icon="@mipmap/ic_nav_payment"
-            android:title="Payment Details" />
         <item
             android:id="@+id/nav_terms"
             android:icon="@mipmap/ic_terms_of_services"
