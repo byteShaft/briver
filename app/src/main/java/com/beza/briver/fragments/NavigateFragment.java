@@ -67,8 +67,8 @@ public class NavigateFragment extends android.support.v4.app.Fragment {
     private GoogleMap.OnMyLocationChangeListener myLocationChangeListener = new GoogleMap.OnMyLocationChangeListener() {
         @Override
         public void onMyLocationChange(Location location) {
+            Helpers.dismissProgressDialog();
             currentLatLngAuto = new LatLng(location.getLatitude(), location.getLongitude());
-            Helpers.dismissProgressWithPositiveButtonDialog();
             if (!routeBuildExecuted) {
                 Routing routing = new Routing.Builder()
                         .travelMode(Routing.TravelMode.DRIVING)
@@ -163,7 +163,7 @@ public class NavigateFragment extends android.support.v4.app.Fragment {
 
             }
         };
-        Helpers.showProgressDialogWithPositiveButton(getActivity(), "Acquiring current location", "Dismiss", null);
+        Helpers.showProgressDialog(getActivity(), "Acquiring current location");
         getActivity().setTitle("Navigate");
         return baseViewNavigateFragment;
     }

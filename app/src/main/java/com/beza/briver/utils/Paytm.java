@@ -22,16 +22,14 @@ public class Paytm {
 
         paramMap.put("ORDER_ID", getOrderIdForPayment());
         paramMap.put("MID", "Bezaon21015855849279");
-//        paramMap.put("MID", "WorldP64425807474247");
         paramMap.put("CUST_ID", "CUST" + String.valueOf(AppGlobals.getUserID()));
         paramMap.put("CHANNEL_ID", "WAP");
         paramMap.put("INDUSTRY_TYPE_ID", "Retail");
         paramMap.put("WEBSITE", "Bezawap");
-//        paramMap.put("WEBSITE", "worldpressplg");
         paramMap.put("TXN_AMOUNT", transactionAmount);
         paramMap.put("THEME", "merchant");
         paramMap.put("EMAIL", AppGlobals.getUsername());
-        paramMap.put("MOBILE_NO", "9999999999");
+        paramMap.put("MOBILE_NO", AppGlobals.getPhoneNumber());
         PaytmOrder Order = new PaytmOrder(paramMap);
         PaytmMerchant Merchant = new PaytmMerchant(
                 "http://139.59.228.194:8000/api/generatechecksum.cgi",

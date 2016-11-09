@@ -43,7 +43,7 @@ public class AppGlobals extends Application {
     private static final String VEHICLE_TYPE = "vehicle_type";
     private static final String VEHICLE_MAKE = "vehicle_make";
     private static final String VEHICLE_MODEL = "vehicle_model";
-    private static final String VEHICLE_MODEL_YEAR = "vehicle_model";
+    private static final String VEHICLE_MODEL_YEAR = "vehicle_model_year";
     private static final String NUMBER_OF_HIRES = "total_hires";
     private static final String TRANSMISSION_TYPE = "transmission_type";
     private static final String FIRST_RUN_HIRE_FRAGMENT = "first_run_hire_fragment";

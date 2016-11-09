@@ -40,6 +40,8 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 
+import static com.beza.briver.Tasks.HiringTask.isHiringTaskRunning;
+
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
@@ -60,7 +62,6 @@ public class MainActivity extends AppCompatActivity
         }
     };
     boolean isDriverStatusTaskRunning;
-    public static boolean isHiringTaskRunning;
     Fragment fragment;
     String fragmentName = "";
     NavigationView navigationView;

@@ -28,12 +28,12 @@ public class HiringTask extends AsyncTask<String, String , String> {
     HttpURLConnection connection;
     public static int responseCode;
     String[] paramsForRetry;
+    public static boolean isHiringTaskRunning;
 
     @Override
     protected void onPreExecute() {
         super.onPreExecute();
-        MainActivity.isHiringTaskRunning = true;
-        Helpers.showProgressDialog(AppGlobals.getRunningActivityInstance(), "Placing hiring request");
+        isHiringTaskRunning = true;
     }
 
     @Override
@@ -58,7 +58,7 @@ public class HiringTask extends AsyncTask<String, String , String> {
     @Override
     protected void onPostExecute(String o) {
         super.onPostExecute(o);
-        MainActivity.isHiringTaskRunning = false;
+        isHiringTaskRunning = false;
         Helpers.dismissProgressDialog();
         Log.i("HiringTaskResponseCode", "" + responseCode);
         if (responseCode == 200) {
@@ -76,7 +76,7 @@ public class HiringTask extends AsyncTask<String, String , String> {
 
     @Override
     protected void onCancelled() {
-        MainActivity.isHiringTaskRunning = false;
+        isHiringTaskRunning = false;
         super.onCancelled();
         Helpers.dismissProgressDialog();
     }
