@@ -426,6 +426,7 @@ public class CodeConfirmationFragment extends Fragment implements View.OnClickLi
     public static void otpReceived() {
         if (otp != null && isCodeConfirmationFragmentOpen) {
             etCodeConfirmationSmsOtp.setText(otp);
+            otp = null;
         }
     }
 

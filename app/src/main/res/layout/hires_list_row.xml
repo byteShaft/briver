@@ -60,6 +60,14 @@
             android:layout_height="wrap_content"
             android:textColor="#ffffff"
             android:textSize="14dp" />
+
+        <TextView
+            android:id="@+id/tv_hires_payment_type"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#ffffff"
+            android:textSize="14dp"
+            android:visibility="gone"/>
     </LinearLayout>
     </RelativeLayout>
 </RelativeLayout>

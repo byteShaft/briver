@@ -27,12 +27,12 @@ public class UpdateHireStatusTask extends AsyncTask<String, String  , String> {
     public static int responseCode;
     boolean reviewAsWell;
     String[] paramsForRetry;
+    public static boolean isUpdateHireStatusTaskRunning;
 
     @Override
     protected void onPreExecute() {
         super.onPreExecute();
-        MainActivity.isHiringTaskRunning = true;
-        Helpers.showProgressDialog(AppGlobals.getRunningActivityInstance(), "Updating Status");
+        isUpdateHireStatusTaskRunning = true;
     }
 
     @Override
@@ -41,7 +41,7 @@ public class UpdateHireStatusTask extends AsyncTask<String, String  , String> {
             paramsForRetry = params;
             connection = WebServiceHelpers.openConnectionForUrl(EndPoints.BASE_URL_HIRE + params[0] + "/update", "PUT", true);
             DataOutputStream out = new DataOutputStream(connection.getOutputStream());
-            out.writeBytes(getStatusChangeString(params[1]));
+            out.writeBytes(getStatusChangeString(params[1], params[2]));
             out.flush();
             out.close();
             responseCode = connection.getResponseCode();
@@ -56,7 +56,7 @@ public class UpdateHireStatusTask extends AsyncTask<String, String  , String> {
     @Override
     protected void onPostExecute(String s) {
         super.onPostExecute(s);
-        MainActivity.isHiringTaskRunning = false;
+        isUpdateHireStatusTaskRunning = false;
         Helpers.dismissProgressDialog();
         Log.i("UpdateHiringResponse", "" + responseCode);
         try {
@@ -84,16 +84,17 @@ public class UpdateHireStatusTask extends AsyncTask<String, String  , String> {
 
     @Override
     protected void onCancelled() {
-        MainActivity.isHiringTaskRunning = false;
+        isUpdateHireStatusTaskRunning = false;
         super.onCancelled();
         Helpers.dismissProgressDialog();
     }
 
 
-    public static String getStatusChangeString (String status) {
+    public static String getStatusChangeString (String status, String paymentType) {
         JSONObject json = new JSONObject();
         try {
             json.put("status", status);
+            json.put("payment_type", paymentType);
         } catch (JSONException e) {
             e.printStackTrace();
         }

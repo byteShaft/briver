@@ -57,12 +57,12 @@ public class PreferencesFragment extends android.support.v4.app.Fragment {
     public static boolean isPreferencesFragmentOpen;
     public static boolean locationSet = true;
     public static String locationString;
-    TextView spinnerTarget;
     boolean customerPreferenceFirstRun = true;
     Spinner spinnerPreferencesUserVehicleMake;
     SpinnerPlus spinnerPreferencesUserVehicleModel;
     public static int responseCode;
     static TextView tvPreferencesDriverLocationDisplay;
+    TextView spinnerTarget;
     static Animation animTexViewFading;
     static int driverPreferencesLocationReportingType = -1;
     LinearLayout llDriverPreferences;
@@ -114,6 +114,7 @@ public class PreferencesFragment extends android.support.v4.app.Fragment {
     String preferencesVehicleModel;
     String preferencesVehicleModelYear;
     String preferencesLocationReportingIntervalTime;
+    ArrayAdapter<CharSequence> dataAdapterSecondary;
     int transmissionType;
     HttpURLConnection connection;
     boolean dummySelectionVehicleModel;
@@ -136,7 +137,7 @@ public class PreferencesFragment extends android.support.v4.app.Fragment {
                 String.format("\"transmission_type\": \"%s\", ", transmissionType) +
                 String.format("\"vehicle_type\": \"%s\", ", vehicle_type) +
                 String.format("\"vehicle_make\": \"%s\", ", vehicle_make) +
-                String.format("\"vehicle_model\": \"%s\"", vehicle_model) +
+                String.format("\"vehicle_model\": \"%s\", ", vehicle_model) +
                 String.format("\"vehicle_model_year\": \"%s\"", vehicle_model_year) +
                 "}";
     }
@@ -339,7 +340,6 @@ public class PreferencesFragment extends android.support.v4.app.Fragment {
         ArrayAdapter<CharSequence> dataAdapter = new ArrayAdapter<CharSequence>(getActivity(), R.layout.spinner_text, array);
         dataAdapter.setDropDownViewResource(R.layout.simple_spinner_dropdown);
         spinnerPreferencesUserVehicleMake.setAdapter(dataAdapter);
-        Log.e("Adapter", "GetPositionFromText: " + dataAdapter.getPosition(AppGlobals.getVehicleMake()));
         spinnerPreferencesUserVehicleMake.setSelection(dataAdapter.getPosition(AppGlobals.getVehicleMake()));
 
         spinnerPreferencesUserVehicleMake.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -348,7 +348,7 @@ public class PreferencesFragment extends android.support.v4.app.Fragment {
                     Collection<String> valuesSecondaryHashMap = StaticVehicleData.hmMain.get(
                             spinnerPreferencesUserVehicleMake.getSelectedItem()).keySet();
                     String[] arraySecondary = valuesSecondaryHashMap.toArray(new String[valuesSecondaryHashMap.size()]);
-                    ArrayAdapter<CharSequence> dataAdapterSecondary = new ArrayAdapter<CharSequence>(
+                    dataAdapterSecondary = new ArrayAdapter<CharSequence>(
                             getActivity(), R.layout.spinner_text_two, arraySecondary);
                     dataAdapterSecondary.setDropDownViewResource(R.layout.simple_spinner_dropdown_two);
                     if (arraySecondary.length > 1 && !customerPreferenceFirstRun) {
@@ -357,13 +357,6 @@ public class PreferencesFragment extends android.support.v4.app.Fragment {
                         dummySelectionVehicleModel = false;
                     }
                     spinnerPreferencesUserVehicleModel.setAdapter(dataAdapterSecondary);
-                    if (customerPreferenceFirstRun) {
-                        Log.i("dataAdapterSecondary", "" + dataAdapterSecondary);
-                        Log.i("getVehicleModel", "" + AppGlobals.getVehicleModel());
-                        Log.e("Adapter", "GetPositionFromText2: " + dataAdapterSecondary.getPosition(AppGlobals.getVehicleModel()));
-                        spinnerPreferencesUserVehicleModel.setSelection(dataAdapterSecondary.getPosition(AppGlobals.getVehicleModel()));
-                        customerPreferenceFirstRun = false;
-                    }
                     preferencesVehicleMake = spinnerPreferencesUserVehicleMake.getSelectedItem().toString();
             }
 
@@ -374,13 +367,19 @@ public class PreferencesFragment extends android.support.v4.app.Fragment {
         spinnerPreferencesUserVehicleModel.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                Log.i("TAGView: ", String.valueOf(view == null));
                 spinnerTarget = (TextView) view.findViewById(android.R.id.text2);
+                if (customerPreferenceFirstRun) {
+                    customerPreferenceFirstRun = false;
+                    spinnerPreferencesUserVehicleModel.setSelection(dataAdapterSecondary.getPosition(AppGlobals.getVehicleModel()));
+                }
                 if (dummySelectionVehicleModel) {
                     spinnerTarget.setText("Select Model");
                     spinnerTarget.setTextColor(Color.GRAY);
                     userPreferencesVehicleType = -1;
                     dummySelectionVehicleModel = false;
                 } else {
+                    Log.i("TAG: ", String.valueOf(spinnerTarget == null)  + "  spinnerPreferencesUserVehicleModel " + String.valueOf(spinnerPreferencesUserVehicleModel == null));
                     spinnerTarget.setText(spinnerPreferencesUserVehicleModel.getSelectedItem().toString());
                     spinnerTarget.setTextColor(Color.WHITE);
                     preferencesVehicleModel = spinnerPreferencesUserVehicleModel.getSelectedItem().toString();
@@ -393,7 +392,6 @@ public class PreferencesFragment extends android.support.v4.app.Fragment {
             @Override
             public void onNothingSelected(AdapterView<?> adapterView) {}
         });
-
         return baseViewPreferencesFragment;
     }
 
@@ -545,7 +543,6 @@ public class PreferencesFragment extends android.support.v4.app.Fragment {
         protected Void doInBackground(Void... params) {
             try {
                 String url = EndPoints.BASE_ACCOUNTS_ME;
-                Log.i("token", "" + AppGlobals.getToken());
                 connection = WebServiceHelpers.openConnectionForUrl(url, "PUT", true);
                 DataOutputStream out = new DataOutputStream(connection.getOutputStream());
                 String editProfileString = "";

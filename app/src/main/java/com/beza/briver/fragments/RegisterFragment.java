@@ -163,6 +163,8 @@ public class RegisterFragment extends Fragment implements View.OnClickListener {
     int genderType = -1;
     boolean dummySelectionVehicleMake = true;
     boolean dummySelectionVehicleModel = true;
+    boolean etContactGotFocus;
+    boolean etContactRepeatGotFocus;
     LocationService mLocationService;
     final Runnable recheckLocationServiceStatus = new Runnable() {
         public void run() {
@@ -287,9 +289,10 @@ public class RegisterFragment extends Fragment implements View.OnClickListener {
         etRegisterUserContactNumber.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override
             public void onFocusChange(View view, boolean b) {
-                if (b) {
+                if (b && !etContactGotFocus) {
                     etRegisterUserContactNumber.setText("+91-");
                     etRegisterUserContactNumber.setSelection(etRegisterUserContactNumber.getText().length());
+                    etContactGotFocus = true;
                 }
             }
         });
@@ -297,9 +300,10 @@ public class RegisterFragment extends Fragment implements View.OnClickListener {
         etRegisterUserContactNumberRepeat.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override
             public void onFocusChange(View view, boolean b) {
-                if (b) {
+                if (b && !etContactRepeatGotFocus) {
                     etRegisterUserContactNumberRepeat.setText("+91-");
                     etRegisterUserContactNumberRepeat.setSelection(etRegisterUserContactNumberRepeat.getText().length());
+                    etContactRepeatGotFocus = true;
                 }
             }
         });

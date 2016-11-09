@@ -71,6 +71,8 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import static com.beza.briver.Tasks.HiringTask.isHiringTaskRunning;
+
 /**
  * Created by fi8er1 on 01/05/2016.
  */
@@ -185,7 +187,7 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
     private EditText etMapSearch;
     private String inputMapSearch;
     private int mYear, mMonth, mDay, mHour, mMinute;
-    private GoogleMap.OnMyLocationChangeListener myLocationChangeListener = new GoogleMap.OnMyLocationChangeListener() {
+    private GoogleMap.OnMyLocationChangeListener myLocationChangeListener =     new GoogleMap.OnMyLocationChangeListener() {
         @Override
         public void onMyLocationChange(Location location) {
             Helpers.dismissProgressWithPositiveButtonDialog();
@@ -839,6 +841,9 @@ public class HireFragment extends android.support.v4.app.Fragment implements Vie
     public void onResume() {
         super.onResume();
         isHireFragmentOpen = true;
+        if (isHiringTaskRunning) {
+            Helpers.showProgressDialog(getActivity(), "Placing hiring request");
+        }
     }
 
     private class GetNearbyDriversAvailableToHire extends AsyncTask<Void, Integer, Void> {

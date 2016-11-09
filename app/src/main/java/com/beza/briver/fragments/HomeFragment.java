@@ -39,6 +39,8 @@ import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import static com.beza.briver.Tasks.UpdateHireStatusTask.isUpdateHireStatusTaskRunning;
+
 /**
  * Created by fi8er1 on 01/05/2016.
  */
@@ -72,6 +74,7 @@ public class HomeFragment extends android.support.v4.app.Fragment {
     static boolean isHiresDataTaskRunning;
     String finalPricingForPayment;
     boolean isViewUserDetailsTaskRunning;
+    String paymentType;
 
     @Nullable
     @Override
@@ -181,11 +184,11 @@ public class HomeFragment extends android.support.v4.app.Fragment {
             case R.id.item_context_hires_list_finish:
                 selectedContextMenuId = info.position;
                 Helpers.nameForRatingsDialog = hashMapHiresData.get(returnProperID(info.position)).get(2);
-                finalPricingForPayment = hashMapHiresData.get(returnProperID(info.position)).get(9);
+                finalPricingForPayment = hashMapHiresData.get(returnProperID(info.position)).get(8);
                 Helpers.AlertDialogWithPositiveFunctionNegativeButton(getActivity(), "Are you sure?", "Want to complete this Hire?\n\n" +
                         "DriverFee: " + hashMapHiresData.get(returnProperID(info.position)).get(8) + "\n" +
                         "TotalCharges: " + hashMapHiresData.get(returnProperID(info.position)).get(9) + "\n\n" +
-                        "Note: You'll have to pay the TotalCharges to complete this Hire", "Yes", "Cancel", finishHireDialog);
+                        "Note: You'll only have to pay the remaining DriverFee to complete this Hire", "Yes", "Cancel", finishHireDialog);
                 return true;
             case R.id.item_context_hires_list_review:
 //                    new ReviewHireTask().execute();
@@ -202,6 +205,9 @@ public class HomeFragment extends android.support.v4.app.Fragment {
     public void onResume() {
         super.onResume();
         isHomeFragmentOpen = true;
+        if (isUpdateHireStatusTaskRunning) {
+            Helpers.showProgressDialog(getActivity(), "Updating Hire Status");
+        }
     }
 
     @Override
@@ -519,7 +525,7 @@ public class HomeFragment extends android.support.v4.app.Fragment {
     final Runnable finishHire = new Runnable() {
         public void run() {
             if (AppGlobals.getUserType() == 0) {
-                String[] dataFinish = new String[]{"" + returnProperID(selectedContextMenuId), "5"};
+                String[] dataFinish = new String[]{"" + returnProperID(selectedContextMenuId), "5", paymentType};
                 new UpdateHireStatusTask().execute(dataFinish);
             }
         }
@@ -528,6 +534,7 @@ public class HomeFragment extends android.support.v4.app.Fragment {
     final Runnable finalPayment = new Runnable() {
         @Override
         public void run() {
+            paymentType = "1";
             Paytm.onStartTransaction(getActivity(), finalPricingForPayment, finishHire);
         }
     };
@@ -535,6 +542,7 @@ public class HomeFragment extends android.support.v4.app.Fragment {
     final Runnable finishHireDialog = new Runnable() {
         @Override
         public void run() {
+            paymentType = "0";
             Helpers.AlertDialogWithPositiveNegativeFunctions(getActivity(), "Payment Method",
                     "How do you wanna pay the service fee?", "Via Paytm", "Paid to driver by hand", finalPayment, finishHire);
         }

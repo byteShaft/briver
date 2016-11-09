@@ -817,13 +817,6 @@ public class Helpers {
         activity.startActivity(intent);
     }
 
-    public static void initiateEmailIntent(Activity activity, String email, String subject, String message) {
-        Intent intent = new Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:" + email));
-        intent.putExtra("subject", subject);
-        intent.putExtra("body", message);
-        activity.startActivity(intent);
-    }
-
     public static String getCurrentTimeOfDevice() {
         return android.text.format.DateFormat.format("yyyy-MM-ddThh:mm:ss", new java.util.Date()).toString();
     }
@@ -959,13 +952,7 @@ public class Helpers {
     public static boolean checkPlayServicesAvailability() {
         GoogleApiAvailability apiAvailability = GoogleApiAvailability.getInstance();
         int resultCode = apiAvailability.isGooglePlayServicesAvailable(getRunningActivityInstance());
-        if (resultCode != ConnectionResult.SUCCESS) {
-//            Helpers.AlertDialogWithPositiveNegativeFunctions(getRunningActivityInstance(), "PlayServices not found",
-//                    "You need to install Google Play Services to continue using Briver", "Install", "Exit App", Helpers.openPlayServicesInstallation, Helpers.exitApp);
-            return false;
-        } else {
-            return true;
-        }
+        return resultCode == ConnectionResult.SUCCESS;
     }
 
 

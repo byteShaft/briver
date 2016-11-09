@@ -441,6 +441,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
                     AppGlobals.putVehicleType(jsonObject.getInt("vehicle_type"));
                     AppGlobals.putVehicleMake(jsonObject.getString("vehicle_make"));
                     AppGlobals.putVehicleModel(jsonObject.getString("vehicle_model"));
+                    Log.i("modelLogin", "" + jsonObject.getString("vehicle_model"));
                     AppGlobals.putVehicleModelYear(jsonObject.getString("vehicle_model_year"));
                 } else if (jsonObject.getInt("user_type") == 1) {
                     AppGlobals.putDrivingExperience(jsonObject.getString("driving_experience"));
