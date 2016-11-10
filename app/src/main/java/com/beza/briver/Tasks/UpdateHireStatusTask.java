@@ -1,7 +1,6 @@
 package com.beza.briver.Tasks;
 
 import android.os.AsyncTask;
-import android.util.Log;
 import android.widget.Toast;
 
 import com.beza.briver.MainActivity;
@@ -23,15 +22,53 @@ import java.net.HttpURLConnection;
  */
 public class UpdateHireStatusTask extends AsyncTask<String, String  , String> {
 
-    HttpURLConnection connection;
     public static int responseCode;
+    public static boolean isUpdateHireStatusTaskRunning;
+    public static boolean isUpdateHireStatusCalledForFinishingTheHire;
+    public static String finishingPaymentType;
+    final Runnable initiateReviewTask = new Runnable() {
+        public void run() {
+            new ReviewHireTask().execute();
+        }
+    };
+    HttpURLConnection connection;
     boolean reviewAsWell;
     String[] paramsForRetry;
-    public static boolean isUpdateHireStatusTaskRunning;
+    final Runnable retryTask = new Runnable() {
+        public void run() {
+            if (paramsForRetry != null) {
+                new UpdateHireStatusTask().execute(paramsForRetry);
+            }
+        }
+    };
+
+    public static String getStatusChangeString (String status) {
+        JSONObject json = new JSONObject();
+        try {
+                json.put("status", status);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return json.toString();
+    }
+
+    public static String getStatusChangeStringForFinishingHire (String status, String paymentType) {
+        JSONObject json = new JSONObject();
+        try {
+                json.put("payment_type", paymentType);
+                json.put("status", status);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return json.toString();
+    }
 
     @Override
     protected void onPreExecute() {
         super.onPreExecute();
+        if (!isUpdateHireStatusCalledForFinishingTheHire || finishingPaymentType.equals("0")) {
+            Helpers.showProgressDialog(AppGlobals.getRunningActivityInstance(), "Updating Hire Status");
+        }
         isUpdateHireStatusTaskRunning = true;
     }
 
@@ -41,11 +78,14 @@ public class UpdateHireStatusTask extends AsyncTask<String, String  , String> {
             paramsForRetry = params;
             connection = WebServiceHelpers.openConnectionForUrl(EndPoints.BASE_URL_HIRE + params[0] + "/update", "PUT", true);
             DataOutputStream out = new DataOutputStream(connection.getOutputStream());
-            out.writeBytes(getStatusChangeString(params[1], params[2]));
+            if (isUpdateHireStatusCalledForFinishingTheHire) {
+                out.writeBytes(getStatusChangeStringForFinishingHire(params[1], params[2]));
+            } else {
+                out.writeBytes(getStatusChangeString(params[1]));
+            }
             out.flush();
             out.close();
             responseCode = connection.getResponseCode();
-
             reviewAsWell = params[1].equalsIgnoreCase("5") && AppGlobals.getUserType() == 0;
         } catch (IOException e) {
             e.printStackTrace();
@@ -58,12 +98,6 @@ public class UpdateHireStatusTask extends AsyncTask<String, String  , String> {
         super.onPostExecute(s);
         isUpdateHireStatusTaskRunning = false;
         Helpers.dismissProgressDialog();
-        Log.i("UpdateHiringResponse", "" + responseCode);
-        try {
-            Log.i("UpdateHiringMessage", "" + connection.getResponseMessage());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
         if (responseCode == 200) {
             Toast.makeText(AppGlobals.getContext(), "Status successfully updated", Toast.LENGTH_LONG).show();
             if (!reviewAsWell) {
@@ -88,31 +122,5 @@ public class UpdateHireStatusTask extends AsyncTask<String, String  , String> {
         super.onCancelled();
         Helpers.dismissProgressDialog();
     }
-
-
-    public static String getStatusChangeString (String status, String paymentType) {
-        JSONObject json = new JSONObject();
-        try {
-            json.put("status", status);
-            json.put("payment_type", paymentType);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        return json.toString();
-    }
-
-    final Runnable initiateReviewTask = new Runnable() {
-        public void run() {
-            new ReviewHireTask().execute();
-        }
-    };
-
-    final Runnable retryTask = new Runnable() {
-        public void run() {
-            if (paramsForRetry != null) {
-                new UpdateHireStatusTask().execute(paramsForRetry);
-            }
-        }
-    };
 
 }

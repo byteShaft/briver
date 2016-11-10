@@ -52,7 +52,6 @@ public class ReviewHireTask extends AsyncTask<String, String , String> {
                 } else {
                     userName = jsonObject.getString("customer_name");
                 }
-                Log.i("reviewGETResponse", "" + jsonObject);
             } else {
                 isGetReviewTask = false;
                 connection = WebServiceHelpers.openConnectionForUrl(EndPoints.BASE_URL_HIRE + params[0] + "/review", "PUT", true);
@@ -63,8 +62,6 @@ public class ReviewHireTask extends AsyncTask<String, String , String> {
                 out.close();
             }
             responseCode = connection.getResponseCode();
-            Log.i("reviewTaskResponseCode", "" + responseCode);
-            Log.i("reviewTaskResponseMSG", "" + connection.getResponseMessage());
         } catch (IOException | JSONException e) {
             e.printStackTrace();
         }

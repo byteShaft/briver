@@ -39,6 +39,8 @@ import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import static com.beza.briver.Tasks.UpdateHireStatusTask.finishingPaymentType;
+import static com.beza.briver.Tasks.UpdateHireStatusTask.isUpdateHireStatusCalledForFinishingTheHire;
 import static com.beza.briver.Tasks.UpdateHireStatusTask.isUpdateHireStatusTaskRunning;
 
 /**
@@ -74,7 +76,6 @@ public class HomeFragment extends android.support.v4.app.Fragment {
     static boolean isHiresDataTaskRunning;
     String finalPricingForPayment;
     boolean isViewUserDetailsTaskRunning;
-    String paymentType;
 
     @Nullable
     @Override
@@ -159,6 +160,7 @@ public class HomeFragment extends android.support.v4.app.Fragment {
     @Override
     public boolean onContextItemSelected(MenuItem item) {
         AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
+        isUpdateHireStatusCalledForFinishingTheHire = false;
         switch (item.getItemId()) {
             case R.id.item_context_hires_list_accept:
                 String[] dataAccept = new String[]{"" + returnProperID(info.position), "2"};
@@ -182,6 +184,7 @@ public class HomeFragment extends android.support.v4.app.Fragment {
                 Helpers.initiateCallIntent(getActivity(), hashMapHiresData.get(returnProperID(info.position)).get(3));
                 return true;
             case R.id.item_context_hires_list_finish:
+                isUpdateHireStatusCalledForFinishingTheHire = true;
                 selectedContextMenuId = info.position;
                 Helpers.nameForRatingsDialog = hashMapHiresData.get(returnProperID(info.position)).get(2);
                 finalPricingForPayment = hashMapHiresData.get(returnProperID(info.position)).get(8);
@@ -285,7 +288,6 @@ public class HomeFragment extends android.support.v4.app.Fragment {
             try {
                 connection = WebServiceHelpers.openConnectionForUrl(url, "GET", true);
                 JSONArray jsonArray = new JSONArray(WebServiceHelpers.readResponse(connection));
-                Log.i("IncomingData", " HiringRequestsHome: " + jsonArray);
                 for (int i = 0; i < jsonArray.length(); i++) {
                     JSONObject jsonObject = jsonArray.getJSONObject(i);
                     if (!hiresIdsList.contains(jsonObject.getInt("id"))) {
@@ -470,6 +472,7 @@ public class HomeFragment extends android.support.v4.app.Fragment {
                     arrayListViewUserDetails.add(jsonObject.getString("vehicle_type"));
                     arrayListViewUserDetails.add(jsonObject.getString("vehicle_make"));
                     arrayListViewUserDetails.add(jsonObject.getString("vehicle_model"));
+                    arrayListViewUserDetails.add(jsonObject.getString("vehicle_model_year"));
                 }
             } catch (IOException | JSONException e) {
                 e.printStackTrace();
@@ -495,7 +498,7 @@ public class HomeFragment extends android.support.v4.app.Fragment {
                         arrayListViewUserDetails.get(0), arrayListViewUserDetails.get(1), arrayListViewUserDetails.get(2),
                         null, null, null, arrayListViewUserDetails.get(3), null, null, arrayListViewUserDetails.get(4),
                         arrayListViewUserDetails.get(5), null, arrayListViewUserDetails.get(6), arrayListViewUserDetails.get(7),
-                        arrayListViewUserDetails.get(8) + " " + arrayListViewUserDetails.get(9));
+                        arrayListViewUserDetails.get(8) + " " + arrayListViewUserDetails.get(9) + " " + arrayListViewUserDetails.get(10));
             }
         }
 
@@ -525,7 +528,7 @@ public class HomeFragment extends android.support.v4.app.Fragment {
     final Runnable finishHire = new Runnable() {
         public void run() {
             if (AppGlobals.getUserType() == 0) {
-                String[] dataFinish = new String[]{"" + returnProperID(selectedContextMenuId), "5", paymentType};
+                String[] dataFinish = new String[]{"" + returnProperID(selectedContextMenuId), "5", finishingPaymentType};
                 new UpdateHireStatusTask().execute(dataFinish);
             }
         }
@@ -534,7 +537,7 @@ public class HomeFragment extends android.support.v4.app.Fragment {
     final Runnable finalPayment = new Runnable() {
         @Override
         public void run() {
-            paymentType = "1";
+            finishingPaymentType = "1";
             Paytm.onStartTransaction(getActivity(), finalPricingForPayment, finishHire);
         }
     };
@@ -542,9 +545,9 @@ public class HomeFragment extends android.support.v4.app.Fragment {
     final Runnable finishHireDialog = new Runnable() {
         @Override
         public void run() {
-            paymentType = "0";
+            finishingPaymentType = "0";
             Helpers.AlertDialogWithPositiveNegativeFunctions(getActivity(), "Payment Method",
-                    "How do you wanna pay the service fee?", "Via Paytm", "Paid to driver by hand", finalPayment, finishHire);
+                    "How do you wanna pay the service fee?", "Via Paytm", "Cash to Driver", finalPayment, finishHire);
         }
     };
 }

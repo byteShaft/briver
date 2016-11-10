@@ -42,6 +42,8 @@ import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import static com.beza.briver.Tasks.UpdateHireStatusTask.finishingPaymentType;
+import static com.beza.briver.Tasks.UpdateHireStatusTask.isUpdateHireStatusCalledForFinishingTheHire;
 import static com.beza.briver.Tasks.UpdateHireStatusTask.isUpdateHireStatusTaskRunning;
 
 /**
@@ -76,7 +78,6 @@ public class TimelineFragment extends android.support.v4.app.Fragment implements
     int selectedContextMenuId;
     String finalPricingForPayment;
     private SectionsPagerAdapter mSectionsPagerAdapter;
-    String paymentType;
 
     @Nullable
     @Override
@@ -219,6 +220,7 @@ public class TimelineFragment extends android.support.v4.app.Fragment implements
     @Override
     public boolean onContextItemSelected(MenuItem item) {
         AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
+        isUpdateHireStatusCalledForFinishingTheHire = false;
         switch (item.getItemId()) {
             case R.id.item_context_hires_list_accept:
                 String[] dataAccept = new String[]{"" + returnProperID(info.position), "2"};
@@ -248,6 +250,7 @@ public class TimelineFragment extends android.support.v4.app.Fragment implements
                 new ReviewHireTask().execute(reviewTaskStringArray);
                 return true;
             case R.id.item_context_hires_list_finish:
+                isUpdateHireStatusCalledForFinishingTheHire = true;
                 selectedContextMenuId = info.position;
                 finalPricingForPayment = hashMapTimelineData.get(returnProperID(info.position)).get(8);
                 Helpers.AlertDialogWithPositiveFunctionNegativeButton(getActivity(), "Are you sure?", "Want to complete this Hire?\n\n" +
@@ -435,11 +438,11 @@ public class TimelineFragment extends android.support.v4.app.Fragment implements
                         arrayListString.add(jsonObject.getString("end_time"));
                         arrayListString.add(jsonObject.getString("time_span"));
                         arrayListString.add(jsonObject.getString("location"));
-                        arrayListString.add(jsonObject.getString("payment_type"));
 
                         JSONObject jsonObjectPricingData = new JSONObject(jsonObject.getString("price"));
                         arrayListString.add(jsonObjectPricingData.getString("driver_price"));
                         arrayListString.add(jsonObjectPricingData.getString("total_price"));
+                        arrayListString.add(jsonObject.getString("payment_type"));
 
                         hashMapTimelineData.put(jsonObject.getInt("id"), arrayListString);
                     }
@@ -502,10 +505,10 @@ public class TimelineFragment extends android.support.v4.app.Fragment implements
                 viewHolder = (ViewHolder) convertView.getTag();
             }
             if (AppGlobals.getUserType() == 0) {
-                viewHolder.tvHiresPrice.setText("₹" + hashMapTimelineData.get(arrayListIntIds.get(position)).get(10));
+                viewHolder.tvHiresPrice.setText("₹" + hashMapTimelineData.get(arrayListIntIds.get(position)).get(9));
                 viewHolder.tvHiresPrice.setTextColor(Color.parseColor("#F44336"));
             } else {
-                viewHolder.tvHiresPrice.setText("₹" + hashMapTimelineData.get(arrayListIntIds.get(position)).get(9));
+                viewHolder.tvHiresPrice.setText("₹" + hashMapTimelineData.get(arrayListIntIds.get(position)).get(8));
                 viewHolder.tvHiresPrice.setTextColor(Color.parseColor("#A4C639"));
             }
 
@@ -533,7 +536,7 @@ public class TimelineFragment extends android.support.v4.app.Fragment implements
             viewHolder.tvHiresEndTime.setText("End Time: " + Helpers.formatTimeToDisplay(hashMapTimelineData.get(arrayListIntIds.get(position)).get(5)));
             viewHolder.tvHiresTimeSpan.setText("Time Span: " + hashMapTimelineData.get(arrayListIntIds.get(position)).get(6) + " Hours");
             if (tabSelected == 2) {
-                String paymentType = hashMapTimelineData.get(arrayListIntIds.get(position)).get(8);
+                String paymentType = hashMapTimelineData.get(arrayListIntIds.get(position)).get(10);
                 if (paymentType.equals("0")) {
                     viewHolder.tvHiresTimeSpan.setText("Payment Type: Paid to Driver");
                 } else {
@@ -634,7 +637,7 @@ public class TimelineFragment extends android.support.v4.app.Fragment implements
             Log.i("userNameTimeline", "" + hashMapTimelineData.get(returnProperID(selectedContextMenuId)).get(2));
             Helpers.nameForRatingsDialog = hashMapTimelineData.get(returnProperID(selectedContextMenuId)).get(2);
             if (AppGlobals.getUserType() == 0) {
-                String[] dataFinish = new String[]{"" + returnProperID(selectedContextMenuId), "5", paymentType};
+                String[] dataFinish = new String[]{"" + returnProperID(selectedContextMenuId), "5", finishingPaymentType};
                 new UpdateHireStatusTask().execute(dataFinish);
             }
         }
@@ -643,7 +646,7 @@ public class TimelineFragment extends android.support.v4.app.Fragment implements
     final Runnable finalPayment = new Runnable() {
         @Override
         public void run() {
-            paymentType = "1";
+            finishingPaymentType = "1";
             Paytm.onStartTransaction(getActivity(), finalPricingForPayment, finishHire);
         }
     };
@@ -651,9 +654,9 @@ public class TimelineFragment extends android.support.v4.app.Fragment implements
     final Runnable finishHireDialog = new Runnable() {
         @Override
         public void run() {
-            paymentType = "0";
+            finishingPaymentType = "0";
             Helpers.AlertDialogWithPositiveNegativeFunctions(getActivity(), "Payment Method",
-                    "How do you wanna pay the service fee?", "Via Paytm", "Paid to driver by hand", finalPayment, finishHire);
+                    "How do you wanna pay the service fee?", "Via Paytm", "Cash to Driver", finalPayment, finishHire);
         }
     };
 

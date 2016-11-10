@@ -86,7 +86,7 @@ public class StaticVehicleData {
         hmMain.put("Hyundai", hmHyundai);
 
         HashMap<String, Integer> hmJaguar = new HashMap<>();
-        hmJaguar.put("Jaguar XE", 3);
+        hmJaguar.put("XE", 3);
         hmMain.put("Jaguar", hmJaguar);
 
         HashMap<String, Integer> hmLandrover = new HashMap<>();

@@ -80,7 +80,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="15dp"
                 android:layout_gravity="center_vertical"
-                android:text="PCC or Equivalent "
+                android:text="PCC or Equivalent"
                 android:textColor="#ffffff"
                 android:textSize="12dp"/>
         </LinearLayout>

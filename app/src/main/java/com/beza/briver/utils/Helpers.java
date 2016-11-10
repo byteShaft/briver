@@ -31,7 +31,6 @@ import android.os.Handler;
 import android.provider.Settings;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -387,11 +386,11 @@ public class Helpers {
         ratingDialog.setCancelable(false);
         final RatingBar rBarRatingDialog = (RatingBar) ratingDialog.findViewById(R.id.rBar_rating_dialog);
 
-        Button btnRatingDialogDone = (Button) ratingDialog.findViewById(R.id.btn_rating_dialog_done);
+        final Button btnRatingDialogDone = (Button) ratingDialog.findViewById(R.id.btn_rating_dialog_done);
+        btnRatingDialogDone.setEnabled(false);
         btnRatingDialogDone.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.i("rating", "" + rBarRatingDialog.getRating());
                 String[] reviewTaskString = new String[] {hireId, "1", String.valueOf(rBarRatingDialog.getRating())};
                 new ReviewHireTask().execute(reviewTaskString);
             }
@@ -402,6 +401,13 @@ public class Helpers {
             @Override
             public void onClick(View v) {
                 ratingDialog.dismiss();
+            }
+        });
+
+        rBarRatingDialog.setOnRatingBarChangeListener(new RatingBar.OnRatingBarChangeListener() {
+            @Override
+            public void onRatingChanged(RatingBar ratingBar, float v, boolean b) {
+                btnRatingDialogDone.setEnabled(true);
             }
         });
 
