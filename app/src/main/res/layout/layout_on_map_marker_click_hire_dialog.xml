@@ -195,7 +195,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="15dp"
                     android:layout_gravity="center_vertical"
-                    android:text="License Front"
+                    android:text="License Front and Back"
                     android:textColor="#ffffff"
                     android:textSize="12dp"/>
             </LinearLayout>
@@ -218,7 +218,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="15dp"
                     android:layout_gravity="center_vertical"
-                    android:text="License Back"
+                    android:text="Aadhar Card or Equivalent"
                     android:textColor="#ffffff"
                     android:textSize="12dp"/>
             </LinearLayout>
@@ -242,7 +242,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="15dp"
                     android:layout_gravity="center_vertical"
-                    android:text="Police Verification"
+                    android:text="PCC or Equivalent"
                     android:textColor="#ffffff"
                     android:textSize="12dp"/>
             </LinearLayout>
